@@ -482,3 +482,260 @@
   white-space: pre-wrap;
   margin: 0;
 }
+
+/* ── Urgência (selo calculado do prazo) ────────────────────── */
+.badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+.badges-linha {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+.urgencia {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.urgencia-tranquilo {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+.urgencia-pouco_urgente {
+  background: #fff8e1;
+  color: #f9a825;
+}
+.urgencia-urgente {
+  background: #fff3e0;
+  color: #e65100;
+}
+.urgencia-muito_urgente {
+  background: #ffebee;
+  color: #c62828;
+}
+
+/* ── Comentários ───────────────────────────────────────────── */
+.comentarios {
+  border-top: 1px solid #eee;
+  margin-top: 1.25rem;
+  padding-top: 0.75rem;
+}
+.comentarios h3 {
+  font-size: 1rem;
+  margin: 0 0 0.5rem;
+  color: #555;
+}
+.lista-comentarios {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.lista-comentarios li {
+  background: #f7f9fc;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+}
+.lista-comentarios .cab {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.lista-comentarios .quando {
+  color: #888;
+  font-size: 0.8rem;
+}
+.lista-comentarios .texto {
+  margin: 0.35rem 0 0;
+  white-space: pre-wrap;
+}
+.tag-contexto {
+  display: inline-block;
+  margin-top: 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: #ede7f6;
+  color: #5e35b1;
+}
+.tag-transicao {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+.form-comentario {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.form-comentario textarea {
+  padding: 0.55rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+}
+.form-comentario button {
+  align-self: flex-start;
+  padding: 0.5rem 1rem;
+  border: 0;
+  border-radius: 8px;
+  background: #1f6feb;
+  color: #fff;
+  cursor: pointer;
+}
+.form-comentario button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ── Ações de status + histórico ───────────────────────────── */
+.acoes-status,
+.historico {
+  border-top: 1px solid #eee;
+  margin-top: 1.25rem;
+  padding-top: 0.75rem;
+}
+.acoes-status h3,
+.historico h3 {
+  font-size: 1rem;
+  margin: 0 0 0.5rem;
+  color: #555;
+}
+.botoes-transicao {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.botoes-transicao button {
+  padding: 0.5rem 0.9rem;
+  border: 0;
+  border-radius: 8px;
+  background: #1f6feb;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.botoes-transicao button.perigo {
+  background: #c62828;
+}
+.botoes-transicao button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.form-transicao {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.form-transicao p {
+  margin: 0;
+}
+.form-transicao textarea {
+  padding: 0.55rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+}
+.form-transicao .acoes {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.form-transicao .acoes button[type='submit'] {
+  padding: 0.5rem 1rem;
+  border: 0;
+  border-radius: 8px;
+  background: #1f6feb;
+  color: #fff;
+  cursor: pointer;
+}
+.form-transicao .acoes button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.lista-historico {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.lista-historico li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: baseline;
+  font-size: 0.9rem;
+}
+.lista-historico .quando {
+  color: #888;
+  font-size: 0.8rem;
+}
+.lista-historico .por {
+  color: #666;
+  font-size: 0.85rem;
+}
+
+/* ── Cancelamento (§12) ────────────────────────────────────── */
+.cancelamento {
+  margin-top: 1.25rem;
+}
+.cancelamento > button.perigo {
+  padding: 0.5rem 0.9rem;
+  border: 0;
+  border-radius: 8px;
+  background: #c62828;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.aviso-cancelamento {
+  margin-top: 1.25rem;
+  background: #fff3e0;
+  border: 1px solid #ffb74d;
+  border-radius: 10px;
+  padding: 0.75rem;
+}
+.aviso-cancelamento p {
+  margin: 0 0 0.4rem;
+}
+.aviso-cancelamento .acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.aviso-cancelamento .dica {
+  color: #666;
+  font-size: 0.85rem;
+}
+.aviso-cancelamento button {
+  padding: 0.45rem 0.8rem;
+  border: 0;
+  border-radius: 8px;
+  background: #c62828;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.aviso-cancelamento button:disabled {
+  opacity: 0.6;
+}
+.marca-cancel {
+  font-size: 0.72rem;
+  color: #e65100;
+  font-weight: 600;
+  white-space: nowrap;
+}

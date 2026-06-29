@@ -106,7 +106,7 @@ export default function Painel({ sessao }) {
 
       <section className="conteudo">
         {secao === 'inicio' && <Inicio perfil={perfil} sessao={sessao} />}
-        {secao === 'demandas' && <Demandas />}
+        {secao === 'demandas' && <Demandas perfil={perfil} />}
         {secao === 'clientes' && <Clientes perfil={perfil} />}
         {secao === 'equipe' && <Equipe perfil={perfil} />}
       </section>

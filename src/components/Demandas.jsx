@@ -3,11 +3,12 @@ import { supabase } from '../lib/supabase'
 import { STATUS_ROTULO } from '../lib/status'
 import NovaDemanda from './NovaDemanda'
 import DetalheDemanda from './DetalheDemanda'
+import SeloUrgencia from './SeloUrgencia'
 
 // Secao "Demandas": lista (a RLS ja filtra — vendedor ve as proprias,
 // admin/atendente veem todas), abrir o detalhe ao clicar, e o botao
 // para criar uma nova.
-export default function Demandas() {
+export default function Demandas({ perfil }) {
   const [demandas, setDemandas] = useState([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
@@ -20,7 +21,7 @@ export default function Demandas() {
     const { data, error } = await supabase
       .from('demanda')
       .select(
-        'id, descricao, prazo, status, created_at, tipo_demanda(nome), obra(nome, cliente(nome))',
+        'id, descricao, prazo, status, created_at, cancelamento_solicitado, tipo_demanda(nome), obra(nome, cliente(nome))',
       )
       .order('created_at', { ascending: false })
     if (error) setErro('Não foi possível carregar as demandas.')
@@ -46,7 +47,11 @@ export default function Demandas() {
 
   if (detalheId) {
     return (
-      <DetalheDemanda demandaId={detalheId} aoVoltar={() => setDetalheId(null)} />
+      <DetalheDemanda
+        demandaId={detalheId}
+        perfil={perfil}
+        aoVoltar={() => setDetalheId(null)}
+      />
     )
   }
 
@@ -80,9 +85,15 @@ export default function Demandas() {
                     {d.obra?.cliente?.nome} / {d.obra?.nome} · prazo {d.prazo}
                   </div>
                 </div>
-                <span className={`status status-${d.status}`}>
-                  {STATUS_ROTULO[d.status]}
-                </span>
+                <div className="badges">
+                  <span className={`status status-${d.status}`}>
+                    {STATUS_ROTULO[d.status]}
+                  </span>
+                  <SeloUrgencia prazo={d.prazo} status={d.status} />
+                  {d.cancelamento_solicitado && (
+                    <span className="marca-cancel">⚠️ cancelamento</span>
+                  )}
+                </div>
               </button>
             </li>
           ))}
