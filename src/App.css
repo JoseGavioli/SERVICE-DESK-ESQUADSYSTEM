@@ -315,8 +315,13 @@
 .lista-demandas li {
   border-bottom: 1px solid #eee;
 }
+.linha-demanda {
+  display: flex;
+  align-items: center;
+}
 .item-demanda {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -331,6 +336,18 @@
 }
 .item-demanda:hover {
   background: #f7f9fc;
+}
+.toggle-filhas {
+  flex-shrink: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #555;
+  padding: 0.5rem 0.6rem;
+}
+.toggle-filhas:hover {
+  color: #1f6feb;
 }
 .lista-demandas .sub {
   color: #666;
@@ -923,4 +940,22 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* ── Demanda-filha (§11) ───────────────────────────────────── */
+.filha {
+  margin-top: 1.25rem;
+}
+.botao-filha {
+  padding: 0.55rem 1rem;
+  border: 0;
+  border-radius: 8px;
+  background: #2e7d32;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+.seta-filha {
+  color: #2e7d32;
+  font-weight: 700;
 }

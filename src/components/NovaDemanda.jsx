@@ -5,11 +5,17 @@ import SeletorCliente from './SeletorCliente'
 import SeletorObra from './SeletorObra'
 
 // Formulario de nova demanda: cliente -> obra -> tipo -> descricao -> prazo
-// -> anexos de entrada (OPCIONAL). O vendedor_id NAO e enviado: o banco
-// preenche com auth.uid() (default + RLS), entao o autor e inforjavel (§5).
-export default function NovaDemanda({ aoCriar, aoCancelar }) {
+// -> anexos de entrada (OPCIONAL).
+//
+// Modo DEMANDA-FILHA (§11): se vier obraFixa + demandaPaiId, a obra ja vem
+// travada (herdada da pai) e o vinculo demanda_pai_id e gravado.
+//
+// O vendedor_id NAO e enviado: o banco preenche com auth.uid() (autor
+// inforjavel, §5).
+export default function NovaDemanda({ aoCriar, aoCancelar, obraFixa, demandaPaiId }) {
+  const ehFilha = Boolean(obraFixa)
   const [cliente, setCliente] = useState(null)
-  const [obra, setObra] = useState(null)
+  const [obra, setObra] = useState(obraFixa ?? null)
   const [tipos, setTipos] = useState([])
   const [tipoId, setTipoId] = useState('')
   const [descricao, setDescricao] = useState('')
@@ -35,7 +41,6 @@ export default function NovaDemanda({ aoCriar, aoCancelar }) {
     setObra(null)
   }
 
-  // Valida cada arquivo escolhido; so adiciona os validos a lista.
   function adicionarArquivos(fileList) {
     setErro('')
     const novos = []
@@ -56,7 +61,6 @@ export default function NovaDemanda({ aoCriar, aoCancelar }) {
     setErro('')
     setSalvando(true)
 
-    // 1) cria a demanda e ja recebe o id novo
     const { data, error } = await supabase
       .from('demanda')
       .insert({
@@ -64,6 +68,7 @@ export default function NovaDemanda({ aoCriar, aoCancelar }) {
         tipo_demanda_id: Number(tipoId),
         descricao: descricao.trim(),
         prazo,
+        demanda_pai_id: demandaPaiId ?? null,
       })
       .select('id')
       .single()
@@ -74,7 +79,6 @@ export default function NovaDemanda({ aoCriar, aoCancelar }) {
       return
     }
 
-    // 2) sobe os anexos de entrada (opcionais), usando o id recem-criado
     let falhou = false
     for (const f of arquivos) {
       const r = await enviarAnexo(data.id, 'entrada', f)
@@ -87,19 +91,32 @@ export default function NovaDemanda({ aoCriar, aoCancelar }) {
         'Demanda criada, mas um ou mais anexos falharam. Você pode anexá-los abrindo o detalhe da demanda.',
       )
     }
-    aoCriar() // volta para a lista e recarrega
+    aoCriar(data.id) // devolve o id para quem chamou abrir a demanda nova
   }
 
   const pronto = obra && tipoId && descricao.trim() && prazo
 
   return (
     <form className="nova-demanda" onSubmit={salvar}>
-      <h2>Nova demanda</h2>
+      <h2>{ehFilha ? 'Nova demanda-filha' : 'Nova demanda'}</h2>
 
-      <SeletorCliente selecionado={cliente} aoSelecionar={selecionarCliente} />
-
-      {cliente && (
-        <SeletorObra cliente={cliente} selecionado={obra} aoSelecionar={setObra} />
+      {ehFilha ? (
+        <div className="seletor selecionado">
+          <span>
+            Obra: <strong>{obraFixa.nome}</strong> <em>(herdada da demanda-pai)</em>
+          </span>
+        </div>
+      ) : (
+        <>
+          <SeletorCliente selecionado={cliente} aoSelecionar={selecionarCliente} />
+          {cliente && (
+            <SeletorObra
+              cliente={cliente}
+              selecionado={obra}
+              aoSelecionar={setObra}
+            />
+          )}
+        </>
       )}
 
       {obra && (
@@ -180,7 +197,7 @@ export default function NovaDemanda({ aoCriar, aoCancelar }) {
 
       <div className="acoes">
         <button type="submit" disabled={!pronto || salvando}>
-          {salvando ? 'Salvando…' : 'Criar demanda'}
+          {salvando ? 'Salvando…' : ehFilha ? 'Criar demanda-filha' : 'Criar demanda'}
         </button>
         <button type="button" className="link" onClick={aoCancelar}>
           Cancelar

@@ -7,20 +7,29 @@ import AcoesStatus from './AcoesStatus'
 import HistoricoStatus from './HistoricoStatus'
 import Comentarios from './Comentarios'
 import Anexos from './Anexos'
+import NovaDemanda from './NovaDemanda'
 
 // Detalhe da demanda (campos somente leitura) + cancelamento, acoes de
-// status, historico e comentarios. Recebe o perfil para saber o que mostrar.
-export default function DetalheDemanda({ demandaId, perfil, aoVoltar }) {
+// status, demanda-filha, historico e comentarios. Recebe o perfil para
+// saber o que mostrar e aoAbrir para navegar a outra demanda (a filha nova).
+export default function DetalheDemanda({
+  demandaId,
+  codigo,
+  perfil,
+  aoVoltar,
+  aoAbrir,
+}) {
   const [d, setD] = useState(null)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
   const [versao, setVersao] = useState(0) // muda apos uma acao p/ recarregar os filhos
+  const [criandoFilha, setCriandoFilha] = useState(false)
 
   async function carregar() {
     const { data, error } = await supabase
       .from('demanda')
       .select(
-        'id, descricao, prazo, status, created_at, vendedor_id, cancelamento_solicitado, tipo_demanda(nome), obra(nome, endereco, cliente(nome)), vendedor:perfil(nome_completo)',
+        'id, descricao, prazo, status, created_at, vendedor_id, obra_id, cancelamento_solicitado, tipo_demanda(nome), obra(nome, endereco, cliente(nome)), vendedor:perfil(nome_completo)',
       )
       .eq('id', demandaId)
       .single()
@@ -53,19 +62,46 @@ export default function DetalheDemanda({ demandaId, perfil, aoVoltar }) {
     )
   }
 
+  // So o vendedor dono cria filha, e so de uma demanda ENVIADA (§5/§11).
+  const podeCriarFilha = d.status === 'enviado' && perfil.id === d.vendedor_id
+
   return (
     <div className="detalhe-demanda">
       <button type="button" className="link" onClick={aoVoltar}>
         ← Voltar
       </button>
 
-      <h2>Demanda #{d.id}</h2>
+      <h2>Demanda #{codigo ?? d.id}</h2>
       <div className="badges-linha">
         <span className={`status status-${d.status}`}>
           {STATUS_ROTULO[d.status]}
         </span>
         <SeloUrgencia prazo={d.prazo} status={d.status} />
       </div>
+
+      {podeCriarFilha && (
+        <div className="filha">
+          {criandoFilha ? (
+            <NovaDemanda
+              obraFixa={{ id: d.obra_id, nome: d.obra?.nome }}
+              demandaPaiId={d.id}
+              aoCriar={(novoId) => {
+                setCriandoFilha(false)
+                aoAbrir(novoId) // abre a filha recem-criada
+              }}
+              aoCancelar={() => setCriandoFilha(false)}
+            />
+          ) : (
+            <button
+              type="button"
+              className="botao-filha"
+              onClick={() => setCriandoFilha(true)}
+            >
+              ➕ Criar demanda-filha
+            </button>
+          )}
+        </div>
+      )}
 
       <dl>
         <dt>Tipo</dt>
