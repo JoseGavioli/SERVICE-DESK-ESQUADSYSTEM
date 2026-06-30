@@ -986,3 +986,27 @@
   color: #333;
   white-space: nowrap;
 }
+
+/* ── Notificacoes (novidades) ──────────────────────────────── */
+.badge-menu {
+  display: inline-block;
+  margin-left: 0.4rem;
+  min-width: 1.2rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: #c62828;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.2rem;
+}
+.novidade-marca {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #fff;
+  background: #c62828;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}

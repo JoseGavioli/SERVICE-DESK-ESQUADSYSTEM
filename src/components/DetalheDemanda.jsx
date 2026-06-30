@@ -18,6 +18,7 @@ export default function DetalheDemanda({
   perfil,
   aoVoltar,
   aoAbrir,
+  aoVisto,
 }) {
   const [d, setD] = useState(null)
   const [carregando, setCarregando] = useState(true)
@@ -29,7 +30,7 @@ export default function DetalheDemanda({
     const { data, error } = await supabase
       .from('demanda')
       .select(
-        'id, descricao, prazo, status, created_at, vendedor_id, obra_id, cancelamento_solicitado, tipo_demanda(nome), obra(nome, endereco, cliente(nome)), vendedor:perfil(nome_completo)',
+        'id, descricao, prazo, status, created_at, vendedor_id, obra_id, cancelamento_solicitado, tipo_demanda(nome), obra(nome, endereco, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo)',
       )
       .eq('id', demandaId)
       .single()
@@ -42,11 +43,29 @@ export default function DetalheDemanda({
     carregar()
   }, [demandaId])
 
-  // Apos mover status / (des)solicitar: recarrega a demanda e forca os
-  // filhos (historico/comentarios) a recarregar trocando a "versao".
+  // Marca a demanda como VISTA (zera a novidade dela) e pede ao Painel
+  // para recarregar o contador. Usado ao abrir E ao agir na demanda.
+  async function marcarVisto() {
+    await supabase
+      .from('visualizacao')
+      .upsert(
+        { user_id: perfil.id, demanda_id: demandaId },
+        { onConflict: 'user_id,demanda_id' },
+      )
+    if (aoVisto) aoVisto()
+  }
+
+  useEffect(() => {
+    marcarVisto()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [demandaId])
+
+  // Apos mover status / (des)solicitar: recarrega a demanda, forca os
+  // filhos a recarregar, e REMARCA como vista (o ator acabou de agir nela).
   function recarregar() {
     carregar()
     setVersao((v) => v + 1)
+    marcarVisto()
   }
 
   if (carregando) return <p>Carregando…</p>

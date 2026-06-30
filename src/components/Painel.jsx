@@ -6,12 +6,14 @@ import Clientes from './Clientes'
 import Equipe from './Equipe'
 
 // Casca do app logado: carrega o perfil do usuario, mostra a barra do
-// topo (nome/papel/Sair) e um menu, e renderiza a "secao" ativa.
+// topo (nome/papel/Sair), um menu (com contador de novidades nas
+// Demandas) e renderiza a "secao" ativa.
 export default function Painel({ sessao }) {
   const [perfil, setPerfil] = useState(null)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
   const [secao, setSecao] = useState('inicio') // 'inicio' | 'demandas' | 'clientes' | 'equipe'
+  const [novidades, setNovidades] = useState([]) // ids de demandas com mudanca de status nao vista
 
   useEffect(() => {
     async function buscarPerfil() {
@@ -30,6 +32,15 @@ export default function Painel({ sessao }) {
     }
     buscarPerfil()
   }, [sessao])
+
+  async function recarregarNovidades() {
+    const { data } = await supabase.rpc('demandas_com_novidade')
+    if (data) setNovidades(data.map((r) => r.demanda_id))
+  }
+
+  useEffect(() => {
+    recarregarNovidades()
+  }, [])
 
   async function sair() {
     await supabase.auth.signOut()
@@ -85,6 +96,9 @@ export default function Painel({ sessao }) {
           onClick={() => setSecao('demandas')}
         >
           Demandas
+          {novidades.length > 0 && (
+            <span className="badge-menu">{novidades.length}</span>
+          )}
         </button>
         <button
           type="button"
@@ -106,7 +120,13 @@ export default function Painel({ sessao }) {
 
       <section className="conteudo">
         {secao === 'inicio' && <Inicio perfil={perfil} sessao={sessao} />}
-        {secao === 'demandas' && <Demandas perfil={perfil} />}
+        {secao === 'demandas' && (
+          <Demandas
+            perfil={perfil}
+            novidades={new Set(novidades)}
+            recarregarNovidades={recarregarNovidades}
+          />
+        )}
         {secao === 'clientes' && <Clientes perfil={perfil} />}
         {secao === 'equipe' && <Equipe perfil={perfil} />}
       </section>

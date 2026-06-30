@@ -23,7 +23,7 @@ const FILTROS_VAZIOS = {
 // Secao "Demandas". Sem filtro: arvore aninhada (pai ↪ filha) com codigo
 // hierarquico e recolher/expandir. Com filtro: lista plana dos resultados.
 // A RLS ja restringe (vendedor ve as proprias; admin/atendente veem todas).
-export default function Demandas({ perfil }) {
+export default function Demandas({ perfil, novidades, recarregarNovidades }) {
   const [demandas, setDemandas] = useState([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
@@ -150,6 +150,7 @@ export default function Demandas({ perfil }) {
           carregar()
           setDetalheId(id)
         }}
+        aoVisto={recarregarNovidades}
       />
     )
   }
@@ -176,6 +177,9 @@ export default function Demandas({ perfil }) {
           <SeloUrgencia prazo={d.prazo} status={d.status} />
           {d.cancelamento_solicitado && (
             <span className="marca-cancel">⚠️ cancelamento</span>
+          )}
+          {novidades?.has(d.id) && (
+            <span className="novidade-marca">novidade</span>
           )}
         </div>
       </button>
