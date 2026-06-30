@@ -739,3 +739,131 @@
   font-weight: 600;
   white-space: nowrap;
 }
+
+/* ── Anexos (§14) ──────────────────────────────────────────── */
+.anexos {
+  border-top: 1px solid #eee;
+  margin-top: 1.25rem;
+  padding-top: 0.75rem;
+}
+.anexos h3 {
+  font-size: 1rem;
+  margin: 0 0 0.5rem;
+  color: #555;
+}
+.anexos h4 {
+  font-size: 0.78rem;
+  margin: 0.75rem 0 0.25rem;
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.lista-anexos {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.lista-anexos li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.lista-anexos .meta {
+  color: #888;
+  font-size: 0.8rem;
+}
+.enviar-arquivo {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.45rem 0.8rem;
+  border: 1px dashed #1f6feb;
+  border-radius: 8px;
+  color: #1f6feb;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.enviar-arquivo input[type='file'] {
+  display: none;
+}
+.anexos-novos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.rotulo-anexos {
+  font-size: 0.9rem;
+  color: #333;
+}
+.arquivos-escolhidos {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.arquivos-escolhidos li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+.arquivos-escolhidos .remover {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  color: #c62828;
+  font-size: 0.9rem;
+}
+.miniatura-btn {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  line-height: 0;
+  flex-shrink: 0;
+}
+.miniatura {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  display: block;
+}
+
+/* Lightbox: imagem expandida sobre a pagina */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.lightbox img {
+  max-width: 95vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  cursor: default;
+}
+.lightbox-fechar {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  font-size: 1.1rem;
+  cursor: pointer;
+}

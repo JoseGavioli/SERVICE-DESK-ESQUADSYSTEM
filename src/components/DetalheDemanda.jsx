@@ -6,6 +6,7 @@ import Cancelamento from './Cancelamento'
 import AcoesStatus from './AcoesStatus'
 import HistoricoStatus from './HistoricoStatus'
 import Comentarios from './Comentarios'
+import Anexos from './Anexos'
 
 // Detalhe da demanda (campos somente leitura) + cancelamento, acoes de
 // status, historico e comentarios. Recebe o perfil para saber o que mostrar.
@@ -93,6 +94,8 @@ export default function DetalheDemanda({ demandaId, perfil, aoVoltar }) {
         <h3>Descrição</h3>
         <p>{d.descricao}</p>
       </div>
+
+      <Anexos demanda={d} perfil={perfil} />
 
       <Cancelamento demanda={d} perfil={perfil} aoMudar={recarregar} />
 
