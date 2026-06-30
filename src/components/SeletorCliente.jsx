@@ -67,7 +67,7 @@ export default function SeletorCliente({ selecionado, aoSelecionar }) {
       <label>Cliente</label>
       <input
         type="search"
-        placeholder="Buscar cliente…"
+        placeholder="Buscar ou cadastrar cliente…"
         value={busca}
         onChange={(e) => setBusca(e.target.value)}
       />

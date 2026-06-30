@@ -67,7 +67,7 @@ export default function SeletorObra({ cliente, selecionado, aoSelecionar }) {
       <label>Obra (de {cliente.nome})</label>
       <input
         type="search"
-        placeholder="Buscar obra…"
+        placeholder="Buscar ou cadastrar obra…"
         value={busca}
         onChange={(e) => setBusca(e.target.value)}
       />
