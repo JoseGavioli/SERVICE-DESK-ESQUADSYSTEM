@@ -23,7 +23,12 @@ const FILTROS_VAZIOS = {
 // Secao "Demandas". Sem filtro: arvore aninhada (pai ↪ filha) com codigo
 // hierarquico e recolher/expandir. Com filtro: lista plana dos resultados.
 // A RLS ja restringe (vendedor ve as proprias; admin/atendente veem todas).
-export default function Demandas({ perfil, novidades, recarregarNovidades }) {
+export default function Demandas({
+  perfil,
+  novidades,
+  comentariosNovos,
+  recarregarNovidades,
+}) {
   const [demandas, setDemandas] = useState([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
@@ -37,7 +42,7 @@ export default function Demandas({ perfil, novidades, recarregarNovidades }) {
     const { data, error } = await supabase
       .from('demanda')
       .select(
-        'id, descricao, prazo, status, created_at, demanda_pai_id, cancelamento_solicitado, tipo_demanda(nome), obra(nome, cliente(nome))',
+        'id, descricao, prazo, status, created_at, demanda_pai_id, cancelamento_solicitado, tipo_demanda(nome), obra(nome, cliente(nome)), comentario(count)',
       )
       .order('created_at', { ascending: false })
     if (error) setErro('Não foi possível carregar as demandas.')
@@ -157,6 +162,8 @@ export default function Demandas({ perfil, novidades, recarregarNovidades }) {
 
   // Conteudo clicavel de uma linha (reutilizado na arvore e na lista plana).
   function botaoDemanda(d, nivel) {
+    const qtdComent = d.comentario?.[0]?.count ?? 0
+    const comentNovo = comentariosNovos?.has(d.id)
     return (
       <button
         type="button"
@@ -180,6 +187,12 @@ export default function Demandas({ perfil, novidades, recarregarNovidades }) {
           )}
           {novidades?.has(d.id) && (
             <span className="novidade-marca">novidade</span>
+          )}
+          {(qtdComent > 0 || comentNovo) && (
+            <span className={`coment ${comentNovo ? 'coment-novo' : ''}`}>
+              💬 {qtdComent}
+              {comentNovo ? ' • novo' : ''}
+            </span>
           )}
         </div>
       </button>

@@ -14,7 +14,8 @@ export default function Painel({ sessao }) {
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
   const [secao, setSecao] = useState('inicio') // 'inicio' | 'demandas' | 'clientes' | 'equipe'
-  const [novidades, setNovidades] = useState([]) // ids de demandas com mudanca de status nao vista
+  const [novidades, setNovidades] = useState([]) // ids com mudanca de status nao vista
+  const [comentariosNovos, setComentariosNovos] = useState([]) // ids com comentario novo
 
   useEffect(() => {
     async function buscarPerfil() {
@@ -35,8 +36,12 @@ export default function Painel({ sessao }) {
   }, [sessao])
 
   async function recarregarNovidades() {
-    const { data } = await supabase.rpc('demandas_com_novidade')
-    if (data) setNovidades(data.map((r) => r.demanda_id))
+    const [nov, com] = await Promise.all([
+      supabase.rpc('demandas_com_novidade'),
+      supabase.rpc('demandas_com_comentario_novo'),
+    ])
+    if (nov.data) setNovidades(nov.data.map((r) => r.demanda_id))
+    if (com.data) setComentariosNovos(com.data.map((r) => r.demanda_id))
   }
 
   useEffect(() => {
@@ -135,6 +140,7 @@ export default function Painel({ sessao }) {
           <Demandas
             perfil={perfil}
             novidades={new Set(novidades)}
+            comentariosNovos={new Set(comentariosNovos)}
             recarregarNovidades={recarregarNovidades}
           />
         )}

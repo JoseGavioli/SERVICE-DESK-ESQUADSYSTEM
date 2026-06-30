@@ -1182,3 +1182,55 @@ button.card-corpo:hover {
 .card .excluir {
   margin: 0.4rem 0.4rem 0 0;
 }
+
+/* ── Início: resumo + notificações ─────────────────────────── */
+.resumo-aberto {
+  background: var(--surface);
+  border: 1px solid var(--borda);
+  border-left: 4px solid var(--primaria);
+  border-radius: var(--raio-sm);
+  padding: 0.7rem 0.85rem;
+  margin: 1rem 0;
+}
+.notificacoes-inicio {
+  margin-top: 1.5rem;
+}
+.notificacoes-inicio h3 {
+  font-size: 1rem;
+  color: var(--texto-suave);
+  margin: 0 0 0.5rem;
+}
+.lista-notif {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.lista-notif li {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-sm);
+  padding: 0.6rem 0.75rem;
+}
+.lista-notif .sub {
+  color: var(--texto-suave);
+  font-size: 0.8rem;
+  margin-top: 0.15rem;
+}
+
+/* contagem / novo de comentários na lista de demandas */
+.coment {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--texto-suave);
+  white-space: nowrap;
+}
+.coment-novo {
+  color: var(--perigo);
+  font-weight: 700;
+}
