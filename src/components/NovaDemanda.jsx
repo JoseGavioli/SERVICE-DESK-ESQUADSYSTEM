@@ -98,7 +98,7 @@ export default function NovaDemanda({ aoCriar, aoCancelar, obraFixa, demandaPaiI
 
   return (
     <form className="nova-demanda" onSubmit={salvar}>
-      <h2>{ehFilha ? 'Nova demanda-filha' : 'Nova demanda'}</h2>
+      <h2>{ehFilha ? 'Nova demanda vinculada' : 'Nova demanda'}</h2>
 
       {ehFilha ? (
         <div className="seletor selecionado">
@@ -197,7 +197,11 @@ export default function NovaDemanda({ aoCriar, aoCancelar, obraFixa, demandaPaiI
 
       <div className="acoes">
         <button type="submit" disabled={!pronto || salvando}>
-          {salvando ? 'Salvando…' : ehFilha ? 'Criar demanda-filha' : 'Criar demanda'}
+          {salvando
+            ? 'Salvando…'
+            : ehFilha
+              ? 'Criar demanda vinculada'
+              : 'Criar demanda'}
         </button>
         <button type="button" className="link" onClick={aoCancelar}>
           Cancelar

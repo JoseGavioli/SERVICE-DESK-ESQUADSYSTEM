@@ -1,76 +1,85 @@
-/* Tela que centraliza o cartao, ocupando a altura toda. */
+/* Campos de formulario — base comum (funciona no claro e no escuro). */
+input,
+select,
+textarea {
+  font: inherit;
+  color: var(--texto);
+  background: var(--surface);
+  border: 1px solid var(--borda-forte);
+  border-radius: var(--raio-sm);
+  padding: 0.55rem;
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--texto-fraco);
+}
+
+/* ── Tela centralizada (login) ─────────────────────────────── */
 .tela {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  background: #f4f5f7;
+  background: var(--bg);
 }
 
-/* "Cartao" branco central — usado tanto no Login quanto no Painel. */
 .cartao {
   width: 100%;
-  max-width: 360px;
-  background: #fff;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+  max-width: 380px;
+  background: var(--surface);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  padding: 1.75rem;
+  box-shadow: var(--sombra);
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
 }
-
 .cartao h1 {
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   margin: 0;
+  color: var(--texto);
 }
-
 .subtitulo {
   margin: 0 0 0.5rem;
-  color: #666;
+  color: var(--texto-suave);
   font-size: 0.9rem;
 }
-
 .cartao label {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.3rem;
   font-size: 0.9rem;
-  color: #333;
+  color: var(--texto-suave);
 }
-
-.cartao input {
-  padding: 0.6rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 1rem;
-}
-
 .cartao button {
   margin-top: 0.5rem;
   padding: 0.7rem;
   border: 0;
-  border-radius: 8px;
-  background: #1f6feb;
-  color: #fff;
+  border-radius: var(--raio-sm);
+  background: var(--primaria);
+  color: var(--primaria-texto);
   font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s ease;
 }
-
+.cartao button:hover:not(:disabled) {
+  background: var(--primaria-hover);
+}
 .cartao button:disabled {
   opacity: 0.6;
   cursor: default;
 }
 
 .erro {
-  color: #b00020;
+  color: var(--perigo);
   font-size: 0.9rem;
   margin: 0;
 }
-
 .email {
-  color: #888;
+  color: var(--texto-fraco);
   font-size: 0.85rem;
   margin: 0;
 }
@@ -80,6 +89,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background: var(--bg);
 }
 
 .topo {
@@ -88,48 +98,71 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 0.75rem 1rem;
-  background: #1f6feb;
-  color: #fff;
+  background: var(--topo-bg);
+  color: var(--topo-texto);
+  box-shadow: var(--sombra-sm);
 }
 .topo .quem {
-  opacity: 0.9;
+  opacity: 0.85;
   font-weight: 400;
+}
+.topo .acoes-topo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.botao-tema {
+  background: rgba(255, 255, 255, 0.14);
+  border: 0;
+  border-radius: var(--raio-pill);
+  width: 34px;
+  height: 34px;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
 }
 
 .menu {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.25rem;
   padding: 0.5rem 1rem;
-  background: #fff;
-  border-bottom: 1px solid #e3e3e3;
+  background: var(--surface);
+  border-bottom: 1px solid var(--borda);
 }
 .menu button {
   background: transparent;
   border: 0;
   padding: 0.5rem 0.9rem;
-  border-radius: 8px;
+  border-radius: var(--raio-sm);
   cursor: pointer;
   font-size: 0.95rem;
-  color: #333;
+  color: var(--texto-suave);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.menu button:hover {
+  background: var(--surface-2);
 }
 .menu button.ativo {
-  background: #e8f0fe;
-  color: #1f6feb;
+  background: var(--primaria-suave);
+  color: var(--primaria);
   font-weight: 600;
 }
 
 .conteudo {
-  padding: 1rem;
-  max-width: 720px;
+  padding: 1.25rem 1rem;
+  max-width: 760px;
   width: 100%;
   margin: 0 auto;
 }
 
 .bloco h1 {
   font-size: 1.4rem;
+  color: var(--texto);
 }
 .dica {
-  color: #666;
+  color: var(--texto-suave);
   margin-top: 1rem;
 }
 
@@ -137,15 +170,19 @@
 .link {
   background: transparent;
   border: 0;
-  color: #1f6feb;
+  color: var(--primaria);
   cursor: pointer;
   font-size: 1rem;
   padding: 0;
   text-align: left;
 }
-.topo .link {
-  color: #fff;
+.link:hover {
   text-decoration: underline;
+}
+.topo .link {
+  color: var(--topo-texto);
+  text-decoration: underline;
+  font-size: 0.95rem;
 }
 
 /* listas de cliente/obra */
@@ -160,13 +197,13 @@
   justify-content: space-between;
   gap: 0.5rem;
   padding: 0.5rem 0.25rem;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--borda);
 }
 .lista li.sel {
-  background: #f0f6ff;
+  background: var(--primaria-suave);
 }
 .lista li.vazio {
-  color: #999;
+  color: var(--texto-fraco);
   justify-content: flex-start;
 }
 .excluir {
@@ -174,23 +211,24 @@
   border: 0;
   cursor: pointer;
   font-size: 1rem;
+  padding: 0.2rem;
+  border-radius: var(--raio-sm);
+}
+.excluir:hover {
+  background: var(--surface-2);
 }
 
 /* busca e formularios de cadastro */
 .secao-clientes input[type='search'],
 .secao-obras input[type='search'] {
   width: 100%;
-  padding: 0.55rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 1rem;
 }
 
 .form-novo {
   margin-top: 1rem;
-  padding: 0.9rem;
-  border: 1px dashed #ccc;
-  border-radius: 10px;
+  padding: 1rem;
+  border: 1px dashed var(--borda-forte);
+  border-radius: var(--raio);
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -199,32 +237,33 @@
 .form-novo h4 {
   margin: 0;
   font-size: 1rem;
-}
-.form-novo input {
-  padding: 0.55rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 1rem;
+  color: var(--texto);
 }
 .form-novo button {
   align-self: flex-start;
   padding: 0.55rem 1rem;
   border: 0;
-  border-radius: 8px;
-  background: #1f6feb;
-  color: #fff;
+  border-radius: var(--raio-sm);
+  background: var(--primaria);
+  color: var(--primaria-texto);
   font-size: 0.95rem;
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s ease;
+}
+.form-novo button:hover:not(:disabled) {
+  background: var(--primaria-hover);
 }
 .form-novo button:disabled {
   opacity: 0.6;
   cursor: default;
 }
 .aviso {
-  color: #9a6700;
-  background: #fff8e1;
-  padding: 0.4rem 0.6rem;
-  border-radius: 6px;
+  color: var(--aviso-fg);
+  background: var(--aviso-bg);
+  border: 1px solid var(--aviso-borda);
+  padding: 0.45rem 0.6rem;
+  border-radius: var(--raio-sm);
   margin: 0;
   font-size: 0.9rem;
 }
@@ -232,7 +271,7 @@
 .secao-obras {
   margin-top: 1.5rem;
   padding-top: 1rem;
-  border-top: 2px solid #e3e3e3;
+  border-top: 2px solid var(--borda);
 }
 
 /* ── Equipe ────────────────────────────────────────────────── */
@@ -250,28 +289,29 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.6rem 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--borda);
 }
 .linha-perfil input[type='text'] {
   flex: 1 1 140px;
   padding: 0.45rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
   font-size: 0.95rem;
 }
 .linha-perfil select {
   padding: 0.45rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
   font-size: 0.95rem;
 }
 .linha-perfil button {
   padding: 0.45rem 0.8rem;
   border: 0;
-  border-radius: 6px;
-  background: #1f6feb;
-  color: #fff;
+  border-radius: var(--raio-sm);
+  background: var(--primaria);
+  color: var(--primaria-texto);
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s ease;
+}
+.linha-perfil button:hover:not(:disabled) {
+  background: var(--primaria-hover);
 }
 .linha-perfil button:disabled {
   opacity: 0.6;
@@ -281,14 +321,15 @@
   align-items: center;
   gap: 0.25rem;
   font-size: 0.9rem;
+  color: var(--texto-suave);
 }
 .voce {
-  color: #1f6feb;
+  color: var(--primaria);
   font-size: 0.85rem;
   font-weight: 600;
 }
 .msg {
-  color: #2e7d32;
+  color: var(--sucesso);
   font-size: 0.85rem;
 }
 
@@ -299,21 +340,36 @@
   justify-content: space-between;
   gap: 1rem;
 }
+.secao-demandas h2 {
+  color: var(--texto);
+}
 .secao-demandas .cabecalho button {
-  padding: 0.5rem 0.9rem;
+  padding: 0.55rem 0.9rem;
   border: 0;
-  border-radius: 8px;
-  background: #1f6feb;
-  color: #fff;
+  border-radius: var(--raio-sm);
+  background: var(--primaria);
+  color: var(--primaria-texto);
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s ease;
+}
+.secao-demandas .cabecalho button:hover {
+  background: var(--primaria-hover);
 }
 .lista-demandas {
   list-style: none;
   padding: 0;
   margin: 1rem 0 0;
+  background: var(--surface);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  overflow: hidden;
 }
 .lista-demandas li {
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--borda);
+}
+.lista-demandas li:last-child {
+  border-bottom: 0;
 }
 .linha-demanda {
   display: flex;
@@ -326,16 +382,17 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.7rem 0.25rem;
+  padding: 0.8rem 0.9rem;
   background: transparent;
   border: 0;
   cursor: pointer;
   text-align: left;
   font: inherit;
-  color: inherit;
+  color: var(--texto);
+  transition: background 0.12s ease;
 }
 .item-demanda:hover {
-  background: #f7f9fc;
+  background: var(--surface-hover);
 }
 .toggle-filhas {
   flex-shrink: 0;
@@ -343,76 +400,57 @@
   border: 0;
   cursor: pointer;
   font-size: 1rem;
-  color: #555;
-  padding: 0.5rem 0.6rem;
+  color: var(--texto-suave);
+  padding: 0.5rem 0.7rem;
 }
 .toggle-filhas:hover {
-  color: #1f6feb;
+  color: var(--primaria);
 }
 .lista-demandas .sub {
-  color: #666;
+  color: var(--texto-suave);
   font-size: 0.85rem;
   margin-top: 0.15rem;
 }
+
+/* selos de status */
 .status {
-  font-size: 0.8rem;
-  padding: 0.25rem 0.55rem;
-  border-radius: 999px;
-  background: #eee;
-  color: #333;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--raio-pill);
+  background: var(--surface-2);
+  color: var(--texto-suave);
   white-space: nowrap;
 }
-.status-nao_iniciado {
-  background: #eceff1;
-  color: #455a64;
-}
-.status-em_andamento {
-  background: #e3f2fd;
-  color: #1565c0;
-}
-.status-congelado {
-  background: #e1f5fe;
-  color: #0277bd;
-}
-.status-em_revisao_custo {
-  background: #fff8e1;
-  color: #ff8f00;
-}
-.status-concluido {
-  background: #e8f5e9;
-  color: #2e7d32;
-}
-.status-enviado {
-  background: #ede7f6;
-  color: #5e35b1;
-}
-.status-cancelada {
-  background: #ffebee;
-  color: #c62828;
-}
+.status-nao_iniciado { background: var(--st-nao_iniciado-bg); color: var(--st-nao_iniciado-fg); }
+.status-em_andamento { background: var(--st-em_andamento-bg); color: var(--st-em_andamento-fg); }
+.status-congelado { background: var(--st-congelado-bg); color: var(--st-congelado-fg); }
+.status-em_revisao_custo { background: var(--st-em_revisao_custo-bg); color: var(--st-em_revisao_custo-fg); }
+.status-concluido { background: var(--st-concluido-bg); color: var(--st-concluido-fg); }
+.status-enviado { background: var(--st-enviado-bg); color: var(--st-enviado-fg); }
+.status-cancelada { background: var(--st-cancelada-bg); color: var(--st-cancelada-fg); }
 
 /* formulario nova demanda + seletores */
 .nova-demanda {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  max-width: 480px;
+  max-width: 520px;
+}
+.nova-demanda h2 {
+  color: var(--texto);
 }
 .nova-demanda label {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
   font-size: 0.9rem;
-  color: #333;
+  color: var(--texto-suave);
 }
 .nova-demanda select,
 .nova-demanda textarea,
 .nova-demanda input[type='date'] {
-  padding: 0.55rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
   font-size: 1rem;
-  font-family: inherit;
 }
 .nova-demanda .acoes {
   display: flex;
@@ -420,13 +458,18 @@
   gap: 1rem;
 }
 .nova-demanda .acoes button[type='submit'] {
-  padding: 0.6rem 1.2rem;
+  padding: 0.65rem 1.2rem;
   border: 0;
-  border-radius: 8px;
-  background: #1f6feb;
-  color: #fff;
+  border-radius: var(--raio-sm);
+  background: var(--primaria);
+  color: var(--primaria-texto);
   font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s ease;
+}
+.nova-demanda .acoes button[type='submit']:hover:not(:disabled) {
+  background: var(--primaria-hover);
 }
 .nova-demanda .acoes button:disabled {
   opacity: 0.6;
@@ -434,9 +477,10 @@
 }
 
 .seletor {
-  border: 1px solid #e3e3e3;
-  border-radius: 10px;
-  padding: 0.75rem;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  padding: 0.85rem;
+  background: var(--surface);
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -444,63 +488,68 @@
 .seletor > label {
   font-weight: 600;
   font-size: 0.9rem;
+  color: var(--texto-suave);
 }
 .seletor input[type='search'] {
   width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 1rem;
 }
 .seletor.selecionado {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  background: #f0f6ff;
+  background: var(--primaria-suave);
 }
 .seletor button:not(.link) {
   align-self: flex-start;
-  padding: 0.45rem 0.8rem;
+  padding: 0.45rem 0.85rem;
   border: 0;
-  border-radius: 8px;
-  background: #2e7d32;
-  color: #fff;
+  border-radius: var(--raio-sm);
+  background: var(--primaria);
+  color: var(--primaria-texto);
+  font-weight: 600;
   cursor: pointer;
   font-size: 0.9rem;
+  transition: background 0.15s ease;
+}
+.seletor button:not(.link):hover {
+  background: var(--primaria-hover);
 }
 
 /* ── Detalhe da demanda ────────────────────────────────────── */
 .detalhe-demanda h2 {
   margin: 0.5rem 0 0.25rem;
+  color: var(--texto);
 }
 .detalhe-demanda dl {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 0.4rem 1rem;
+  gap: 0.45rem 1rem;
   margin: 1rem 0;
 }
 .detalhe-demanda dt {
   font-weight: 600;
-  color: #555;
+  color: var(--texto-suave);
 }
 .detalhe-demanda dd {
   margin: 0;
+  color: var(--texto);
 }
 .detalhe-demanda .descricao {
-  border-top: 1px solid #eee;
-  padding-top: 0.75rem;
+  border-top: 1px solid var(--borda);
+  padding-top: 0.85rem;
 }
 .detalhe-demanda .descricao h3 {
   font-size: 1rem;
   margin: 0 0 0.25rem;
-  color: #555;
+  color: var(--texto-suave);
 }
 .detalhe-demanda .descricao p {
   white-space: pre-wrap;
   margin: 0;
+  color: var(--texto);
 }
 
-/* ── Urgência (selo calculado do prazo) ────────────────────── */
+/* ── Urgência ──────────────────────────────────────────────── */
 .badges {
   display: flex;
   flex-direction: column;
@@ -511,42 +560,30 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-top: 0.25rem;
+  margin-top: 0.35rem;
 }
 .urgencia {
   font-size: 0.75rem;
-  padding: 0.2rem 0.5rem;
-  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--raio-pill);
   font-weight: 600;
   white-space: nowrap;
 }
-.urgencia-tranquilo {
-  background: #e8f5e9;
-  color: #2e7d32;
-}
-.urgencia-pouco_urgente {
-  background: #fff8e1;
-  color: #f9a825;
-}
-.urgencia-urgente {
-  background: #fff3e0;
-  color: #e65100;
-}
-.urgencia-muito_urgente {
-  background: #ffebee;
-  color: #c62828;
-}
+.urgencia-tranquilo { background: var(--ur-tranquilo-bg); color: var(--ur-tranquilo-fg); }
+.urgencia-pouco_urgente { background: var(--ur-pouco-bg); color: var(--ur-pouco-fg); }
+.urgencia-urgente { background: var(--ur-urgente-bg); color: var(--ur-urgente-fg); }
+.urgencia-muito_urgente { background: var(--ur-muito-bg); color: var(--ur-muito-fg); }
 
 /* ── Comentários ───────────────────────────────────────────── */
 .comentarios {
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--borda);
   margin-top: 1.25rem;
-  padding-top: 0.75rem;
+  padding-top: 0.85rem;
 }
 .comentarios h3 {
   font-size: 1rem;
   margin: 0 0 0.5rem;
-  color: #555;
+  color: var(--texto-suave);
 }
 .lista-comentarios {
   list-style: none;
@@ -557,9 +594,10 @@
   gap: 0.75rem;
 }
 .lista-comentarios li {
-  background: #f7f9fc;
-  border-radius: 8px;
-  padding: 0.6rem 0.75rem;
+  background: var(--surface-2);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-sm);
+  padding: 0.65rem 0.8rem;
 }
 .lista-comentarios .cab {
   display: flex;
@@ -567,13 +605,17 @@
   align-items: baseline;
   gap: 0.5rem;
 }
+.lista-comentarios .cab strong {
+  color: var(--texto);
+}
 .lista-comentarios .quando {
-  color: #888;
+  color: var(--texto-fraco);
   font-size: 0.8rem;
 }
 .lista-comentarios .texto {
   margin: 0.35rem 0 0;
   white-space: pre-wrap;
+  color: var(--texto);
 }
 .tag-contexto {
   display: inline-block;
@@ -581,13 +623,13 @@
   font-size: 0.7rem;
   font-weight: 600;
   padding: 0.1rem 0.45rem;
-  border-radius: 999px;
-  background: #ede7f6;
-  color: #5e35b1;
+  border-radius: var(--raio-pill);
+  background: var(--st-enviado-bg);
+  color: var(--st-enviado-fg);
 }
 .tag-transicao {
-  background: #e3f2fd;
-  color: #1565c0;
+  background: var(--st-em_andamento-bg);
+  color: var(--st-em_andamento-fg);
 }
 .form-comentario {
   display: flex;
@@ -595,20 +637,21 @@
   gap: 0.5rem;
 }
 .form-comentario textarea {
-  padding: 0.55rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
   font-size: 1rem;
-  font-family: inherit;
 }
 .form-comentario button {
   align-self: flex-start;
   padding: 0.5rem 1rem;
   border: 0;
-  border-radius: 8px;
-  background: #1f6feb;
-  color: #fff;
+  border-radius: var(--raio-sm);
+  background: var(--primaria);
+  color: var(--primaria-texto);
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s ease;
+}
+.form-comentario button:hover:not(:disabled) {
+  background: var(--primaria-hover);
 }
 .form-comentario button:disabled {
   opacity: 0.6;
@@ -618,15 +661,15 @@
 /* ── Ações de status + histórico ───────────────────────────── */
 .acoes-status,
 .historico {
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--borda);
   margin-top: 1.25rem;
-  padding-top: 0.75rem;
+  padding-top: 0.85rem;
 }
 .acoes-status h3,
 .historico h3 {
   font-size: 1rem;
   margin: 0 0 0.5rem;
-  color: #555;
+  color: var(--texto-suave);
 }
 .botoes-transicao {
   display: flex;
@@ -636,14 +679,22 @@
 .botoes-transicao button {
   padding: 0.5rem 0.9rem;
   border: 0;
-  border-radius: 8px;
-  background: #1f6feb;
-  color: #fff;
+  border-radius: var(--raio-sm);
+  background: var(--primaria);
+  color: var(--primaria-texto);
+  font-weight: 600;
   cursor: pointer;
   font-size: 0.9rem;
+  transition: background 0.15s ease;
+}
+.botoes-transicao button:hover:not(:disabled) {
+  background: var(--primaria-hover);
 }
 .botoes-transicao button.perigo {
-  background: #c62828;
+  background: var(--perigo);
+}
+.botoes-transicao button.perigo:hover:not(:disabled) {
+  background: var(--perigo-hover);
 }
 .botoes-transicao button:disabled {
   opacity: 0.6;
@@ -656,13 +707,10 @@
 }
 .form-transicao p {
   margin: 0;
+  color: var(--texto);
 }
 .form-transicao textarea {
-  padding: 0.55rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
   font-size: 1rem;
-  font-family: inherit;
 }
 .form-transicao .acoes {
   display: flex;
@@ -672,10 +720,15 @@
 .form-transicao .acoes button[type='submit'] {
   padding: 0.5rem 1rem;
   border: 0;
-  border-radius: 8px;
-  background: #1f6feb;
-  color: #fff;
+  border-radius: var(--raio-sm);
+  background: var(--primaria);
+  color: var(--primaria-texto);
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s ease;
+}
+.form-transicao .acoes button[type='submit']:hover:not(:disabled) {
+  background: var(--primaria-hover);
 }
 .form-transicao .acoes button:disabled {
   opacity: 0.6;
@@ -695,38 +748,45 @@
   gap: 0.5rem;
   align-items: baseline;
   font-size: 0.9rem;
+  color: var(--texto);
 }
 .lista-historico .quando {
-  color: #888;
+  color: var(--texto-fraco);
   font-size: 0.8rem;
 }
 .lista-historico .por {
-  color: #666;
+  color: var(--texto-suave);
   font-size: 0.85rem;
 }
 
-/* ── Cancelamento (§12) ────────────────────────────────────── */
+/* ── Cancelamento ──────────────────────────────────────────── */
 .cancelamento {
   margin-top: 1.25rem;
 }
 .cancelamento > button.perigo {
-  padding: 0.5rem 0.9rem;
+  padding: 0.55rem 0.95rem;
   border: 0;
-  border-radius: 8px;
-  background: #c62828;
-  color: #fff;
+  border-radius: var(--raio-sm);
+  background: var(--perigo);
+  color: var(--perigo-texto);
+  font-weight: 600;
   cursor: pointer;
   font-size: 0.9rem;
+  transition: background 0.15s ease;
+}
+.cancelamento > button.perigo:hover {
+  background: var(--perigo-hover);
 }
 .aviso-cancelamento {
   margin-top: 1.25rem;
-  background: #fff3e0;
-  border: 1px solid #ffb74d;
-  border-radius: 10px;
-  padding: 0.75rem;
+  background: var(--aviso-bg);
+  border: 1px solid var(--aviso-borda);
+  border-radius: var(--raio);
+  padding: 0.85rem;
 }
 .aviso-cancelamento p {
   margin: 0 0 0.4rem;
+  color: var(--texto);
 }
 .aviso-cancelamento .acoes {
   display: flex;
@@ -735,45 +795,50 @@
   gap: 0.5rem;
 }
 .aviso-cancelamento .dica {
-  color: #666;
+  color: var(--texto-suave);
   font-size: 0.85rem;
 }
 .aviso-cancelamento button {
   padding: 0.45rem 0.8rem;
   border: 0;
-  border-radius: 8px;
-  background: #c62828;
-  color: #fff;
+  border-radius: var(--raio-sm);
+  background: var(--perigo);
+  color: var(--perigo-texto);
+  font-weight: 600;
   cursor: pointer;
   font-size: 0.9rem;
+  transition: background 0.15s ease;
+}
+.aviso-cancelamento button:hover:not(:disabled) {
+  background: var(--perigo-hover);
 }
 .aviso-cancelamento button:disabled {
   opacity: 0.6;
 }
 .marca-cancel {
   font-size: 0.72rem;
-  color: #e65100;
-  font-weight: 600;
+  color: var(--perigo);
+  font-weight: 700;
   white-space: nowrap;
 }
 
-/* ── Anexos (§14) ──────────────────────────────────────────── */
+/* ── Anexos ────────────────────────────────────────────────── */
 .anexos {
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--borda);
   margin-top: 1.25rem;
-  padding-top: 0.75rem;
+  padding-top: 0.85rem;
 }
 .anexos h3 {
   font-size: 1rem;
   margin: 0 0 0.5rem;
-  color: #555;
+  color: var(--texto-suave);
 }
 .anexos h4 {
   font-size: 0.78rem;
   margin: 0.75rem 0 0.25rem;
-  color: #777;
+  color: var(--texto-fraco);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
 }
 .lista-anexos {
   list-style: none;
@@ -781,7 +846,7 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.4rem;
 }
 .lista-anexos li {
   display: flex;
@@ -789,18 +854,19 @@
   gap: 0.5rem;
 }
 .lista-anexos .meta {
-  color: #888;
+  color: var(--texto-fraco);
   font-size: 0.8rem;
 }
 .enviar-arquivo {
   display: inline-block;
   margin-top: 0.5rem;
-  padding: 0.45rem 0.8rem;
-  border: 1px dashed #1f6feb;
-  border-radius: 8px;
-  color: #1f6feb;
+  padding: 0.5rem 0.85rem;
+  border: 1px dashed var(--primaria);
+  border-radius: var(--raio-sm);
+  color: var(--primaria);
   cursor: pointer;
   font-size: 0.85rem;
+  font-weight: 600;
 }
 .enviar-arquivo input[type='file'] {
   display: none;
@@ -812,7 +878,7 @@
 }
 .rotulo-anexos {
   font-size: 0.9rem;
-  color: #333;
+  color: var(--texto-suave);
 }
 .arquivos-escolhidos {
   list-style: none;
@@ -828,12 +894,13 @@
   justify-content: space-between;
   gap: 0.5rem;
   font-size: 0.85rem;
+  color: var(--texto);
 }
 .arquivos-escolhidos .remover {
   background: transparent;
   border: 0;
   cursor: pointer;
-  color: #c62828;
+  color: var(--perigo);
   font-size: 0.9rem;
 }
 .miniatura-btn {
@@ -848,17 +915,17 @@
   width: 48px;
   height: 48px;
   object-fit: cover;
-  border-radius: 6px;
-  border: 1px solid #ddd;
+  border-radius: var(--raio-sm);
+  border: 1px solid var(--borda-forte);
   display: block;
 }
 
-/* Lightbox: imagem expandida sobre a pagina, com carrossel e zoom */
+/* Lightbox (sempre fundo escuro, independente do tema) */
 .lightbox {
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0, 0, 0, 0.88);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -870,13 +937,13 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  touch-action: none; /* o navegador nao "rouba" o gesto; o pan fica por nossa conta */
+  touch-action: none;
 }
 .lightbox-palco img {
   max-width: 92vw;
   max-height: 82vh;
   object-fit: contain;
-  border-radius: 6px;
+  border-radius: var(--raio-sm);
   user-select: none;
 }
 .lightbox-barra {
@@ -892,8 +959,9 @@
   width: 40px;
   height: 40px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--raio-sm);
   background: rgba(255, 255, 255, 0.92);
+  color: #1f2733;
   cursor: pointer;
   font-size: 0.95rem;
 }
@@ -914,8 +982,9 @@
   width: 48px;
   height: 64px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--raio-sm);
   background: rgba(255, 255, 255, 0.85);
+  color: #1f2733;
   cursor: pointer;
   font-size: 2rem;
   line-height: 1;
@@ -932,9 +1001,9 @@
   left: 50%;
   transform: translateX(-50%);
   color: #fff;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.55);
   padding: 0.3rem 0.8rem;
-  border-radius: 999px;
+  border-radius: var(--raio-pill);
   font-size: 0.85rem;
   max-width: 80vw;
   overflow: hidden;
@@ -942,37 +1011,40 @@
   white-space: nowrap;
 }
 
-/* ── Demanda-filha (§11) ───────────────────────────────────── */
+/* ── Demanda-filha ─────────────────────────────────────────── */
 .filha {
   margin-top: 1.25rem;
 }
 .botao-filha {
   padding: 0.55rem 1rem;
   border: 0;
-  border-radius: 8px;
-  background: #2e7d32;
-  color: #fff;
+  border-radius: var(--raio-sm);
+  background: var(--primaria);
+  color: var(--primaria-texto);
+  font-weight: 600;
   cursor: pointer;
   font-size: 0.95rem;
+  transition: background 0.15s ease;
+}
+.botao-filha:hover {
+  background: var(--primaria-hover);
 }
 .seta-filha {
-  color: #2e7d32;
+  color: var(--primaria);
   font-weight: 700;
 }
 
-/* ── Filtros das demandas ──────────────────────────────────── */
+/* ── Filtros ───────────────────────────────────────────────── */
 .filtros {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
-  margin: 0.75rem 0;
+  margin: 0.85rem 0;
 }
 .filtros input[type='search'],
 .filtros select {
-  padding: 0.45rem 0.55rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+  padding: 0.5rem 0.6rem;
   font-size: 0.9rem;
 }
 .filtros input[type='search'] {
@@ -983,19 +1055,19 @@
   align-items: center;
   gap: 0.3rem;
   font-size: 0.9rem;
-  color: #333;
+  color: var(--texto-suave);
   white-space: nowrap;
 }
 
-/* ── Notificacoes (novidades) ──────────────────────────────── */
+/* ── Notificações ──────────────────────────────────────────── */
 .badge-menu {
   display: inline-block;
   margin-left: 0.4rem;
   min-width: 1.2rem;
   padding: 0 0.35rem;
-  border-radius: 999px;
-  background: #c62828;
-  color: #fff;
+  border-radius: var(--raio-pill);
+  background: var(--perigo);
+  color: var(--perigo-texto);
   font-size: 0.72rem;
   font-weight: 700;
   text-align: center;
@@ -1004,9 +1076,109 @@
 .novidade-marca {
   font-size: 0.7rem;
   font-weight: 700;
-  color: #fff;
-  background: #c62828;
+  color: var(--perigo-texto);
+  background: var(--perigo);
   padding: 0.1rem 0.45rem;
-  border-radius: 999px;
+  border-radius: var(--raio-pill);
   white-space: nowrap;
+}
+
+/* ── Logos / marca ─────────────────────────────────────────── */
+.logo-login {
+  width: 70%;
+  max-width: 230px;
+  height: auto;
+  align-self: center;
+  margin-bottom: 0.25rem;
+}
+[data-theme='dark'] .logo-login {
+  filter: brightness(0) invert(1);
+}
+.marca-topo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+.logo-topo {
+  height: 30px;
+  width: auto;
+  flex-shrink: 0;
+  filter: brightness(0) invert(1); /* ícone branco no topo marinho */
+}
+
+/* botao secundario (ex.: Voltar) — caixa com borda */
+.botao-voltar {
+  align-self: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--borda-forte);
+  color: var(--texto);
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--raio-sm);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background 0.15s ease;
+}
+.botao-voltar:hover {
+  background: var(--surface-2);
+}
+
+/* ── Cards (clientes / obras) ──────────────────────────────── */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.6rem;
+  margin: 0.85rem 0;
+}
+.card {
+  display: flex;
+  align-items: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra-sm);
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.card.sel {
+  border-color: var(--primaria);
+  box-shadow: var(--foco);
+}
+.card-corpo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  align-items: flex-start;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  padding: 0.7rem 0.8rem;
+  cursor: pointer;
+  font: inherit;
+  color: var(--texto);
+}
+.card-estatico .card-corpo {
+  cursor: default;
+}
+button.card-corpo:hover {
+  background: var(--surface-hover);
+}
+.card .id {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--texto-fraco);
+}
+.card .nome {
+  font-weight: 600;
+  word-break: break-word;
+}
+.card .obs {
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+}
+.card .excluir {
+  margin: 0.4rem 0.4rem 0 0;
 }

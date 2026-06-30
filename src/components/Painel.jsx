@@ -4,6 +4,7 @@ import Inicio from './Inicio'
 import Demandas from './Demandas'
 import Clientes from './Clientes'
 import Equipe from './Equipe'
+import BotaoTema from './BotaoTema'
 
 // Casca do app logado: carrega o perfil do usuario, mostra a barra do
 // topo (nome/papel/Sair), um menu (com contador de novidades nas
@@ -70,16 +71,26 @@ export default function Painel({ sessao }) {
   return (
     <div className="app">
       <header className="topo">
-        <div>
-          <strong>Controle de Demandas</strong>
-          <span className="quem">
-            {' '}
-            — {perfil.nome_completo} ({perfil.papel})
-          </span>
+        <div className="marca-topo">
+          <img
+            className="logo-topo"
+            src="/logo-icone.svg"
+            alt="EsquadSystem"
+          />
+          <div>
+            <strong>Controle de Demandas</strong>
+            <span className="quem">
+              {' '}
+              — {perfil.nome_completo} ({perfil.papel})
+            </span>
+          </div>
         </div>
-        <button type="button" className="link" onClick={sair}>
-          Sair
-        </button>
+        <div className="acoes-topo">
+          <BotaoTema />
+          <button type="button" className="link" onClick={sair}>
+            Sair
+          </button>
+        </div>
       </header>
 
       <nav className="menu">

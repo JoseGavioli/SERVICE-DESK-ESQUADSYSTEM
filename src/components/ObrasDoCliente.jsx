@@ -81,14 +81,17 @@ export default function ObrasDoCliente({ cliente, perfil }) {
 
       {carregando ? (
         <p>Carregando obras…</p>
+      ) : filtradas.length === 0 ? (
+        <p className="vazio">Nenhuma obra ainda.</p>
       ) : (
-        <ul className="lista">
+        <div className="cards">
           {filtradas.map((o) => (
-            <li key={o.id}>
-              <span>
-                {o.nome}
-                {o.endereco ? ` — ${o.endereco}` : ''}
-              </span>
+            <div key={o.id} className="card card-estatico">
+              <div className="card-corpo">
+                <span className="id">#{o.id}</span>
+                <span className="nome">{o.nome}</span>
+                {o.endereco && <span className="obs">{o.endereco}</span>}
+              </div>
               {podeEditar && (
                 <button
                   type="button"
@@ -99,12 +102,9 @@ export default function ObrasDoCliente({ cliente, perfil }) {
                   🗑
                 </button>
               )}
-            </li>
+            </div>
           ))}
-          {filtradas.length === 0 && (
-            <li className="vazio">Nenhuma obra ainda.</li>
-          )}
-        </ul>
+        </div>
       )}
 
       <form className="form-novo" onSubmit={criarObra}>

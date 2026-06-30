@@ -1,10 +1,138 @@
-/* Reset minimo e fonte padrao do sistema. */
+/* ───────────────────────────────────────────────────────────────
+   Design tokens (variaveis CSS) — paleta EsquadSystem (marinho + vermelho).
+   Tema CLARO no :root; tema ESCURO em [data-theme="dark"].
+   Mudar a identidade = mexer so aqui.
+   ─────────────────────────────────────────────────────────────── */
+:root {
+  color-scheme: light;
+
+  /* Cores da marca */
+  --marca-navy: #2e3a4e;
+  --marca-red: #d11f2a;
+
+  /* Superficies e texto (claro) */
+  --bg: #eef1f5;
+  --surface: #ffffff;
+  --surface-2: #f3f6f9;
+  --surface-hover: #eef3f8;
+  --texto: #1f2733;
+  --texto-suave: #5f6b7a;
+  --texto-fraco: #8a94a3;
+  --borda: #e2e8f0;
+  --borda-forte: #cdd6e0;
+
+  /* Acao primaria (marinho) */
+  --primaria: #2e3a4e;
+  --primaria-hover: #3b4a63;
+  --primaria-texto: #ffffff;
+  --primaria-suave: #e7ebf1;
+
+  /* Perigo / acento (vermelho) */
+  --perigo: #d11f2a;
+  --perigo-hover: #b21a23;
+  --perigo-texto: #ffffff;
+
+  /* Sucesso (mensagens) */
+  --sucesso: #2e7d32;
+
+  /* Barra do topo */
+  --topo-bg: #2e3a4e;
+  --topo-texto: #ffffff;
+
+  /* Avisos */
+  --aviso-bg: #fff8e1;
+  --aviso-fg: #8a6d00;
+  --aviso-borda: #ffe08a;
+
+  /* Formas */
+  --raio: 12px;
+  --raio-sm: 8px;
+  --raio-pill: 999px;
+  --sombra-sm: 0 1px 3px rgba(15, 23, 42, 0.08);
+  --sombra: 0 6px 22px rgba(15, 23, 42, 0.08);
+  --foco: 0 0 0 3px rgba(46, 58, 78, 0.25);
+
+  /* Selos de status (fundo/texto) */
+  --st-nao_iniciado-bg: #eceff1; --st-nao_iniciado-fg: #455a64;
+  --st-em_andamento-bg: #e3f2fd; --st-em_andamento-fg: #1565c0;
+  --st-congelado-bg: #e1f5fe; --st-congelado-fg: #0277bd;
+  --st-em_revisao_custo-bg: #fff8e1; --st-em_revisao_custo-fg: #b07d00;
+  --st-concluido-bg: #e8f5e9; --st-concluido-fg: #2e7d32;
+  --st-enviado-bg: #ede7f6; --st-enviado-fg: #5e35b1;
+  --st-cancelada-bg: #ffebee; --st-cancelada-fg: #c62828;
+
+  /* Selos de urgencia */
+  --ur-tranquilo-bg: #e8f5e9; --ur-tranquilo-fg: #2e7d32;
+  --ur-pouco-bg: #fff8e1; --ur-pouco-fg: #b07d00;
+  --ur-urgente-bg: #fff3e0; --ur-urgente-fg: #e65100;
+  --ur-muito-bg: #ffebee; --ur-muito-fg: #c62828;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #12171f;
+  --surface: #1b222c;
+  --surface-2: #232c38;
+  --surface-hover: #232c38;
+  --texto: #e7ecf3;
+  --texto-suave: #9aa6b4;
+  --texto-fraco: #6b7787;
+  --borda: #2b3543;
+  --borda-forte: #3a4658;
+
+  --primaria: #5e7bab;
+  --primaria-hover: #6f8cbb;
+  --primaria-texto: #ffffff;
+  --primaria-suave: #283341;
+
+  --perigo: #e0454e;
+  --perigo-hover: #ef5a62;
+
+  --sucesso: #6cc777;
+
+  --topo-bg: #1b222c;
+  --topo-texto: #e7ecf3;
+
+  --aviso-bg: #38300f; --aviso-fg: #e0c97a; --aviso-borda: #5a4a1e;
+
+  --sombra-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+  --sombra: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --foco: 0 0 0 3px rgba(94, 123, 171, 0.4);
+
+  --st-nao_iniciado-bg: #2b333c; --st-nao_iniciado-fg: #b0bec5;
+  --st-em_andamento-bg: #16314a; --st-em_andamento-fg: #7db5f0;
+  --st-congelado-bg: #14313d; --st-congelado-fg: #6fc3e0;
+  --st-em_revisao_custo-bg: #3a2f12; --st-em_revisao_custo-fg: #e0b84d;
+  --st-concluido-bg: #1c3a23; --st-concluido-fg: #7fc98a;
+  --st-enviado-bg: #2c2440; --st-enviado-fg: #b39ddb;
+  --st-cancelada-bg: #3d1f24; --st-cancelada-fg: #ef8a8f;
+
+  --ur-tranquilo-bg: #1c3a23; --ur-tranquilo-fg: #7fc98a;
+  --ur-pouco-bg: #3a2f12; --ur-pouco-fg: #e0b84d;
+  --ur-urgente-bg: #3a2a14; --ur-urgente-fg: #f0a868;
+  --ur-muito-bg: #3d1f24; --ur-muito-fg: #ef8a8f;
+}
+
 * {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  color: #1a1a1a;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
+    sans-serif;
+  color: var(--texto);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Anel de foco consistente (acessibilidade + polimento) */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+  outline: none;
+  box-shadow: var(--foco);
 }

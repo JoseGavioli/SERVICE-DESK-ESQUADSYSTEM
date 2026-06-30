@@ -86,7 +86,7 @@ export default function DetalheDemanda({
 
   return (
     <div className="detalhe-demanda">
-      <button type="button" className="link" onClick={aoVoltar}>
+      <button type="button" className="botao-voltar" onClick={aoVoltar}>
         ← Voltar
       </button>
 
@@ -116,7 +116,7 @@ export default function DetalheDemanda({
               className="botao-filha"
               onClick={() => setCriandoFilha(true)}
             >
-              ➕ Criar demanda-filha
+              ➕ Criar demanda vinculada
             </button>
           )}
         </div>

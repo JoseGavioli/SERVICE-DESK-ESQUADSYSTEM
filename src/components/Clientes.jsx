@@ -97,32 +97,38 @@ export default function Clientes({ perfil }) {
 
       {erro && <p className="erro">{erro}</p>}
 
-      <ul className="lista">
-        {filtrados.map((c) => (
-          <li key={c.id} className={selecionado?.id === c.id ? 'sel' : ''}>
-            <button
-              type="button"
-              className="link"
-              onClick={() => setSelecionado(c)}
+      {filtrados.length === 0 ? (
+        <p className="vazio">Nenhum cliente encontrado.</p>
+      ) : (
+        <div className="cards">
+          {filtrados.map((c) => (
+            <div
+              key={c.id}
+              className={`card ${selecionado?.id === c.id ? 'sel' : ''}`}
             >
-              {c.nome}
-            </button>
-            {podeEditar && (
               <button
                 type="button"
-                className="excluir"
-                title="Excluir cliente"
-                onClick={() => excluirCliente(c)}
+                className="card-corpo"
+                onClick={() => setSelecionado(c)}
               >
-                🗑
+                <span className="id">#{c.id}</span>
+                <span className="nome">{c.nome}</span>
+                {c.observacoes && <span className="obs">{c.observacoes}</span>}
               </button>
-            )}
-          </li>
-        ))}
-        {filtrados.length === 0 && (
-          <li className="vazio">Nenhum cliente encontrado.</li>
-        )}
-      </ul>
+              {podeEditar && (
+                <button
+                  type="button"
+                  className="excluir"
+                  title="Excluir cliente"
+                  onClick={() => excluirCliente(c)}
+                >
+                  🗑
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Busca-primeiro: o "criar" aparece sempre, mas avisa se houver nome igual */}
       <form className="form-novo" onSubmit={criarCliente}>

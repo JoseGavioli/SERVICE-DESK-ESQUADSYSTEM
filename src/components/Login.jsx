@@ -29,8 +29,12 @@ export default function Login() {
   return (
     <main className="tela">
       <form className="cartao" onSubmit={entrar}>
+        <img
+          className="logo-login"
+          src="/logo-esquadsystem-h.svg"
+          alt="EsquadSystem"
+        />
         <h1>Controle de Demandas</h1>
-        <p className="subtitulo">JFA — Esquadrias de Alumínio</p>
 
         <label>
           Email
