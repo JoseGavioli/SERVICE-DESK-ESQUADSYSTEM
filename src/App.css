@@ -1307,3 +1307,150 @@ button.card-corpo:hover {
   color: var(--perigo);
   font-weight: 700;
 }
+
+/* ── Sino de notificações (topo) ───────────────────────────── */
+.sino {
+  position: relative;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: 1.15rem;
+  line-height: 1;
+  padding: 0.3rem;
+  color: inherit;
+}
+.sino-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.3rem;
+  border-radius: var(--raio-pill);
+  background: var(--perigo);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.1rem;
+  text-align: center;
+}
+
+/* ── Tela de Notificações ──────────────────────────────────── */
+.notif-icone {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+.lista-notif li.nao-lida {
+  border-left: 3px solid var(--primaria);
+}
+.ponto-nao-lida {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--primaria);
+  flex-shrink: 0;
+  align-self: center;
+  margin-left: auto;
+}
+.notif-titulo {
+  font-weight: 600;
+}
+
+/* ── Pop-up (toast) de notificação em tempo real ───────────── */
+.toast-notif {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 50;
+  max-width: 22rem;
+  display: flex;
+  align-items: stretch;
+  gap: 0.25rem;
+  background: var(--surface);
+  border: 1px solid var(--borda);
+  border-left: 4px solid var(--primaria);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+  animation: toast-entra 0.2s ease;
+}
+@keyframes toast-entra {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.toast-corpo {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  flex: 1;
+  min-width: 0;
+  padding: 0.7rem 0.8rem;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: var(--texto);
+}
+.toast-icone {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+.toast-titulo {
+  font-weight: 600;
+}
+.toast-fechar {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  color: var(--texto-suave);
+  font-size: 1.2rem;
+  padding: 0.4rem 0.6rem;
+  line-height: 1;
+}
+.toast-fechar:hover {
+  color: var(--texto);
+}
+
+/* ── Limpar notificações (botão + confirmação) ─────────────── */
+.acoes-notif {
+  display: flex;
+  gap: 0.9rem;
+  align-items: center;
+}
+.confirmar-limpar {
+  margin-bottom: 0.75rem;
+  padding: 0.8rem 0.9rem;
+  background: var(--aviso-bg);
+  border: 1px solid var(--aviso-borda);
+  color: var(--aviso-fg);
+  border-radius: var(--raio-sm);
+}
+.confirmar-limpar p {
+  margin: 0 0 0.6rem;
+}
+.confirmar-limpar .acoes {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.confirmar-limpar button.perigo {
+  padding: 0.5rem 0.9rem;
+  border: 0;
+  border-radius: var(--raio-sm);
+  background: var(--perigo);
+  color: var(--perigo-texto);
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.15s ease;
+}
+.confirmar-limpar button.perigo:hover {
+  background: var(--perigo-hover);
+}

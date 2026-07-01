@@ -38,7 +38,7 @@ export default function Demandas({
   perfil,
   novidades,
   comentariosNovos,
-  recarregarNovidades,
+  marcarLidaDemanda,
   demandaInicial,
   aoConsumirInicial,
 }) {
@@ -176,7 +176,7 @@ export default function Demandas({
           carregar()
           setDetalheId(id)
         }}
-        aoVisto={recarregarNovidades}
+        aoVisto={() => marcarLidaDemanda(detalheId)}
       />
     )
   }

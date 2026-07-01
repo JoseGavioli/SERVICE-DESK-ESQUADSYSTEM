@@ -5,6 +5,9 @@ import Demandas from './Demandas'
 import Clientes from './Clientes'
 import Equipe from './Equipe'
 import BotaoTema from './BotaoTema'
+import Notificacoes from './Notificacoes'
+import ToastNotificacao from './ToastNotificacao'
+import { useNotificacoes } from '../lib/useNotificacoes'
 
 // Casca do app logado: carrega o perfil do usuario, mostra a barra do
 // topo (nome/papel/Sair), um menu (com contador de novidades nas
@@ -14,11 +17,32 @@ export default function Painel({ sessao }) {
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
   const [secao, setSecao] = useState('inicio') // 'inicio' | 'demandas' | 'clientes' | 'equipe'
-  const [novidades, setNovidades] = useState([]) // ids com mudanca de status nao vista
-  const [comentariosNovos, setComentariosNovos] = useState([]) // ids com comentario novo
   const [demandaInicial, setDemandaInicial] = useState(null) // demanda a abrir ao ir p/ Demandas
+  const {
+    notificacoes,
+    naoLidas,
+    marcarLida,
+    marcarLidaDemanda,
+    marcarTodasLidas,
+    limparTodas,
+    toast,
+    descartarToast,
+  } = useNotificacoes(perfil)
 
-  // Chamado pela Inicio: vai para a tela de Demandas ja abrindo a demanda.
+  // Demandas com "novidade" = tem QUALQUER notificacao NAO LIDA (status, novo
+  // comentario, nova demanda, cancelamento). Deriva do sistema de notificacoes,
+  // entao ja respeita a regra user-to-user (nunca as suas proprias acoes).
+  const demandasComNovidade = new Set(
+    notificacoes.filter((n) => !n.lida).map((n) => n.demanda_id),
+  )
+  // Subconjunto: demandas com COMENTARIO novo (mostra o "• novo" no 💬).
+  const demandasComComentarioNovo = new Set(
+    notificacoes
+      .filter((n) => !n.lida && n.tipo === 'novo_comentario')
+      .map((n) => n.demanda_id),
+  )
+
+  // Chamado pela Inicio/Notificacoes: vai para Demandas ja abrindo a demanda.
   function abrirDemanda(id) {
     setDemandaInicial(id)
     setSecao('demandas')
@@ -41,19 +65,6 @@ export default function Painel({ sessao }) {
     }
     buscarPerfil()
   }, [sessao])
-
-  async function recarregarNovidades() {
-    const [nov, com] = await Promise.all([
-      supabase.rpc('demandas_com_novidade'),
-      supabase.rpc('demandas_com_comentario_novo'),
-    ])
-    if (nov.data) setNovidades(nov.data.map((r) => r.demanda_id))
-    if (com.data) setComentariosNovos(com.data.map((r) => r.demanda_id))
-  }
-
-  useEffect(() => {
-    recarregarNovidades()
-  }, [])
 
   async function sair() {
     await supabase.auth.signOut()
@@ -98,6 +109,16 @@ export default function Painel({ sessao }) {
           </div>
         </div>
         <div className="acoes-topo">
+          <button
+            type="button"
+            className="sino"
+            onClick={() => setSecao('notificacoes')}
+            aria-label="Notificações"
+            title="Notificações"
+          >
+            🔔
+            {naoLidas > 0 && <span className="sino-badge">{naoLidas}</span>}
+          </button>
           <BotaoTema />
           <button type="button" className="link" onClick={sair}>
             Sair
@@ -119,8 +140,8 @@ export default function Painel({ sessao }) {
           onClick={() => setSecao('demandas')}
         >
           Demandas
-          {novidades.length > 0 && (
-            <span className="badge-menu">{novidades.length}</span>
+          {demandasComNovidade.size > 0 && (
+            <span className="badge-menu">{demandasComNovidade.size}</span>
           )}
         </button>
         <button
@@ -142,19 +163,24 @@ export default function Painel({ sessao }) {
       </nav>
 
       <section className="conteudo">
-        {secao === 'inicio' && (
-          <Inicio
-            perfil={perfil}
-            recarregarNovidades={recarregarNovidades}
-            aoAbrirDemanda={abrirDemanda}
+        {secao === 'inicio' && <Inicio perfil={perfil} />}
+        {secao === 'notificacoes' && (
+          <Notificacoes
+            notificacoes={notificacoes}
+            aoAbrir={(n) => {
+              marcarLida(n.id)
+              abrirDemanda(n.demanda_id)
+            }}
+            aoMarcarTodas={marcarTodasLidas}
+            aoLimpar={limparTodas}
           />
         )}
         {secao === 'demandas' && (
           <Demandas
             perfil={perfil}
-            novidades={new Set(novidades)}
-            comentariosNovos={new Set(comentariosNovos)}
-            recarregarNovidades={recarregarNovidades}
+            novidades={demandasComNovidade}
+            comentariosNovos={demandasComComentarioNovo}
+            marcarLidaDemanda={marcarLidaDemanda}
             demandaInicial={demandaInicial}
             aoConsumirInicial={() => setDemandaInicial(null)}
           />
@@ -162,6 +188,16 @@ export default function Painel({ sessao }) {
         {secao === 'clientes' && <Clientes perfil={perfil} />}
         {secao === 'equipe' && <Equipe perfil={perfil} />}
       </section>
+
+      <ToastNotificacao
+        notificacao={toast}
+        aoAbrir={(n) => {
+          marcarLida(n.id)
+          abrirDemanda(n.demanda_id)
+          descartarToast()
+        }}
+        aoFechar={descartarToast}
+      />
     </div>
   )
 }
