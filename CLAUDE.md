@@ -1,7 +1,9 @@
-# CLAUDE.md — App de Controle de Demandas (JFA)
+# CLAUDE.md — App de Controle de Demandas (EsquadSystem)
 
 > Este arquivo é a fundação do projeto. Leia-o por completo antes de qualquer ação.
 > Ele define **o que o app é**, **as regras de negócio** e **como você (Claude Code) deve trabalhar comigo**.
+
+> **Status atual (jul/2026):** Fases 0–6 **concluídas** e app **no ar** (deploy na **Vercel**, CD ativo — push na `main` publica). Depois delas: **repaginação visual** (marca **EsquadSystem**, tema claro/escuro, PWA com ícone próprio), **"concluído" fora do fluxo** (§7) e um **sistema de notificações in-app em tempo real** (§15). Backend em Supabase; migrações `0001`–`0017` aplicadas. Pendências ativas em §17.
 
 ---
 
@@ -21,7 +23,7 @@ Eu quero **entender cada parte do código**. Não quero um app que funciona mas 
 
 ## 1. O PROBLEMA (por que este app existe)
 
-Hoje, na JFA (esquadrias de alumínio), as demandas de orçamento chegam por WhatsApp. Resultado:
+Hoje, na EsquadSystem (esquadrias de alumínio), as demandas de orçamento chegam por WhatsApp. Resultado:
 - o histórico se perde;
 - só o atendente enxerga o quadro (hoje é um Kanban local de uso pessoal);
 - o vendedor não acompanha o andamento do que pediu.
@@ -32,14 +34,14 @@ O app resolve isso com: **canal único de entrada, histórico permanente, visibi
 
 ## 2. O QUE O APP **NÃO** É (escopo fechado)
 
-Não é Jira/Movidesk. É uma ferramenta interna, enxuta, da JFA. **Não inclui** (nesta versão):
+Não é Jira/Movidesk. É uma ferramenta interna, enxuta, da EsquadSystem. **Não inclui** (nesta versão):
 - notificação por WhatsApp;
 - notificação por e-mail (fica para fase futura — ver §13);
 - relatórios de métricas de tempo / dashboard de gestão;
 - app nativo (é web/PWA);
 - integração com o CEM (sistema de orçamento atual).
 
-Mirar em features do Jira é o caminho para estourar o prazo. A spec sai do fluxo real da JFA, não de produtos de mercado.
+Mirar em features do Jira é o caminho para estourar o prazo. A spec sai do fluxo real da EsquadSystem, não de produtos de mercado.
 
 ---
 
@@ -48,7 +50,7 @@ Mirar em features do Jira é o caminho para estourar o prazo. A spec sai do flux
 - **Frontend:** React + Vite. Responsivo (uso confortável no celular do vendedor). **PWA** (instalável na tela inicial do celular, sem loja, atualiza sozinho ao publicar nova versão).
 - **Backend:** Supabase — Auth + Postgres + Row Level Security (RLS) + Storage.
 - **Segurança:** RLS por papel é **obrigatória**. Nenhuma regra de permissão pode viver só no frontend. O banco é a fonte da verdade de quem pode ver/fazer o quê.
-- **Hosting do frontend:** a decidir na Fase 0 (Cloudflare Pages ou Vercel — ambos servem; decisão simples, sem impacto na arquitetura).
+- **Hosting do frontend:** **Vercel** (decidido na Fase 0), com **deploy contínuo** — cada push na branch `main` publica automaticamente. As variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` ficam no painel da Vercel.
 
 ---
 
@@ -285,7 +287,7 @@ Motivo: comentário obrigatório só onde ele **significa** algo. Forçar justif
 | **Entrada** | Vendedor | Imagem (JPG/PNG) ou PDF | **≤ 2 MB** |
 | **Saída** | Atendente | PDF (principal); outros formatos permitidos | (definir limite na Fase 4) |
 
-- Storage: **Supabase Storage**. Referência de dimensionamento: ~4 anos de PDFs de orçamento da JFA ≈ 3 GB no total; só os artefatos de **saída** pesam pouco no dia a dia. O plano free (1 GB) comporta o início. Upgrade de plano amplia o storage **sem reescrever código**.
+- Storage: **Supabase Storage**. Referência de dimensionamento: ~4 anos de PDFs de orçamento da EsquadSystem ≈ 3 GB no total; só os artefatos de **saída** pesam pouco no dia a dia. O plano free (1 GB) comporta o início. Upgrade de plano amplia o storage **sem reescrever código**.
 - Limites são configuração (fáceis de ajustar depois).
 - **Pendência futura (não é Fase 1):** política de limpeza de anexos de **entrada** antigos para conter peso. Anexos de **saída** (orçamentos entregues) são permanentes — nunca expiram.
 
@@ -293,10 +295,15 @@ Motivo: comentário obrigatório só onde ele **significa** algo. Forçar justif
 
 ## 15. NOTIFICAÇÕES
 
-- **Nesta versão:** notificação **dentro do app** (indicador/contador de novidades — ex.: demandas com mudança de status que o vendedor ainda não viu).
-- **Fase futura (registrado, fora do escopo atual):**
-  1. **E-mail** automático na mudança de status (redundância caso o vendedor não veja o app). Mais simples que WhatsApp; sem burocracia.
-  2. **WhatsApp** via API oficial (Cloud API). Exige homologação na Meta, número dedicado, templates aprovados e custo por mensagem — é projeto administrativo, não só técnico. **Não usar bibliotecas que automatizam o WhatsApp Web** (violam os termos e arriscam o número da empresa).
+- **Nesta versão (implementado — migrações `0015`–`0017`):** **sistema de notificações in-app em tempo real** (Supabase Realtime). Tabela `notificacao` preenchida por **gatilhos** no banco (à prova de forja), com regra **user-to-user**:
+  - ação de **vendedor → atendente/admin**; ação de **staff → vendedor dono**;
+  - **nunca** o próprio autor; um vendedor **nunca** recebe de outro vendedor.
+  - Na interface: **sino no topo** com contador de não lidas; **tela de notificações** (cada item abre a demanda e marca como lida; "marcar todas como lidas" e **"limpar" com confirmação**); **pop-up (toast)** ao chegar algo novo; **descrição específica** do evento ("Fulano iniciou a demanda de Cliente").
+  - A **Início** (contador de demandas em aberto) e os marcadores da lista (tag **"novidade"** + **💬 novo**) derivam **desse mesmo sistema**.
+- **Fases futuras (registrado, fora do escopo atual):**
+  1. **Push no sistema operacional** (notificação na barra do celular / Windows) via **Web Push** (VAPID + service worker + Edge Function). Ressalva: no iPhone só funciona com o **PWA instalado** (iOS 16.4+).
+  2. **E-mail** automático na mudança de status (redundância caso o vendedor não veja o app). Mais simples que WhatsApp; sem burocracia.
+  3. **WhatsApp** via API oficial (Cloud API). Exige homologação na Meta, número dedicado, templates aprovados e custo por mensagem — é projeto administrativo, não só técnico. **Não usar bibliotecas que automatizam o WhatsApp Web** (violam os termos e arriscam o número da empresa).
 
 ---
 
@@ -314,14 +321,23 @@ Cada fase é pequena o bastante para eu ler, entender e aprovar antes da próxim
 | **5** | Demanda-filha (vínculos) + visão da árvore da obra. |
 | **6** | Painéis e filtros (vendedor vê as próprias; atendente vê a fila) + notificação dentro do app + ajuste PWA. |
 
-**Fora de escopo (fase 7+):** e-mail, WhatsApp, relatórios de tempo, dashboard de gestão, integração com CEM, tabela de feriados, histórico de versões de texto, limpeza automática de anexos.
+> **✅ Fases 0–6 concluídas** e no ar (Vercel). **Pós-Fase 6:** repaginação visual (design tokens claro/escuro, marca EsquadSystem, cards, ícone do PWA), **"concluído" fora do fluxo** (§7) e o **sistema de notificações in-app em tempo real** (§15) — evoluções de UX pedidas pelo dono, fora do plano original de fases.
+
+**Fora de escopo (fase 7+):** push no SO (Web Push, celular/Windows), e-mail, WhatsApp, cadastro de usuário in-app (Edge Function `criar-usuario` já criada, **ainda não deployada**), relatórios de tempo, dashboard de gestão, integração com CEM, tabela de feriados, histórico de versões de texto, limpeza automática de anexos.
 
 ---
 
 ## 17. PENDÊNCIAS CONHECIDAS (pare e pergunte ao chegar nelas)
 
-1. **Fronteiras exatas da urgência** (§8) — limites de dias e tratamento de "exatamente 2/3 dias". Resolver antes da Fase 3.
-2. **Login = email ou username separado** (§6) — confirmar na Fase 1. Default: email.
-3. **Permissão de criar cliente/obra pelo vendedor** (§6) — default é "pode, com busca-primeiro". Confirmar na Fase 1.
-4. **Limite de tamanho do anexo de saída** (§14) — definir na Fase 4.
-5. **Hosting do frontend** (§3) — Cloudflare Pages ou Vercel; decidir na Fase 0.
+**Ainda em aberto:**
+1. **Fronteiras exatas da urgência** (§8) — os limites hoje são **provisórios** (em `lib/urgencia.js`); falta alinhar com os vendedores o tratamento de "exatamente 2/3 dias".
+4. **Limite de tamanho do anexo de saída** (§14) — a confirmar/ajustar (é só configuração).
+6. **`perfil.ativo` na RLS** — um vendedor desativado ainda consegue agir; falta aplicar a checagem na RLS.
+7. **Reset dos dados de teste** antes do lançamento real (apagar demandas/clientes/obras/comentários/histórico/anexos/notificações + arquivos do Storage + vendedor de teste; manter admin + 6 tipos). Só na virada — vira destrutivo com dados reais.
+8. **Cadastro de usuários in-app** — Edge Function `criar-usuario` criada, **não deployada** (falta o deploy + o formulário na Equipe).
+9. **Tela admin de tipos de demanda** — hoje os 6 tipos são semeados no banco.
+
+**Já resolvidas:**
+2. ~~Login = email ou username~~ → **email** (Supabase Auth nativo).
+3. ~~Permissão de criar cliente/obra pelo vendedor~~ → **pode**, com **busca-primeiro** (anti-duplicata).
+5. ~~Hosting do frontend~~ → **Vercel** (CD ativo).
