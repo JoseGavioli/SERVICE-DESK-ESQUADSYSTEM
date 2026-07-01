@@ -295,10 +295,6 @@ export default function Demandas({
 
   return (
     <div className="secao-demandas">
-      <div className="cabecalho">
-        <h2>Demandas</h2>
-      </div>
-
       <FiltrosDemandas f={f} setF={setF} />
 
       {erro && <p className="erro">{erro}</p>}

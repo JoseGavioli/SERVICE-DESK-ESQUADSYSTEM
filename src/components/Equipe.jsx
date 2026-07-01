@@ -30,7 +30,6 @@ export default function Equipe({ perfil }) {
 
   return (
     <div className="secao-equipe">
-      <h2>Equipe</h2>
       <p className="dica">
         Para adicionar um membro, crie o login no painel do Supabase
         (Authentication → Add user). O perfil aparece aqui automaticamente —

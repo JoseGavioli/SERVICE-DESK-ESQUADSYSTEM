@@ -86,8 +86,6 @@ export default function Clientes({ perfil }) {
 
   return (
     <div className="secao-clientes">
-      <h2>Clientes</h2>
-
       <input
         type="search"
         placeholder="Buscar cliente pelo nome…"
