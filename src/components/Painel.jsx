@@ -207,6 +207,7 @@ export default function Painel({ sessao }) {
             aoConsumirFiltro={() => setFiltroInicial(null)}
             criarInicial={criarInicial}
             aoConsumirCriar={() => setCriarInicial(false)}
+            aoVoltarInicio={() => setSecao('inicio')}
           />
         )}
         {secao === 'clientes' && <Clientes perfil={perfil} />}

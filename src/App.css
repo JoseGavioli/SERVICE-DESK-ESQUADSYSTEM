@@ -447,6 +447,43 @@ textarea::placeholder {
   font-size: 0.85rem;
   margin-top: 0.15rem;
 }
+/* botão "Voltar" fixo na parte inferior, a frente de tudo, na largura do conteudo */
+.voltar-inicio {
+  position: fixed;
+  bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  left: 1rem;
+  right: 1rem;
+  max-width: calc(760px - 2rem);
+  margin: 0 auto;
+  z-index: 40;
+  padding: 0.7rem;
+  border: 0;
+  border-radius: var(--raio-sm);
+  background: var(--primaria);
+  color: var(--primaria-texto);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-align: center;
+  box-shadow: var(--sombra);
+  transition: background 0.15s ease;
+}
+.voltar-inicio:hover {
+  background: var(--primaria-hover);
+}
+/* espaco no fim da lista para o ultimo item nao ficar atras do botao fixo */
+.secao-demandas {
+  padding-bottom: 5.5rem;
+}
+/* no celular, afasta mais o botao da borda inferior */
+@media (max-width: 640px) {
+  .voltar-inicio {
+    bottom: calc(2.5rem + env(safe-area-inset-bottom, 0px));
+  }
+  .secao-demandas {
+    padding-bottom: 6.5rem;
+  }
+}
 
 /* selos de status */
 .status {

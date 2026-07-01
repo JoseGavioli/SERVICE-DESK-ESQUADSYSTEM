@@ -45,6 +45,7 @@ export default function Demandas({
   aoConsumirFiltro,
   criarInicial,
   aoConsumirCriar,
+  aoVoltarInicio,
 }) {
   const [demandas, setDemandas] = useState([])
   const [carregando, setCarregando] = useState(true)
@@ -286,9 +287,6 @@ export default function Demandas({
     <div className="secao-demandas">
       <div className="cabecalho">
         <h2>Demandas</h2>
-        <button type="button" onClick={() => setCriando(true)}>
-          ➕ Nova demanda
-        </button>
       </div>
 
       <FiltrosDemandas f={f} setF={setF} />
@@ -316,6 +314,10 @@ export default function Demandas({
           {raizes.map((d) => renderArvore(d, 0))}
         </ul>
       )}
+
+      <button type="button" className="voltar-inicio" onClick={aoVoltarInicio}>
+        Voltar
+      </button>
     </div>
   )
 }
