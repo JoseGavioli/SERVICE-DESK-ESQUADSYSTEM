@@ -29,12 +29,9 @@ export default function Login() {
   return (
     <main className="tela">
       <form className="cartao" onSubmit={entrar}>
-        <img
-          className="logo-login"
-          src="/logo-esquadsystem-h.svg"
-          alt="EsquadSystem"
-        />
-        <h1>Service Desk</h1>
+        <img className="logo-login" src="/logo-icone.svg" alt="EsquadSystem" />
+        <h1>Service Desk - EsquadSystem</h1>
+        <p className="subtitulo">Orçamentos &amp; Revisões</p>
 
         <label>
           Email
