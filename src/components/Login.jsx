@@ -34,7 +34,7 @@ export default function Login() {
           src="/logo-esquadsystem-h.svg"
           alt="EsquadSystem"
         />
-        <h1>Controle de Demandas</h1>
+        <h1>Service Desk</h1>
 
         <label>
           Email

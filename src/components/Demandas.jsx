@@ -41,6 +41,10 @@ export default function Demandas({
   marcarLidaDemanda,
   demandaInicial,
   aoConsumirInicial,
+  filtroInicial,
+  aoConsumirFiltro,
+  criarInicial,
+  aoConsumirCriar,
 }) {
   const [demandas, setDemandas] = useState([])
   const [carregando, setCarregando] = useState(true)
@@ -74,6 +78,23 @@ export default function Demandas({
       aoConsumirInicial?.()
     }
   }, [demandaInicial])
+
+  // Veio da Inicio clicando numa box: aplica o filtro ({} = limpa/mostra todas).
+  useEffect(() => {
+    if (filtroInicial) {
+      setDetalheId(null)
+      setF({ ...FILTROS_VAZIOS, ...filtroInicial })
+      aoConsumirFiltro?.()
+    }
+  }, [filtroInicial])
+
+  // Veio da Inicio clicando em "incluir nova demanda": abre o form.
+  useEffect(() => {
+    if (criarInicial) {
+      setCriando(true)
+      aoConsumirCriar?.()
+    }
+  }, [criarInicial])
 
   function alternar(id) {
     setRecolhidos((prev) => {

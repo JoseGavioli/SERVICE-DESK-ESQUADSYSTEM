@@ -2,40 +2,45 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { STATUS_ROTULO } from '../lib/status'
 
-// Ordem em que os status "em aberto" (nao terminais) aparecem na quebra.
-const STATUS_ABERTOS = [
+// Ordem das boxes de status na Inicio. "concluido" fica de fora (legado).
+const STATUS_ORDEM = [
   'nao_iniciado',
   'em_andamento',
   'congelado',
   'em_revisao_custo',
-  'concluido',
+  'enviado',
+  'cancelada',
 ]
 
-// Tela inicial: boas-vindas + demandas em aberto (total e por status),
-// atualizado em TEMPO REAL. As notificacoes ficam no sino do topo.
-//
-// O total NAO filtra por vendedor_id de proposito: a RLS ja decide o que
-// cada um ve (vendedor = as proprias; admin/atendente = todas).
-export default function Inicio({ perfil }) {
-  const [emAberto, setEmAberto] = useState(null) // { total, porStatus }
+// Status terminais: NAO entram no total da box "DEMANDAS" (mas tem box propria).
+const TERMINAIS = ['enviado', 'cancelada']
+
+// Tela inicial: um "painel" de boxes clicaveis, em tempo real.
+//  - Botao "incluir nova demanda": abre o formulario de nova demanda.
+//  - Box "DEMANDAS": total das EM ABERTO (sem terminais) -> abre Demandas "só ativas".
+//  - Uma box por status (com a cor do status) -> abre Demandas filtrada por
+//    aquele status, ordenada pela mais urgente primeiro.
+// A RLS decide o que cada um ve (vendedor = as proprias; staff = todas).
+export default function Inicio({ perfil, aoAbrirComFiltro, aoNovaDemanda }) {
+  const [dados, setDados] = useState(null) // { emAberto, contagem }
 
   const carregar = useCallback(async () => {
-    const { data: abertas } = await supabase
-      .from('demanda')
-      .select('status')
-      .not('status', 'in', '(enviado,cancelada)')
-    const porStatus = {}
-    for (const d of abertas ?? []) {
-      porStatus[d.status] = (porStatus[d.status] ?? 0) + 1
+    const { data } = await supabase.from('demanda').select('status')
+    const contagem = {}
+    for (const d of data ?? []) {
+      contagem[d.status] = (contagem[d.status] ?? 0) + 1
     }
-    setEmAberto({ total: abertas?.length ?? 0, porStatus })
+    const emAberto = (data ?? []).filter(
+      (d) => !TERMINAIS.includes(d.status),
+    ).length
+    setDados({ emAberto, contagem })
   }, [])
 
   useEffect(() => {
     carregar()
   }, [carregar])
 
-  // Tempo real: qualquer mudanca em demandas visiveis re-conta o resumo.
+  // Tempo real: qualquer mudanca em demandas visiveis recalcula as boxes.
   useEffect(() => {
     const canal = supabase
       .channel('inicio-demandas')
@@ -50,37 +55,68 @@ export default function Inicio({ perfil }) {
     }
   }, [carregar])
 
+  // Para o VENDEDOR, "Enviado" aparece como "Recebido" (ponto de vista dele).
+  function tituloBox(s) {
+    if (s === 'enviado' && perfil.papel === 'vendedor') return 'Recebido'
+    return STATUS_ROTULO[s]
+  }
+
+  const visiveis = dados
+    ? STATUS_ORDEM.filter((s) => dados.contagem[s] > 0)
+    : []
+
   return (
     <div className="bloco">
-      <h1>Bem-vindo 👋</h1>
-      <p>
-        Olá, <strong>{perfil.nome_completo}</strong>!
+      <p className="saudacao">
+        Olá, <strong>{perfil.nome_completo}</strong> 👋
       </p>
 
-      {emAberto !== null && (
-        <div className="resumo-aberto">
-          {emAberto.total === 0 ? (
-            'Você não possui demandas em aberto no momento.'
-          ) : (
-            <>
-              <p className="resumo-titulo">
-                Você possui <strong>{emAberto.total}</strong> demanda
-                {emAberto.total > 1 ? 's' : ''} em aberto — consulte-as na tela
-                de <strong>Demandas</strong>.
-              </p>
-              <ul className="resumo-status">
-                {STATUS_ABERTOS.filter((s) => emAberto.porStatus[s]).map((s) => (
-                  <li key={s}>
-                    <span className={`status status-${s}`}>
-                      {STATUS_ROTULO[s]}
-                    </span>
-                    <strong>{emAberto.porStatus[s]}</strong>
-                  </li>
-                ))}
-              </ul>
-            </>
+      <button
+        type="button"
+        className="box-inicio box-novo"
+        onClick={aoNovaDemanda}
+      >
+        <span className="box-novo-mais" aria-hidden="true">
+          +
+        </span>
+        <span className="box-novo-texto">incluir nova demanda</span>
+      </button>
+
+      {dados && (
+        <>
+          <button
+            type="button"
+            className="box-inicio box-total"
+            onClick={() => aoAbrirComFiltro({ soAtivas: true })}
+          >
+            <span className="box-titulo">DEMANDAS EM ABERTO</span>
+            <span className="box-numero">{dados.emAberto}</span>
+            <span className="box-hint">toque para ver</span>
+          </button>
+
+          {visiveis.length > 0 && (
+            <div className="grade-status">
+              {visiveis.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  className="box-inicio"
+                  style={{ borderLeftColor: `var(--st-${s}-fg)` }}
+                  onClick={() => aoAbrirComFiltro({ status: s, ordenar: true })}
+                >
+                  <span
+                    className="box-titulo"
+                    style={{ color: `var(--st-${s}-fg)` }}
+                  >
+                    {tituloBox(s)}
+                  </span>
+                  <span className="box-numero">{dados.contagem[s]}</span>
+                  <span className="box-hint">toque para ver</span>
+                </button>
+              ))}
+            </div>
           )}
-        </div>
+        </>
       )}
     </div>
   )

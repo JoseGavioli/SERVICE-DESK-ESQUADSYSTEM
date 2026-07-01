@@ -10,9 +10,9 @@ export default defineConfig({
       // Atualiza sozinho quando uma versao nova e publicada (§3).
       registerType: 'autoUpdate',
       manifest: {
-        name: 'Controle de Demandas — EsquadSystem',
-        short_name: 'EsquadSystem',
-        description: 'Controle de demandas de orçamento da EsquadSystem',
+        name: 'Service Desk - EsquadSystem',
+        short_name: 'Service Desk',
+        description: 'Service Desk de demandas da EsquadSystem',
         lang: 'pt-BR',
         theme_color: '#1f6feb',
         background_color: '#f4f5f7',

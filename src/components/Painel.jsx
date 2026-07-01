@@ -18,6 +18,8 @@ export default function Painel({ sessao }) {
   const [erro, setErro] = useState('')
   const [secao, setSecao] = useState('inicio') // 'inicio' | 'demandas' | 'clientes' | 'equipe'
   const [demandaInicial, setDemandaInicial] = useState(null) // demanda a abrir ao ir p/ Demandas
+  const [filtroInicial, setFiltroInicial] = useState(null) // filtro a aplicar ao ir p/ Demandas
+  const [criarInicial, setCriarInicial] = useState(false) // abrir o form de nova demanda
   const {
     notificacoes,
     naoLidas,
@@ -45,6 +47,18 @@ export default function Painel({ sessao }) {
   // Chamado pela Inicio/Notificacoes: vai para Demandas ja abrindo a demanda.
   function abrirDemanda(id) {
     setDemandaInicial(id)
+    setSecao('demandas')
+  }
+
+  // Chamado pela Inicio: vai para Demandas ja com um filtro ({} = sem filtro).
+  function abrirDemandasComFiltro(filtro) {
+    setFiltroInicial(filtro)
+    setSecao('demandas')
+  }
+
+  // Chamado pela Inicio: vai para Demandas ja abrindo o form de nova demanda.
+  function abrirNovaDemanda() {
+    setCriarInicial(true)
     setSecao('demandas')
   }
 
@@ -101,7 +115,7 @@ export default function Painel({ sessao }) {
             alt="EsquadSystem"
           />
           <div>
-            <strong>Controle de Demandas</strong>
+            <strong>Service Desk - EsquadSystem</strong>
             <span className="quem">
               {' '}
               — {perfil.nome_completo} ({perfil.papel})
@@ -163,7 +177,13 @@ export default function Painel({ sessao }) {
       </nav>
 
       <section className="conteudo">
-        {secao === 'inicio' && <Inicio perfil={perfil} />}
+        {secao === 'inicio' && (
+          <Inicio
+            perfil={perfil}
+            aoAbrirComFiltro={abrirDemandasComFiltro}
+            aoNovaDemanda={abrirNovaDemanda}
+          />
+        )}
         {secao === 'notificacoes' && (
           <Notificacoes
             notificacoes={notificacoes}
@@ -183,6 +203,10 @@ export default function Painel({ sessao }) {
             marcarLidaDemanda={marcarLidaDemanda}
             demandaInicial={demandaInicial}
             aoConsumirInicial={() => setDemandaInicial(null)}
+            filtroInicial={filtroInicial}
+            aoConsumirFiltro={() => setFiltroInicial(null)}
+            criarInicial={criarInicial}
+            aoConsumirCriar={() => setCriarInicial(false)}
           />
         )}
         {secao === 'clientes' && <Clientes perfil={perfil} />}
