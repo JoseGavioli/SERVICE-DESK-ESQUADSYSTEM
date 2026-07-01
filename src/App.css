@@ -593,6 +593,11 @@ textarea::placeholder {
   font-size: 0.85rem;
   margin-top: 0.15rem;
 }
+/* nome do cliente no item da lista: caixa alta + negrito */
+.cliente-nome {
+  text-transform: uppercase;
+  font-weight: 700;
+}
 /* botão "Voltar" fixo na parte inferior, a frente de tudo, na largura do conteudo */
 .voltar-inicio {
   position: fixed;

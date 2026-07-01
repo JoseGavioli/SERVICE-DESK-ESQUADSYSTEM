@@ -223,9 +223,12 @@ export default function Demandas({
       >
         <div>
           {nivel > 0 && <span className="seta-filha">↪ </span>}
-          <strong>#{codigos[d.id] ?? d.id}</strong> — {d.tipo_demanda?.nome}
+          <strong>#{codigos[d.id] ?? d.id}</strong> —{' '}
+          <strong className="cliente-nome">{d.obra?.cliente?.nome}</strong>
+          <div className="sub">{d.obra?.nome}</div>
           <div className="sub">
-            {d.obra?.cliente?.nome} / {d.obra?.nome} · prazo {d.prazo}
+            <strong>{d.tipo_demanda?.nome}</strong> · criada em{' '}
+            {new Date(d.created_at).toLocaleDateString('pt-BR')}
           </div>
           {perfil.papel !== 'vendedor' && d.vendedor?.nome_completo && (
             <div className="vendedor-linha">
