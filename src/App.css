@@ -1482,6 +1482,41 @@ button.card-corpo:hover {
   gap: 0.75rem;
 }
 
+/* container "Dashboard" que agrupa as boxes das demandas */
+.dashboard {
+  background: var(--surface-2);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  padding: 1rem;
+  margin: 0 0 1.25rem;
+}
+.dashboard-titulo {
+  font-size: 1.1rem;
+  margin: 0 0 0.85rem;
+  color: var(--texto);
+}
+
+/* boxes de status: fundo gradiente na cor do status (fonte legivel).
+   --c = cor forte do status; --cbg = tom claro. Fallback solido se o
+   navegador nao suportar color-mix. */
+.box-status-cor {
+  border-left-color: var(--c);
+  background: var(--cbg);
+  background: linear-gradient(
+    135deg,
+    var(--cbg),
+    color-mix(in srgb, var(--cbg) 70%, var(--c))
+  );
+}
+.box-status-cor .box-titulo,
+.box-status-cor .box-numero {
+  color: var(--c);
+}
+.box-status-cor .box-hint {
+  color: var(--c);
+  opacity: 0.85;
+}
+
 /* botão "incluir nova demanda" (mesmo padrão das boxes, conteúdo centralizado) */
 .box-novo {
   align-items: center;

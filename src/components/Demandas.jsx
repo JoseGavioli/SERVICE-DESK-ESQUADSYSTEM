@@ -18,6 +18,7 @@ const FILTROS_VAZIOS = {
   urgencia: '',
   soAtivas: false,
   ordenar: false,
+  ordenarRecente: false,
 }
 
 // Status finalizados que ganham destaque (borda colorida) na lista.
@@ -136,7 +137,8 @@ export default function Demandas({
     f.status !== '' ||
     f.urgencia !== '' ||
     f.soAtivas ||
-    f.ordenar
+    f.ordenar ||
+    f.ordenarRecente
 
   function calcularLista() {
     const termo = f.busca.trim().toLowerCase()
@@ -163,7 +165,12 @@ export default function Demandas({
       }
       return true
     })
-    if (f.ordenar) {
+    if (f.ordenarRecente) {
+      // mais recente -> mais antiga (usado no filtro de Enviado)
+      lista = lista
+        .slice()
+        .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
+    } else if (f.ordenar) {
       const rank = (d) => {
         const u = calcularUrgencia(d.prazo, d.status)
         return u ? RANK_URGENCIA[u.nivel] : 99 // terminais por ultimo

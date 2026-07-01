@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { STATUS_ROTULO } from '../lib/status'
 
-// Ordem das boxes de status na Inicio. "concluido" fica de fora (legado).
+// Ordem das boxes de status no dashboard. "concluido" fica de fora (legado).
 const STATUS_ORDEM = [
   'nao_iniciado',
   'em_andamento',
@@ -12,15 +12,13 @@ const STATUS_ORDEM = [
   'cancelada',
 ]
 
-// Status terminais: NAO entram no total da box "DEMANDAS" (mas tem box propria).
+// Status terminais: NAO entram no total da box "DEMANDAS EM ABERTO".
 const TERMINAIS = ['enviado', 'cancelada']
 
-// Tela inicial: um "painel" de boxes clicaveis, em tempo real.
-//  - Botao "incluir nova demanda": abre o formulario de nova demanda.
-//  - Box "DEMANDAS": total das EM ABERTO (sem terminais) -> abre Demandas "só ativas".
-//  - Uma box por status (com a cor do status) -> abre Demandas filtrada por
-//    aquele status, ordenada pela mais urgente primeiro.
-// A RLS decide o que cada um ve (vendedor = as proprias; staff = todas).
+// Tela inicial: botoes de acao + um "Dashboard" (boxes clicaveis, em tempo real).
+//  - "incluir nova demanda": abre o form de nova demanda.
+//  - Dashboard: box "DEMANDAS EM ABERTO" (total sem terminais) + uma box por
+//    status (fundo na cor do status), cada uma abrindo Demandas ja filtrada.
 export default function Inicio({ perfil, aoAbrirComFiltro, aoNovaDemanda }) {
   const [dados, setDados] = useState(null) // { emAberto, contagem }
 
@@ -83,7 +81,9 @@ export default function Inicio({ perfil, aoAbrirComFiltro, aoNovaDemanda }) {
       </button>
 
       {dados && (
-        <>
+        <div className="dashboard">
+          <h2 className="dashboard-titulo">Dashboard</h2>
+
           <button
             type="button"
             className="box-inicio box-total"
@@ -100,23 +100,27 @@ export default function Inicio({ perfil, aoAbrirComFiltro, aoNovaDemanda }) {
                 <button
                   key={s}
                   type="button"
-                  className="box-inicio"
-                  style={{ borderLeftColor: `var(--st-${s}-fg)` }}
-                  onClick={() => aoAbrirComFiltro({ status: s, ordenar: true })}
+                  className="box-inicio box-status-cor"
+                  style={{
+                    '--c': `var(--st-${s}-fg)`,
+                    '--cbg': `var(--st-${s}-bg)`,
+                  }}
+                  onClick={() =>
+                    aoAbrirComFiltro(
+                      s === 'enviado'
+                        ? { status: s, ordenarRecente: true }
+                        : { status: s, ordenar: true },
+                    )
+                  }
                 >
-                  <span
-                    className="box-titulo"
-                    style={{ color: `var(--st-${s}-fg)` }}
-                  >
-                    {tituloBox(s)}
-                  </span>
+                  <span className="box-titulo">{tituloBox(s)}</span>
                   <span className="box-numero">{dados.contagem[s]}</span>
                   <span className="box-hint">toque para ver</span>
                 </button>
               ))}
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   )
