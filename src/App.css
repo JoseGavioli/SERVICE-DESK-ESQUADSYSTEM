@@ -553,6 +553,23 @@ textarea::placeholder {
 .item-demanda.fim-cancelada {
   border-left-color: var(--st-cancelada-fg);
 }
+/* ATENCAO (prazo vencido OU custo atrasado): fundo vermelho + evidencia */
+.item-demanda.atencao {
+  background: color-mix(in srgb, var(--perigo) 12%, transparent);
+  border-left-color: var(--perigo);
+}
+.item-demanda.atencao:hover {
+  background: color-mix(in srgb, var(--perigo) 20%, transparent);
+}
+.selo-custo-atrasado {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--perigo-texto);
+  background: var(--perigo);
+  padding: 0.12rem 0.5rem;
+  border-radius: var(--raio-pill);
+  white-space: nowrap;
+}
 
 /* nome do vendedor (mini-avatar de iniciais) no card da demanda */
 .vendedor-linha {
@@ -841,10 +858,11 @@ textarea::placeholder {
   font-weight: 600;
   white-space: nowrap;
 }
-.urgencia-tranquilo { background: var(--ur-tranquilo-bg); color: var(--ur-tranquilo-fg); }
+.urgencia-sem_urgencia { background: var(--ur-sem-bg); color: var(--ur-sem-fg); }
 .urgencia-pouco_urgente { background: var(--ur-pouco-bg); color: var(--ur-pouco-fg); }
 .urgencia-urgente { background: var(--ur-urgente-bg); color: var(--ur-urgente-fg); }
 .urgencia-muito_urgente { background: var(--ur-muito-bg); color: var(--ur-muito-fg); }
+.urgencia-atrasado { background: var(--ur-atrasado-bg); color: var(--ur-atrasado-fg); }
 
 /* ── Comentários ───────────────────────────────────────────── */
 .comentarios {

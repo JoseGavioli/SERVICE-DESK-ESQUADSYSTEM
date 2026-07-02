@@ -61,11 +61,12 @@
   --st-enviado-bg: #e8f5e9; --st-enviado-fg: #2e7d32;
   --st-cancelada-bg: #ffebee; --st-cancelada-fg: #c62828;
 
-  /* Selos de urgencia */
-  --ur-tranquilo-bg: #e8f5e9; --ur-tranquilo-fg: #2e7d32;
-  --ur-pouco-bg: #fff8e1; --ur-pouco-fg: #b07d00;
-  --ur-urgente-bg: #fff3e0; --ur-urgente-fg: #e65100;
-  --ur-muito-bg: #ffebee; --ur-muito-fg: #c62828;
+  /* Selos de urgencia (do menos ao mais critico) */
+  --ur-sem-bg: #eceff1; --ur-sem-fg: #546e7a;      /* Sem urgencia (neutro) */
+  --ur-pouco-bg: #fff8e1; --ur-pouco-fg: #b07d00;  /* Pouco urgente (ambar) */
+  --ur-urgente-bg: #fff3e0; --ur-urgente-fg: #e65100; /* Urgente (laranja) */
+  --ur-muito-bg: #ffebee; --ur-muito-fg: #c62828;  /* Muito urgente (vermelho claro) */
+  --ur-atrasado-bg: #c62828; --ur-atrasado-fg: #ffffff; /* Atrasado (vermelho solido) */
 }
 
 [data-theme='dark'] {
@@ -108,10 +109,11 @@
   --st-enviado-bg: #1c3a23; --st-enviado-fg: #7fc98a;
   --st-cancelada-bg: #3d1f24; --st-cancelada-fg: #ef8a8f;
 
-  --ur-tranquilo-bg: #1c3a23; --ur-tranquilo-fg: #7fc98a;
-  --ur-pouco-bg: #3a2f12; --ur-pouco-fg: #e0b84d;
-  --ur-urgente-bg: #3a2a14; --ur-urgente-fg: #f0a868;
-  --ur-muito-bg: #3d1f24; --ur-muito-fg: #ef8a8f;
+  --ur-sem-bg: #2a2f33; --ur-sem-fg: #a4b4bd;      /* Sem urgencia (neutro) */
+  --ur-pouco-bg: #3a2f12; --ur-pouco-fg: #e0b84d;  /* Pouco urgente (ambar) */
+  --ur-urgente-bg: #3a2a14; --ur-urgente-fg: #f0a868; /* Urgente (laranja) */
+  --ur-muito-bg: #3d1f24; --ur-muito-fg: #ef8a8f;  /* Muito urgente (vermelho claro) */
+  --ur-atrasado-bg: #b71c1c; --ur-atrasado-fg: #ffffff; /* Atrasado (vermelho solido) */
 }
 
 * {

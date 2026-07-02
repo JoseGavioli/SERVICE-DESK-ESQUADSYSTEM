@@ -38,6 +38,11 @@ export function textoNotificacao(n) {
       return `${autor} cancelou a demanda${deCliente}`
     case 'mudanca_status':
       return `${autor} ${verboStatus(n.de_status, n.para_status)}${deCliente}`
+    // Notificacoes do SISTEMA (job diario, migracao 0020) — nao tem autor.
+    case 'prazo_vencido':
+      return `⏰ O prazo da demanda${deCliente} venceu`
+    case 'custo_atrasado':
+      return `⏰ O custo da demanda${deCliente} está atrasado (5+ dias em revisão)`
     default:
       return `${autor} atualizou a demanda${deCliente}`
   }

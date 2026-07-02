@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { STATUS_ROTULO } from '../lib/status'
-import { calcularUrgencia, URGENCIA_NIVEIS } from '../lib/urgencia'
+import { calcularUrgencia, URGENCIA_NIVEIS, estaCustoAtrasado } from '../lib/urgencia'
 import NovaDemanda from './NovaDemanda'
 import DetalheDemanda from './DetalheDemanda'
 import SeloUrgencia from './SeloUrgencia'
@@ -55,18 +55,42 @@ export default function Demandas({
   const [detalheId, setDetalheId] = useState(null)
   const [recolhidos, setRecolhidos] = useState(new Set())
   const [f, setF] = useState(FILTROS_VAZIOS)
+  // Mapa demanda_id -> data da 1a entrada em "revisao de custo" (para o atraso).
+  const [datasRevisao, setDatasRevisao] = useState({})
 
   async function carregar() {
     setCarregando(true)
-    const { data, error } = await supabase
-      .from('demanda')
-      .select(
-        'id, descricao, prazo, status, created_at, demanda_pai_id, cancelamento_solicitado, tipo_demanda(nome), obra(nome, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo), comentario(count)',
-      )
-      .order('created_at', { ascending: false })
+    const [{ data, error }, { data: datas }] = await Promise.all([
+      supabase
+        .from('demanda')
+        .select(
+          'id, descricao, prazo, status, created_at, demanda_pai_id, cancelamento_solicitado, tipo_demanda(nome), obra(nome, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo), comentario(count)',
+        )
+        .order('created_at', { ascending: false }),
+      supabase.rpc('datas_primeira_revisao'),
+    ])
     if (error) setErro('Não foi possível carregar as demandas.')
     else setDemandas(data)
+    if (datas) {
+      const mapa = {}
+      for (const r of datas) mapa[r.demanda_id] = r.data
+      setDatasRevisao(mapa)
+    }
     setCarregando(false)
+  }
+
+  // Custo atrasado: >= 5 dias uteis em revisao de custo (§alerta).
+  function custoAtrasado(d) {
+    return estaCustoAtrasado(d.status, datasRevisao[d.id])
+  }
+  // Prazo do orcamento ja venceu (urgencia "Atrasado").
+  function prazoVencido(d) {
+    return calcularUrgencia(d.prazo, d.status)?.nivel === 'atrasado'
+  }
+  // Demanda que "chama a atencao" (fundo vermelho + topo): custo atrasado
+  // OU prazo vencido. O que diferencia os dois e a tag/selo exibido.
+  function precisaAtencao(d) {
+    return custoAtrasado(d) || prazoVencido(d)
   }
 
   useEffect(() => {
@@ -177,7 +201,11 @@ export default function Demandas({
       }
       lista = lista.slice().sort((a, b) => rank(a) - rank(b))
     }
+    // Demandas que precisam de atencao sempre no topo (evidencia), preservando
+    // a ordem acima dentro de cada grupo (o sort do JS e estavel).
     return lista
+      .slice()
+      .sort((a, b) => (precisaAtencao(a) ? 0 : 1) - (precisaAtencao(b) ? 0 : 1))
   }
 
   if (criando) {
@@ -214,11 +242,13 @@ export default function Demandas({
   function botaoDemanda(d, nivel) {
     const qtdComent = d.comentario?.[0]?.count ?? 0
     const comentNovo = comentariosNovos?.has(d.id)
+    const custoAtras = custoAtrasado(d)
+    const atencao = precisaAtencao(d)
     const destaque = STATUS_FINAL.includes(d.status) ? ` fim-${d.status}` : ''
     return (
       <button
         type="button"
-        className={`item-demanda${destaque}`}
+        className={`item-demanda${destaque}${atencao ? ' atencao' : ''}`}
         onClick={() => setDetalheId(d.id)}
       >
         <div>
@@ -240,6 +270,7 @@ export default function Demandas({
           )}
         </div>
         <div className="badges">
+          {custoAtras && <span className="selo-custo-atrasado">⏰ custo atrasado</span>}
           <span className={`status status-${d.status}`}>
             {STATUS_ROTULO[d.status]}
           </span>
@@ -292,6 +323,11 @@ export default function Demandas({
   }
 
   const listaFiltrada = filtrando ? calcularLista() : []
+  // Na arvore, as raizes que precisam de atencao sobem para o topo (as filhas
+  // seguem aninhadas; os codigos hierarquicos nao mudam, pois derivam do id).
+  const raizesOrdenadas = [...raizes].sort(
+    (a, b) => (precisaAtencao(a) ? 0 : 1) - (precisaAtencao(b) ? 0 : 1),
+  )
 
   return (
     <div className="secao-demandas">
@@ -317,7 +353,7 @@ export default function Demandas({
         )
       ) : (
         <ul className="lista-demandas">
-          {raizes.map((d) => renderArvore(d, 0))}
+          {raizesOrdenadas.map((d) => renderArvore(d, 0))}
         </ul>
       )}
 
