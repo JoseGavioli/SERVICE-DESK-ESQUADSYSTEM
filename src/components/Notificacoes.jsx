@@ -1,21 +1,23 @@
 import { useState } from 'react'
 import { textoNotificacao } from '../lib/notificacaoTexto'
 import EstadoVazio from './EstadoVazio'
+import Icone from './Icone'
 
 // Drawer de Notificacoes: desliza da DIREITA (aberto pelo sino do topo), com
 // backdrop escurecido atras — mesmo padrao do menu lateral (que vem da esquerda).
 // Lista cronologica; cada item abre a demanda e marca como lida. Botoes para
 // marcar todas como lidas e para LIMPAR (apagar) as proprias, com confirmacao.
 
+// Nome do icone (ver Icone.jsx) por tipo de notificacao.
 const TIPO_ICONE = {
-  nova_demanda: '🆕',
-  mudanca_status: '🔄',
-  cancelamento_efetivado: '❌',
-  novo_comentario: '💬',
-  solicitacao_cancelamento: '⚠️',
-  prazo_proximo: '⏰',
-  prazo_vencido: '⏰',
-  custo_atrasado: '⏰',
+  nova_demanda: 'nova',
+  mudanca_status: 'atualizar',
+  cancelamento_efetivado: 'cancelado',
+  novo_comentario: 'chat',
+  solicitacao_cancelamento: 'aviso',
+  prazo_proximo: 'relogio',
+  prazo_vencido: 'relogio',
+  custo_atrasado: 'relogio',
 }
 
 export default function Notificacoes({
@@ -46,7 +48,7 @@ export default function Notificacoes({
             onClick={aoFechar}
             aria-label="Fechar"
           >
-            ✕
+            <Icone nome="fechar" size={18} />
           </button>
         </div>
 
@@ -97,7 +99,7 @@ export default function Notificacoes({
 
         {notificacoes.length === 0 ? (
           <EstadoVazio
-            icone="🔔"
+            nome="sino"
             titulo="Tudo em dia"
             dica="Nenhuma notificação por enquanto."
           />
@@ -111,7 +113,9 @@ export default function Notificacoes({
                   onClick={() => aoAbrir(n)}
                   title="Abrir a demanda"
                 >
-                  <span className="notif-icone">{TIPO_ICONE[n.tipo] ?? '🔔'}</span>
+                  <span className="notif-icone">
+                    <Icone nome={TIPO_ICONE[n.tipo] ?? 'sino'} size={18} />
+                  </span>
                   <div>
                     <div className="notif-titulo">{textoNotificacao(n)}</div>
                     <div className="sub">

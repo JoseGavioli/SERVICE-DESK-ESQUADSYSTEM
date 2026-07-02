@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import Icone from './Icone'
 
 // Selecionar uma obra DO cliente recebido por prop, com busca-primeiro.
 // Cria na hora se nao existir. Avisa o pai por aoSelecionar(obra | null).
@@ -90,7 +91,7 @@ export default function SeletorObra({ cliente, selecionado, aoSelecionar }) {
       </ul>
       {termo && !nomeExato && (
         <button type="button" onClick={criar} disabled={criando}>
-          {criando ? 'Criando…' : `➕ Criar obra "${busca.trim()}"`}
+          {criando ? 'Criando…' : (<><Icone nome="mais" size={16} /> Criar obra "{busca.trim()}"</>)}
         </button>
       )}
     </div>

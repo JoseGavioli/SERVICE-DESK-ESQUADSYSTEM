@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import Icone from './Icone'
 
 // Cuida do fluxo de cancelamento (§12) nos dois lados:
 //  - se ja foi solicitado: mostra o aviso (e, para o admin, "Descartar");
@@ -49,7 +50,7 @@ export default function Cancelamento({ demanda, perfil, aoMudar }) {
     return (
       <div className="aviso-cancelamento">
         <p>
-          ⚠️ <strong>Cancelamento solicitado</strong> — o motivo está nos
+          <Icone nome="aviso" size={15} /> <strong>Cancelamento solicitado</strong> — o motivo está nos
           comentários.
         </p>
         {perfil.papel === 'admin' && (

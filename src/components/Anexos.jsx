@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { enviarAnexo, validarArquivo, formatarTamanho, ehImagem } from '../lib/anexos'
 import Lightbox from './Lightbox'
+import Icone from './Icone'
 
 // Anexos da demanda: entrada (vendedor dono) e saida (atendente/admin).
 // Bucket privado -> download por LINK ASSINADO temporario. Imagens ganham
@@ -144,7 +145,7 @@ export default function Anexos({ demanda, perfil }) {
                   title="Excluir anexo"
                   onClick={() => excluir(a)}
                 >
-                  🗑
+                  <Icone nome="lixeira" size={16} />
                 </button>
               )}
             </li>
@@ -175,7 +176,7 @@ export default function Anexos({ demanda, perfil }) {
       {renderLista(entrada)}
       {podeEntrada && (
         <label className="enviar-arquivo">
-          {enviando ? 'Enviando…' : '➕ Anexar entrada (JPG/PNG/PDF, ≤ 2 MB)'}
+          {enviando ? 'Enviando…' : (<><Icone nome="mais" size={16} /> Anexar entrada (JPG/PNG/PDF, ≤ 2 MB)</>)}
           <input
             type="file"
             accept="image/jpeg,image/png,application/pdf"
@@ -192,7 +193,7 @@ export default function Anexos({ demanda, perfil }) {
       {renderLista(saida)}
       {podeSaida && (
         <label className="enviar-arquivo">
-          {enviando ? 'Enviando…' : '➕ Anexar saída (≤ 10 MB)'}
+          {enviando ? 'Enviando…' : (<><Icone nome="mais" size={16} /> Anexar saída (≤ 10 MB)</>)}
           <input
             type="file"
             disabled={enviando}

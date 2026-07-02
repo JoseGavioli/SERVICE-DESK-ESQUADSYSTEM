@@ -9,6 +9,7 @@ import HistoricoStatus from './HistoricoStatus'
 import Comentarios from './Comentarios'
 import Anexos from './Anexos'
 import NovaDemanda from './NovaDemanda'
+import Icone from './Icone'
 
 // Detalhe da demanda (campos somente leitura) + cancelamento, acoes de
 // status, demanda-filha, historico e comentarios. Recebe o perfil para
@@ -96,7 +97,7 @@ export default function DetalheDemanda({
       <div className="detalhe-demanda">
         <p className="erro">{erro}</p>
         <button type="button" className="link" onClick={aoVoltar}>
-          ← Voltar
+          <Icone nome="voltar" size={16} /> Voltar
         </button>
       </div>
     )
@@ -110,7 +111,7 @@ export default function DetalheDemanda({
   return (
     <div className="detalhe-demanda">
       <button type="button" className="botao-voltar" onClick={aoVoltar}>
-        ← Voltar
+        <Icone nome="voltar" size={20} /> Voltar
       </button>
 
       <h2>Demanda #{codigo ?? d.id}</h2>
@@ -123,7 +124,7 @@ export default function DetalheDemanda({
 
       {d.status === 'em_revisao_custo' && diasRevisao != null && (
         <p className={`tempo-revisao ${diasRevisao >= 5 ? 'atrasado' : ''}`}>
-          ⏱️{' '}
+          <Icone nome="relogio" size={16} />{' '}
           {diasRevisao === 0
             ? 'Em revisão de custo desde hoje'
             : `Em revisão de custo há ${diasRevisao} ${
@@ -151,7 +152,7 @@ export default function DetalheDemanda({
               className="botao-filha"
               onClick={() => setCriandoFilha(true)}
             >
-              ➕ Criar demanda vinculada
+              <Icone nome="mais" size={16} /> Criar demanda vinculada
             </button>
           )}
         </div>

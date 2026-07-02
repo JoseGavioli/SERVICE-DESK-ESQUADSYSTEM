@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import Icone from './Icone'
 
 // Selecionar um cliente com busca-primeiro. Se nao existir, cria na hora.
 // Avisa o pai pelo callback aoSelecionar(cliente) — ou aoSelecionar(null)
@@ -90,7 +91,7 @@ export default function SeletorCliente({ selecionado, aoSelecionar }) {
       </ul>
       {termo && !nomeExato && (
         <button type="button" onClick={criar} disabled={criando}>
-          {criando ? 'Criando…' : `➕ Criar cliente "${busca.trim()}"`}
+          {criando ? 'Criando…' : (<><Icone nome="mais" size={16} /> Criar cliente "{busca.trim()}"</>)}
         </button>
       )}
     </div>

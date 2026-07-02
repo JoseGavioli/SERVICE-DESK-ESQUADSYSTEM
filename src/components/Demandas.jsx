@@ -7,6 +7,7 @@ import DetalheDemanda from './DetalheDemanda'
 import SeloUrgencia from './SeloUrgencia'
 import FiltrosDemandas from './FiltrosDemandas'
 import EstadoVazio from './EstadoVazio'
+import Icone from './Icone'
 
 // Rank de urgencia (0 = mais critico) para ordenar a fila.
 const RANK_URGENCIA = Object.fromEntries(
@@ -287,7 +288,11 @@ export default function Demandas({
         onClick={() => setDetalheId(d.id)}
       >
         <div>
-          {nivel > 0 && <span className="seta-filha">↪ </span>}
+          {nivel > 0 && (
+            <span className="seta-filha">
+              <Icone nome="seta-filha" size={13} />{' '}
+            </span>
+          )}
           <strong>#{codigos[d.id] ?? d.id}</strong> —{' '}
           <strong className="cliente-nome">{d.obra?.cliente?.nome}</strong>
           <div className="sub">{d.obra?.nome}</div>
@@ -305,20 +310,26 @@ export default function Demandas({
           )}
         </div>
         <div className="badges">
-          {custoAtras && <span className="selo-custo-atrasado">⏰ custo atrasado</span>}
+          {custoAtras && (
+            <span className="selo-custo-atrasado">
+              <Icone nome="relogio" size={12} /> custo atrasado
+            </span>
+          )}
           <span className={`status status-${d.status}`}>
             {STATUS_ROTULO[d.status]}
           </span>
           <SeloUrgencia prazo={d.prazo} status={d.status} />
           {d.cancelamento_solicitado && (
-            <span className="marca-cancel">⚠️ cancelamento</span>
+            <span className="marca-cancel">
+              <Icone nome="aviso" size={12} /> cancelamento
+            </span>
           )}
           {novidades?.has(d.id) && (
             <span className="novidade-marca">novidade</span>
           )}
           {(qtdComent > 0 || comentNovo) && (
             <span className={`coment ${comentNovo ? 'coment-novo' : ''}`}>
-              💬 {qtdComent}
+              <Icone nome="chat" size={13} /> {qtdComent}
               {comentNovo ? ' • novo' : ''}
             </span>
           )}
@@ -347,7 +358,10 @@ export default function Demandas({
                 aria-label={recolhido ? 'Mostrar filhas' : 'Esconder filhas'}
                 title={recolhido ? 'Mostrar filhas' : 'Esconder filhas'}
               >
-                {recolhido ? '▸' : '▾'}
+                <Icone
+                  nome={recolhido ? 'chevron-direita' : 'chevron-baixo'}
+                  size={16}
+                />
               </button>
             )}
           </div>
@@ -378,7 +392,7 @@ export default function Demandas({
           }
           aria-pressed={f.soAtencao}
         >
-          ⚠️ Precisam de atenção
+          <Icone nome="aviso" size={15} /> Precisam de atenção
           <span className="atalho-contador">{qtdAtencao}</span>
         </button>
       )}
@@ -408,14 +422,14 @@ export default function Demandas({
         </div>
       ) : demandas.length === 0 ? (
         <EstadoVazio
-          icone="📋"
+          nome="lista"
           titulo="Nenhuma demanda ainda"
           dica="Toque no + para criar a primeira."
         />
       ) : filtrando ? (
         listaFiltrada.length === 0 ? (
           <EstadoVazio
-            icone="🔍"
+            nome="lupa"
             titulo="Nada com esses filtros"
             dica="Tente afrouxar a busca ou limpar os filtros."
           />
@@ -445,7 +459,7 @@ export default function Demandas({
         aria-label="Nova demanda"
         title="Nova demanda"
       >
-        +
+        <Icone nome="mais" size={26} />
       </button>
     </div>
   )

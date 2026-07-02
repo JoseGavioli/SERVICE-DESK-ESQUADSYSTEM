@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import Icone from './Icone'
 
 // Visualizador de imagens em tela cheia, com carrossel (‹ ›, setas) e
 // zoom (🔍 +/−, e arrastar para mover quando ampliado). Recebe a lista
@@ -77,7 +78,7 @@ export default function Lightbox({ imagens, indiceInicial, aoFechar }) {
           disabled={zoom <= 1}
           aria-label="Diminuir zoom"
         >
-          🔍−
+          <Icone nome="zoom-menos" size={20} />
         </button>
         <span className="zoom-nivel">{Math.round(zoom * 100)}%</span>
         <button
@@ -86,10 +87,10 @@ export default function Lightbox({ imagens, indiceInicial, aoFechar }) {
           disabled={zoom >= 4}
           aria-label="Aumentar zoom"
         >
-          🔍+
+          <Icone nome="zoom-mais" size={20} />
         </button>
         <button type="button" onClick={aoFechar} aria-label="Fechar">
-          ✕
+          <Icone nome="fechar" size={20} />
         </button>
       </div>
 

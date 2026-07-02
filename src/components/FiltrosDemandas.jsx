@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Icone from './Icone'
 import { STATUS_ROTULO } from '../lib/status'
 import { URGENCIA_NIVEIS } from '../lib/urgencia'
 
@@ -71,7 +72,7 @@ export default function FiltrosDemandas({
           onClick={() => (aberto ? setAberto(false) : abrir())}
           aria-expanded={aberto}
         >
-          Filtrar {aberto ? '▴' : '▾'}
+          Filtrar {aberto ? <Icone nome="chevron-cima" size={16} /> : <Icone nome="chevron-baixo" size={16} />}
         </button>
 
         {tags.map((t) => (
@@ -83,7 +84,7 @@ export default function FiltrosDemandas({
               onClick={() => aoRemover(t.campo)}
               aria-label={`Remover filtro ${t.texto}`}
             >
-              ×
+              <Icone nome="fechar" size={14} />
             </button>
           </span>
         ))}

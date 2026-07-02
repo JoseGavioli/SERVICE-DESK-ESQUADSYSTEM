@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import ObrasDoCliente from './ObrasDoCliente'
+import Icone from './Icone'
 
 // Lista + busca-primeiro + criacao de clientes.
 // Ao selecionar um cliente, mostra as obras dele (relacao 1 -> N).
@@ -120,7 +121,7 @@ export default function Clientes({ perfil }) {
                   title="Excluir cliente"
                   onClick={() => excluirCliente(c)}
                 >
-                  🗑
+                  <Icone nome="lixeira" size={18} />
                 </button>
               )}
             </div>
@@ -130,7 +131,7 @@ export default function Clientes({ perfil }) {
 
       {/* Busca-primeiro: o "criar" aparece sempre, mas avisa se houver nome igual */}
       <form className="form-novo" onSubmit={criarCliente}>
-        <h3>➕ Novo cliente</h3>
+        <h3><Icone nome="mais" size={18} /> Novo cliente</h3>
         <input
           type="text"
           placeholder="Nome do cliente"

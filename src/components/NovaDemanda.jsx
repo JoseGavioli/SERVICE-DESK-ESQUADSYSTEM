@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { validarArquivo, enviarAnexo, formatarTamanho } from '../lib/anexos'
 import SeletorCliente from './SeletorCliente'
 import SeletorObra from './SeletorObra'
+import Icone from './Icone'
 
 // Formulario de nova demanda. Todos os campos aparecem de uma vez (sem travar
 // tipo/descricao/prazo ate escolher a obra). A obra ainda depende do cliente
@@ -286,14 +287,14 @@ export default function NovaDemanda({ aoCriar, aoCancelar, obraFixa, demandaPaiI
                   className="remover"
                   onClick={() => removerArquivo(i)}
                 >
-                  ✕
+                  <Icone nome="fechar" size={14} />
                 </button>
               </li>
             ))}
           </ul>
         )}
         <label className="enviar-arquivo">
-          ➕ Escolher arquivos (JPG/PNG/PDF, ≤ 2 MB)
+          <Icone nome="mais" size={16} /> Escolher arquivos (JPG/PNG/PDF, ≤ 2 MB)
           <input
             type="file"
             multiple

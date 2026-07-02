@@ -8,6 +8,7 @@ import MenuLateral from './MenuLateral'
 import Tema from './Tema'
 import Notificacoes from './Notificacoes'
 import ToastNotificacao from './ToastNotificacao'
+import Icone from './Icone'
 import { useNotificacoes } from '../lib/useNotificacoes'
 
 // Nome exibido no cabecalho para cada secao.
@@ -126,7 +127,7 @@ export default function Painel({ sessao }) {
             onClick={() => setMenuAberto(true)}
             aria-label="Abrir menu"
           >
-            ☰
+            <Icone nome="menu" size={20} />
           </button>
           <span className="titulo-tela">{NOME_TELA[secao] ?? ''}</span>
         </div>
@@ -137,7 +138,7 @@ export default function Painel({ sessao }) {
           aria-label="Notificações"
           title="Notificações"
         >
-          🔔
+          <Icone nome="sino" size={20} />
           {naoLidas > 0 && <span className="sino-badge">{naoLidas}</span>}
         </button>
       </header>

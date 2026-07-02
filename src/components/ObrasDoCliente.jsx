@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import Icone from './Icone'
 
 // Lista + busca + criacao das obras de UM cliente (recebido por prop).
 export default function ObrasDoCliente({ cliente, perfil }) {
@@ -99,7 +100,7 @@ export default function ObrasDoCliente({ cliente, perfil }) {
                   title="Excluir obra"
                   onClick={() => excluirObra(o)}
                 >
-                  🗑
+                  <Icone nome="lixeira" size={18} />
                 </button>
               )}
             </div>
@@ -108,7 +109,7 @@ export default function ObrasDoCliente({ cliente, perfil }) {
       )}
 
       <form className="form-novo" onSubmit={criarObra}>
-        <h4>➕ Nova obra</h4>
+        <h4><Icone nome="mais" size={16} /> Nova obra</h4>
         <input
           type="text"
           placeholder="Nome/identificação da obra"

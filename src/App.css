@@ -608,10 +608,15 @@ textarea::placeholder {
   color: var(--texto-suave);
 }
 .estado-vazio-icone {
-  font-size: 2.4rem;
   display: block;
-  margin-bottom: 0.5rem;
+  margin: 0 auto 0.5rem;
+  color: var(--texto-suave);
   opacity: 0.85;
+}
+/* alinhamento dos icones (lucide) inline com o texto, e nao encolher em flex */
+.lucide {
+  vertical-align: -0.15em;
+  flex-shrink: 0;
 }
 .estado-vazio-titulo {
   font-weight: 600;

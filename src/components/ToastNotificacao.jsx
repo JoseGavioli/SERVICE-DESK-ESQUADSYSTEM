@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { textoNotificacao } from '../lib/notificacaoTexto'
+import Icone from './Icone'
 
 // Pop-up (toast) que aparece no canto quando chega uma notificacao em tempo
 // real. Clicavel (abre a demanda) e some sozinho depois de alguns segundos.
@@ -17,7 +18,7 @@ export default function ToastNotificacao({ notificacao, aoAbrir, aoFechar }) {
   return (
     <div className="toast-notif" role="status">
       <button type="button" className="toast-corpo" onClick={() => aoAbrir(n)}>
-        <span className="toast-icone">🔔</span>
+        <span className="toast-icone"><Icone nome="sino" size={20} /></span>
         <div>
           <div className="toast-titulo">{textoNotificacao(n)}</div>
           <div className="sub">
@@ -36,7 +37,7 @@ export default function ToastNotificacao({ notificacao, aoAbrir, aoFechar }) {
         onClick={aoFechar}
         aria-label="Fechar"
       >
-        ×
+        <Icone nome="fechar" size={18} />
       </button>
     </div>
   )
