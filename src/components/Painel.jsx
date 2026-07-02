@@ -16,7 +16,6 @@ const NOME_TELA = {
   demandas: 'Demandas',
   clientes: 'Clientes',
   equipe: 'Equipe',
-  notificacoes: 'Notificações',
   tema: 'Tema',
 }
 
@@ -28,6 +27,7 @@ export default function Painel({ sessao }) {
   const [erro, setErro] = useState('')
   const [secao, setSecao] = useState('inicio') // inicio|demandas|clientes|equipe|tema|notificacoes
   const [menuAberto, setMenuAberto] = useState(false)
+  const [notifAberto, setNotifAberto] = useState(false) // drawer do sino (notificacoes)
   const [demandaInicial, setDemandaInicial] = useState(null) // demanda a abrir ao ir p/ Demandas
   const [filtroInicial, setFiltroInicial] = useState(null) // filtro a aplicar ao ir p/ Demandas
   const [criarInicial, setCriarInicial] = useState(false) // abrir o form de nova demanda
@@ -133,7 +133,7 @@ export default function Painel({ sessao }) {
         <button
           type="button"
           className="sino"
-          onClick={() => setSecao('notificacoes')}
+          onClick={() => setNotifAberto(true)}
           aria-label="Notificações"
           title="Notificações"
         >
@@ -155,23 +155,25 @@ export default function Painel({ sessao }) {
         aoSair={sair}
       />
 
+      <Notificacoes
+        aberto={notifAberto}
+        aoFechar={() => setNotifAberto(false)}
+        notificacoes={notificacoes}
+        aoAbrir={(n) => {
+          marcarLida(n.id)
+          setNotifAberto(false)
+          abrirDemanda(n.demanda_id)
+        }}
+        aoMarcarTodas={marcarTodasLidas}
+        aoLimpar={limparTodas}
+      />
+
       <section className="conteudo">
         {secao === 'inicio' && (
           <Inicio
             perfil={perfil}
             aoAbrirComFiltro={abrirDemandasComFiltro}
             aoNovaDemanda={abrirNovaDemanda}
-          />
-        )}
-        {secao === 'notificacoes' && (
-          <Notificacoes
-            notificacoes={notificacoes}
-            aoAbrir={(n) => {
-              marcarLida(n.id)
-              abrirDemanda(n.demanda_id)
-            }}
-            aoMarcarTodas={marcarTodasLidas}
-            aoLimpar={limparTodas}
           />
         )}
         {secao === 'demandas' && (
