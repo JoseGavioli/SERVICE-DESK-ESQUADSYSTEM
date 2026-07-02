@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import Inicio from './Inicio'
+import Dashboard from './Dashboard'
 import Demandas from './Demandas'
 import Clientes from './Clientes'
 import Equipe from './Equipe'
@@ -13,7 +13,7 @@ import { useNotificacoes } from '../lib/useNotificacoes'
 // Nome exibido no cabecalho para cada secao.
 const NOME_TELA = {
   inicio: 'Início',
-  demandas: 'Demandas',
+  dashboard: 'Dashboard',
   clientes: 'Clientes',
   equipe: 'Equipe',
   tema: 'Tema',
@@ -25,7 +25,7 @@ export default function Painel({ sessao }) {
   const [perfil, setPerfil] = useState(null)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
-  const [secao, setSecao] = useState('inicio') // inicio|demandas|clientes|equipe|tema|notificacoes
+  const [secao, setSecao] = useState('inicio') // inicio(lista)|dashboard|clientes|equipe|tema
   const [menuAberto, setMenuAberto] = useState(false)
   const [notifAberto, setNotifAberto] = useState(false) // drawer do sino (notificacoes)
   const [demandaInicial, setDemandaInicial] = useState(null) // demanda a abrir ao ir p/ Demandas
@@ -55,22 +55,22 @@ export default function Painel({ sessao }) {
       .map((n) => n.demanda_id),
   )
 
-  // Chamado pela Inicio/Notificacoes: vai para Demandas ja abrindo a demanda.
+  // Notificacoes/Dashboard: vai para a lista (Inicio) ja abrindo a demanda.
   function abrirDemanda(id) {
     setDemandaInicial(id)
-    setSecao('demandas')
+    setSecao('inicio')
   }
 
-  // Chamado pela Inicio: vai para Demandas ja com um filtro ({} = sem filtro).
+  // Dashboard: vai para a lista (Inicio) ja com um filtro ({} = sem filtro).
   function abrirDemandasComFiltro(filtro) {
     setFiltroInicial(filtro)
-    setSecao('demandas')
+    setSecao('inicio')
   }
 
-  // Chamado pela Inicio: vai para Demandas ja abrindo o form de nova demanda.
+  // Dashboard: vai para a lista (Inicio) ja abrindo o form de nova demanda.
   function abrirNovaDemanda() {
     setCriarInicial(true)
-    setSecao('demandas')
+    setSecao('inicio')
   }
 
   useEffect(() => {
@@ -170,13 +170,6 @@ export default function Painel({ sessao }) {
 
       <section className="conteudo">
         {secao === 'inicio' && (
-          <Inicio
-            perfil={perfil}
-            aoAbrirComFiltro={abrirDemandasComFiltro}
-            aoNovaDemanda={abrirNovaDemanda}
-          />
-        )}
-        {secao === 'demandas' && (
           <Demandas
             perfil={perfil}
             novidades={demandasComNovidade}
@@ -188,7 +181,13 @@ export default function Painel({ sessao }) {
             aoConsumirFiltro={() => setFiltroInicial(null)}
             criarInicial={criarInicial}
             aoConsumirCriar={() => setCriarInicial(false)}
-            aoVoltarInicio={() => setSecao('inicio')}
+          />
+        )}
+        {secao === 'dashboard' && (
+          <Dashboard
+            perfil={perfil}
+            aoAbrirComFiltro={abrirDemandasComFiltro}
+            aoNovaDemanda={abrirNovaDemanda}
           />
         )}
         {secao === 'clientes' && <Clientes perfil={perfil} />}

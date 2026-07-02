@@ -15,11 +15,12 @@ const STATUS_ORDEM = [
 // Status terminais: NAO entram no total da box "DEMANDAS EM ABERTO".
 const TERMINAIS = ['enviado', 'cancelada']
 
-// Tela inicial: botoes de acao + um "Dashboard" (boxes clicaveis, em tempo real).
-//  - "incluir nova demanda": abre o form de nova demanda.
-//  - Dashboard: box "DEMANDAS EM ABERTO" (total sem terminais) + uma box por
-//    status (fundo na cor do status), cada uma abrindo Demandas ja filtrada.
-export default function Inicio({ perfil, aoAbrirComFiltro, aoNovaDemanda }) {
+// Tela "Dashboard" (resumo). Antes era a tela inicial; agora a home e a LISTA
+// de demandas (§issue #1), e este resumo virou uma tela separada no menu.
+//  - "incluir nova demanda": abre o form de nova demanda (na lista).
+//  - boxes clicaveis (tempo real): "DEMANDAS EM ABERTO" (total sem terminais)
+//    + uma box por status, cada uma abrindo a lista ja filtrada.
+export default function Dashboard({ perfil, aoAbrirComFiltro, aoNovaDemanda }) {
   const [dados, setDados] = useState(null) // { emAberto, contagem }
 
   const carregar = useCallback(async () => {
@@ -41,7 +42,7 @@ export default function Inicio({ perfil, aoAbrirComFiltro, aoNovaDemanda }) {
   // Tempo real: qualquer mudanca em demandas visiveis recalcula as boxes.
   useEffect(() => {
     const canal = supabase
-      .channel('inicio-demandas')
+      .channel('dashboard-demandas')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'demanda' },
@@ -82,8 +83,6 @@ export default function Inicio({ perfil, aoAbrirComFiltro, aoNovaDemanda }) {
 
       {dados && (
         <div className="dashboard">
-          <h2 className="dashboard-titulo">Dashboard</h2>
-
           <button
             type="button"
             className="box-inicio box-total"
@@ -108,8 +107,8 @@ export default function Inicio({ perfil, aoAbrirComFiltro, aoNovaDemanda }) {
                   onClick={() =>
                     aoAbrirComFiltro(
                       s === 'enviado'
-                        ? { status: s, ordenarRecente: true }
-                        : { status: s, ordenar: true },
+                        ? { status: s, ordenacao: 'recentes' }
+                        : { status: s, ordenacao: 'urgencia' },
                     )
                   }
                 >

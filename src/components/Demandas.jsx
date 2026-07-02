@@ -17,8 +17,7 @@ const FILTROS_VAZIOS = {
   status: '',
   urgencia: '',
   soAtivas: false,
-  ordenar: false,
-  ordenarRecente: false,
+  ordenacao: 'padrao', // padrao | urgencia | recentes | antigas
 }
 
 // Status finalizados que ganham destaque (borda colorida) na lista.
@@ -46,7 +45,6 @@ export default function Demandas({
   aoConsumirFiltro,
   criarInicial,
   aoConsumirCriar,
-  aoVoltarInicio,
 }) {
   const [demandas, setDemandas] = useState([])
   const [carregando, setCarregando] = useState(true)
@@ -161,8 +159,7 @@ export default function Demandas({
     f.status !== '' ||
     f.urgencia !== '' ||
     f.soAtivas ||
-    f.ordenar ||
-    f.ordenarRecente
+    f.ordenacao !== 'padrao'
 
   function calcularLista() {
     const termo = f.busca.trim().toLowerCase()
@@ -189,23 +186,49 @@ export default function Demandas({
       }
       return true
     })
-    if (f.ordenarRecente) {
-      // mais recente -> mais antiga (usado no filtro de Enviado)
+    if (f.ordenacao === 'recentes') {
       lista = lista
         .slice()
         .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
-    } else if (f.ordenar) {
+    } else if (f.ordenacao === 'antigas') {
+      lista = lista
+        .slice()
+        .sort((a, b) => (a.created_at > b.created_at ? 1 : -1))
+    } else if (f.ordenacao === 'urgencia') {
       const rank = (d) => {
         const u = calcularUrgencia(d.prazo, d.status)
         return u ? RANK_URGENCIA[u.nivel] : 99 // terminais por ultimo
       }
       lista = lista.slice().sort((a, b) => rank(a) - rank(b))
     }
+    // 'padrao' = mantem a ordem base (mais recentes primeiro, do carregar)
     // Demandas que precisam de atencao sempre no topo (evidencia), preservando
     // a ordem acima dentro de cada grupo (o sort do JS e estavel).
     return lista
       .slice()
       .sort((a, b) => (precisaAtencao(a) ? 0 : 1) - (precisaAtencao(b) ? 0 : 1))
+  }
+
+  // ── Handlers do filtro ──────────────────────────────────────────
+  // A busca aplica AO VIVO; os filtros estruturados so no botao "Filtrar".
+  function aoBuscar(v) {
+    setF((prev) => ({ ...prev, busca: v }))
+  }
+  function aoAplicarFiltros(rascunho) {
+    setF((prev) => ({ ...prev, ...rascunho }))
+  }
+  function aoRemoverFiltro(campo) {
+    const PADRAO = { status: '', urgencia: '', soAtivas: false, ordenacao: 'padrao' }
+    setF((prev) => ({ ...prev, [campo]: PADRAO[campo] }))
+  }
+  function aoLimparFiltros() {
+    setF((prev) => ({
+      ...prev,
+      status: '',
+      urgencia: '',
+      soAtivas: false,
+      ordenacao: 'padrao',
+    }))
   }
 
   if (criando) {
@@ -331,7 +354,16 @@ export default function Demandas({
 
   return (
     <div className="secao-demandas">
-      <FiltrosDemandas f={f} setF={setF} />
+      <p className="saudacao">
+        Olá, <strong>{perfil.nome_completo}</strong> 👋
+      </p>
+      <FiltrosDemandas
+        f={f}
+        aoBuscar={aoBuscar}
+        aoAplicar={aoAplicarFiltros}
+        aoRemover={aoRemoverFiltro}
+        aoLimpar={aoLimparFiltros}
+      />
 
       {erro && <p className="erro">{erro}</p>}
 
@@ -361,8 +393,14 @@ export default function Demandas({
         </div>
       )}
 
-      <button type="button" className="voltar-inicio" onClick={aoVoltarInicio}>
-        Voltar
+      <button
+        type="button"
+        className="fab-nova"
+        onClick={() => setCriando(true)}
+        aria-label="Nova demanda"
+        title="Nova demanda"
+      >
+        +
       </button>
     </div>
   )

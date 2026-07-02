@@ -551,17 +551,14 @@ textarea::placeholder {
 .secao-demandas .cabecalho button:hover {
   background: var(--primaria-hover);
 }
-/* Caixa da lista: rola por DENTRO (sem margem interna), para o botao "Voltar"
-   fixo ficar abaixo dela e nunca cobrir as demandas. flex 0 1 auto = cresce
-   com o conteudo e, quando passa do espaco disponivel, rola. */
+/* Caixa da lista: card com a lista dentro (sem margem interna). A rolagem e a
+   normal da pagina — o botao "Voltar" saiu (issue #1). */
 .caixa-lista {
   margin-top: 1rem;
-  flex: 0 1 auto;
-  min-height: 0;
-  overflow-y: auto;
   background: var(--surface);
   border: 1px solid var(--borda);
   border-radius: var(--raio);
+  overflow: hidden;
 }
 .lista-demandas {
   list-style: none;
@@ -671,46 +668,34 @@ textarea::placeholder {
   font-weight: 700;
 }
 /* botão "Voltar" fixo na parte inferior, a frente de tudo, na largura do conteudo */
-.voltar-inicio {
+/* Botao flutuante "+" (FAB) para criar demanda a partir da home (issue #1). */
+.fab-nova {
   position: fixed;
   bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
-  left: 1rem;
-  right: 1rem;
-  max-width: calc(760px - 2rem);
-  margin: 0 auto;
+  right: 1.25rem;
   z-index: 40;
-  padding: 0.7rem;
+  width: 3.5rem;
+  height: 3.5rem;
   border: 0;
-  border-radius: var(--raio-sm);
+  border-radius: 50%;
   background: var(--primaria);
   color: var(--primaria-texto);
-  font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 2rem;
+  line-height: 1;
   cursor: pointer;
-  text-align: center;
   box-shadow: var(--sombra);
   transition: background 0.15s ease;
 }
-.voltar-inicio:hover {
+.fab-nova:hover {
   background: var(--primaria-hover);
 }
-/* Coluna de altura fixa: filtros no topo, caixa da lista rolando no meio, e o
-   botao "Voltar" fixo ABAIXO (a altura reservada deixa a caixa acima dele). */
+/* folga no rodape da lista para o ultimo item nao ficar sob o FAB */
 .secao-demandas {
-  display: flex;
-  flex-direction: column;
-  height: calc(100dvh - 10rem);
+  padding-bottom: 4.5rem;
 }
-.secao-demandas > .filtros {
-  flex-shrink: 0;
-}
-/* no celular o botao fica mais alto -> reserva um pouco mais de espaco */
 @media (max-width: 640px) {
-  .voltar-inicio {
-    bottom: calc(2.5rem + env(safe-area-inset-bottom, 0px));
-  }
-  .secao-demandas {
-    height: calc(100dvh - 11rem);
+  .fab-nova {
+    bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -1388,9 +1373,8 @@ textarea::placeholder {
 /* ── Filtros ───────────────────────────────────────────────── */
 .filtros {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 0.6rem;
   margin: 0.85rem 0;
 }
 .filtros input[type='search'],
@@ -1398,16 +1382,97 @@ textarea::placeholder {
   padding: 0.5rem 0.6rem;
   font-size: 0.9rem;
 }
-.filtros input[type='search'] {
-  flex: 1 1 200px;
+/* barra recolhida: botao "Filtrar" + tags do que esta aplicado */
+.filtro-barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
 }
-.filtros .check {
+.botao-filtrar {
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-sm);
+  background: var(--surface);
+  color: var(--texto);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.botao-filtrar:hover {
+  background: var(--surface-2);
+}
+.botao-filtrar.aberto {
+  border-color: var(--primaria);
+  color: var(--primaria);
+}
+.tag-filtro {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  font-size: 0.9rem;
-  color: var(--texto-suave);
+  gap: 0.25rem;
+  padding: 0.22rem 0.3rem 0.22rem 0.6rem;
+  border-radius: var(--raio-pill);
+  background: var(--primaria-suave);
+  color: var(--primaria);
+  font-size: 0.82rem;
+  font-weight: 600;
   white-space: nowrap;
+}
+.tag-x {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 1.05rem;
+  line-height: 1;
+  padding: 0 0.15rem;
+  border-radius: 50%;
+}
+.tag-x:hover {
+  background: color-mix(in srgb, var(--primaria) 22%, transparent);
+}
+/* box expandida com os campos + botao aplicar */
+.filtro-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.9rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+}
+.filtro-box > label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+.filtro-box > label.check {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.45rem;
+}
+.filtro-box .check input {
+  width: auto;
+}
+.filtro-acoes {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-top: 0.2rem;
+}
+.botao-aplicar {
+  padding: 0.55rem 1.3rem;
+  border: 0;
+  border-radius: var(--raio-sm);
+  background: var(--primaria);
+  color: var(--primaria-texto);
+  font-weight: 600;
+  cursor: pointer;
+}
+.botao-aplicar:hover {
+  background: var(--primaria-hover);
 }
 
 /* ── Notificações ──────────────────────────────────────────── */

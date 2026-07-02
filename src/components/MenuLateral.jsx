@@ -5,7 +5,7 @@
 
 const ITENS_BASE = [
   { id: 'inicio', rotulo: 'Início' },
-  { id: 'demandas', rotulo: 'Demandas' },
+  { id: 'dashboard', rotulo: 'Dashboard' },
   { id: 'clientes', rotulo: 'Clientes' },
 ]
 
@@ -45,7 +45,7 @@ export default function MenuLateral({
               onClick={() => aoNavegar(it.id)}
             >
               {it.rotulo}
-              {it.id === 'demandas' && novidadesCount > 0 && (
+              {it.id === 'inicio' && novidadesCount > 0 && (
                 <span className="badge-menu">{novidadesCount}</span>
               )}
             </button>
