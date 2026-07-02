@@ -61,15 +61,51 @@ export default function NovaDemanda({ aoCriar, aoCancelar, obraFixa, demandaPaiI
     setArquivos((prev) => prev.filter((_, i) => i !== idx))
   }
 
+  // Acha (ou cria) a obra padrao "Obra de {cliente}" quando nenhuma foi
+  // escolhida. Roda sob a RLS do vendedor (ele ja pode criar obras). Retorna o
+  // id da obra, ou null em caso de erro (com a mensagem ja sinalizada).
+  async function obterOuCriarObraPadrao() {
+    const nome = `Obra de ${cliente.nome}`
+    const { data: existente } = await supabase
+      .from('obra')
+      .select('id')
+      .eq('cliente_id', cliente.id)
+      .eq('nome', nome)
+      .limit(1)
+      .maybeSingle()
+    if (existente) return existente.id
+
+    const { data: nova, error } = await supabase
+      .from('obra')
+      .insert({ cliente_id: cliente.id, nome })
+      .select('id')
+      .single()
+    if (error) {
+      setErro('Não foi possível criar a obra padrão do cliente.')
+      return null
+    }
+    return nova.id
+  }
+
   async function salvar(evento) {
     evento.preventDefault()
     setErro('')
     setSalvando(true)
 
+    // Obra: a escolhida, ou "Obra de {cliente}" (acha-ou-cria) se ficou em branco.
+    let obraId = obra?.id
+    if (!obraId) {
+      obraId = await obterOuCriarObraPadrao()
+      if (!obraId) {
+        setSalvando(false)
+        return
+      }
+    }
+
     const { data, error } = await supabase
       .from('demanda')
       .insert({
-        obra_id: obra.id,
+        obra_id: obraId,
         tipo_demanda_id: Number(tipoId),
         descricao: descricao.trim(),
         prazo,
@@ -104,7 +140,7 @@ export default function NovaDemanda({ aoCriar, aoCancelar, obraFixa, demandaPaiI
   }
 
   const pronto =
-    obra &&
+    (ehFilha ? obra : cliente) &&
     tipoId &&
     descricao.trim() &&
     prazo &&
@@ -124,11 +160,19 @@ export default function NovaDemanda({ aoCriar, aoCancelar, obraFixa, demandaPaiI
         <>
           <SeletorCliente selecionado={cliente} aoSelecionar={selecionarCliente} />
           {cliente && (
-            <SeletorObra
-              cliente={cliente}
-              selecionado={obra}
-              aoSelecionar={setObra}
-            />
+            <>
+              <SeletorObra
+                cliente={cliente}
+                selecionado={obra}
+                aoSelecionar={setObra}
+              />
+              {!obra && (
+                <p className="dica-obra">
+                  Sem obra específica? Pode deixar em branco — usaremos{' '}
+                  <strong>Obra de {cliente.nome}</strong>.
+                </p>
+              )}
+            </>
           )}
         </>
       )}

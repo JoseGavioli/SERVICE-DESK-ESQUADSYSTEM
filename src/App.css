@@ -787,6 +787,15 @@ textarea::placeholder {
   width: 4.5rem;
   font-size: 1rem;
 }
+/* dica de "obra opcional" abaixo do seletor de obra (issue #2) */
+.dica-obra {
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+  margin: 0.1rem 0 0;
+}
+.dica-obra strong {
+  color: var(--texto);
+}
 .nova-demanda .acoes {
   display: flex;
   align-items: center;
