@@ -4,8 +4,9 @@ import { validarArquivo, enviarAnexo, formatarTamanho } from '../lib/anexos'
 import SeletorCliente from './SeletorCliente'
 import SeletorObra from './SeletorObra'
 
-// Formulario de nova demanda: cliente -> obra -> tipo -> descricao -> prazo
-// -> anexos de entrada (OPCIONAL).
+// Formulario de nova demanda. Todos os campos aparecem de uma vez (sem travar
+// tipo/descricao/prazo ate escolher a obra). A obra ainda depende do cliente
+// para listar as obras dele.
 //
 // Modo DEMANDA-FILHA (§11): se vier obraFixa + demandaPaiId, a obra ja vem
 // travada (herdada da pai) e o vinculo demanda_pai_id e gravado.
@@ -20,7 +21,11 @@ export default function NovaDemanda({ aoCriar, aoCancelar, obraFixa, demandaPaiI
   const [tipoId, setTipoId] = useState('')
   const [descricao, setDescricao] = useState('')
   const [prazo, setPrazo] = useState('')
-  const [arquivos, setArquivos] = useState([]) // anexos de entrada escolhidos (ainda nao enviados)
+  const [clubCasa, setClubCasa] = useState(false)
+  const [rt, setRt] = useState(false)
+  const [rtPercentual, setRtPercentual] = useState('')
+  const [arquiteto, setArquiteto] = useState('')
+  const [arquivos, setArquivos] = useState([]) // anexos de entrada (ainda nao enviados)
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
 
@@ -69,6 +74,10 @@ export default function NovaDemanda({ aoCriar, aoCancelar, obraFixa, demandaPaiI
         descricao: descricao.trim(),
         prazo,
         demanda_pai_id: demandaPaiId ?? null,
+        club_casa: clubCasa,
+        rt,
+        rt_percentual: rt && rtPercentual !== '' ? Number(rtPercentual) : null,
+        arquiteto_engenheiro: arquiteto.trim() || null,
       })
       .select('id')
       .single()
@@ -94,7 +103,12 @@ export default function NovaDemanda({ aoCriar, aoCancelar, obraFixa, demandaPaiI
     aoCriar(data.id) // devolve o id para quem chamou abrir a demanda nova
   }
 
-  const pronto = obra && tipoId && descricao.trim() && prazo
+  const pronto =
+    obra &&
+    tipoId &&
+    descricao.trim() &&
+    prazo &&
+    (!rt || String(rtPercentual).trim() !== '')
 
   return (
     <form className="nova-demanda" onSubmit={salvar}>
@@ -119,79 +133,134 @@ export default function NovaDemanda({ aoCriar, aoCancelar, obraFixa, demandaPaiI
         </>
       )}
 
-      {obra && (
-        <>
-          <label>
-            Tipo
-            <select
-              value={tipoId}
-              onChange={(e) => setTipoId(e.target.value)}
-              required
-            >
-              <option value="">— escolha —</option>
-              {tipos.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.nome}
-                </option>
-              ))}
-            </select>
-          </label>
+      <label>
+        Tipo
+        <select
+          value={tipoId}
+          onChange={(e) => setTipoId(e.target.value)}
+          required
+        >
+          <option value="">— escolha —</option>
+          {tipos.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.nome}
+            </option>
+          ))}
+        </select>
+      </label>
 
-          <label>
-            Descrição <em>(não poderá ser editada depois)</em>
-            <textarea
-              value={descricao}
-              onChange={(e) => setDescricao(e.target.value)}
-              rows={4}
-              required
-            />
-          </label>
+      <label>
+        Descrição <em>(não poderá ser editada depois)</em>
+        <textarea
+          value={descricao}
+          onChange={(e) => setDescricao(e.target.value)}
+          rows={4}
+          required
+        />
+      </label>
 
+      <label>
+        Prazo
+        <input
+          type="date"
+          value={prazo}
+          onChange={(e) => setPrazo(e.target.value)}
+          required
+        />
+      </label>
+
+      <div className="linha-opcoes">
+        <label className="opcao-check">
+          <input
+            type="checkbox"
+            checked={clubCasa}
+            onChange={(e) => setClubCasa(e.target.checked)}
+          />
+          <span>CLUB CASA</span>
+        </label>
+
+        <div className="opcao-radio">
+          <span className="opcao-titulo">RT</span>
           <label>
-            Prazo
             <input
-              type="date"
-              value={prazo}
-              onChange={(e) => setPrazo(e.target.value)}
+              type="radio"
+              name="rt"
+              checked={!rt}
+              onChange={() => setRt(false)}
+            />{' '}
+            Não
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="rt"
+              checked={rt}
+              onChange={() => setRt(true)}
+            />{' '}
+            Sim
+          </label>
+        </div>
+
+        {rt && (
+          <label className="opcao-pct">
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="0.5"
+              className="input-pct"
+              value={rtPercentual}
+              onChange={(e) => setRtPercentual(e.target.value)}
+              aria-label="Porcentagem da RT"
               required
             />
+            <span>%</span>
           </label>
+        )}
+      </div>
 
-          <div className="anexos-novos">
-            <span className="rotulo-anexos">Anexos de entrada (opcional)</span>
-            {arquivos.length > 0 && (
-              <ul className="arquivos-escolhidos">
-                {arquivos.map((f, i) => (
-                  <li key={i}>
-                    <span>
-                      {f.name} ({formatarTamanho(f.size)})
-                    </span>
-                    <button
-                      type="button"
-                      className="remover"
-                      onClick={() => removerArquivo(i)}
-                    >
-                      ✕
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <label className="enviar-arquivo">
-              ➕ Escolher arquivos (JPG/PNG/PDF, ≤ 2 MB)
-              <input
-                type="file"
-                multiple
-                accept="image/jpeg,image/png,application/pdf"
-                onChange={(e) => {
-                  adicionarArquivos(e.target.files)
-                  e.target.value = ''
-                }}
-              />
-            </label>
-          </div>
-        </>
-      )}
+      <label>
+        Arquiteto/engenheiro <em>(se houver)</em>
+        <input
+          type="text"
+          value={arquiteto}
+          onChange={(e) => setArquiteto(e.target.value)}
+        />
+      </label>
+
+      <div className="anexos-novos">
+        <span className="rotulo-anexos">Anexos de entrada (opcional)</span>
+        {arquivos.length > 0 && (
+          <ul className="arquivos-escolhidos">
+            {arquivos.map((f, i) => (
+              <li key={i}>
+                <span>
+                  {f.name} ({formatarTamanho(f.size)})
+                </span>
+                <button
+                  type="button"
+                  className="remover"
+                  onClick={() => removerArquivo(i)}
+                >
+                  ✕
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <label className="enviar-arquivo">
+          ➕ Escolher arquivos (JPG/PNG/PDF, ≤ 2 MB)
+          <input
+            type="file"
+            multiple
+            accept="image/jpeg,image/png,application/pdf"
+            onChange={(e) => {
+              adicionarArquivos(e.target.files)
+              e.target.value = ''
+            }}
+          />
+        </label>
+      </div>
 
       {erro && <p className="erro">{erro}</p>}
 

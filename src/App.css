@@ -676,6 +676,54 @@ textarea::placeholder {
 .nova-demanda input[type='date'] {
   font-size: 1rem;
 }
+/* campos extras: CLUB CASA (check) e RT (sim/nao) */
+.nova-demanda .opcao-check {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--texto);
+  font-size: 0.95rem;
+}
+.nova-demanda .opcao-radio {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+.nova-demanda .opcao-radio .opcao-titulo {
+  font-weight: 600;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}
+.nova-demanda .opcao-radio label {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--texto);
+  font-size: 0.95rem;
+}
+.nova-demanda input[type='checkbox'],
+.nova-demanda input[type='radio'] {
+  width: auto;
+  margin: 0;
+}
+/* CLUB CASA + RT + % na mesma linha; % em campo pequeno (~5 caracteres) */
+.nova-demanda .linha-opcoes {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+.nova-demanda .opcao-pct {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--texto);
+}
+.nova-demanda .input-pct {
+  width: 4.5rem;
+  font-size: 1rem;
+}
 .nova-demanda .acoes {
   display: flex;
   align-items: center;
