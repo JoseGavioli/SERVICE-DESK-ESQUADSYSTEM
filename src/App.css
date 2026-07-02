@@ -504,14 +504,22 @@ textarea::placeholder {
 .secao-demandas .cabecalho button:hover {
   background: var(--primaria-hover);
 }
-.lista-demandas {
-  list-style: none;
-  padding: 0;
-  margin: 1rem 0 0;
+/* Caixa da lista: rola por DENTRO (sem margem interna), para o botao "Voltar"
+   fixo ficar abaixo dela e nunca cobrir as demandas. flex 0 1 auto = cresce
+   com o conteudo e, quando passa do espaco disponivel, rola. */
+.caixa-lista {
+  margin-top: 1rem;
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
   background: var(--surface);
   border: 1px solid var(--borda);
   border-radius: var(--raio);
-  overflow: hidden;
+}
+.lista-demandas {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 .lista-demandas li {
   border-bottom: 1px solid var(--borda);
@@ -639,17 +647,23 @@ textarea::placeholder {
 .voltar-inicio:hover {
   background: var(--primaria-hover);
 }
-/* espaco no fim da lista para o ultimo item nao ficar atras do botao fixo */
+/* Coluna de altura fixa: filtros no topo, caixa da lista rolando no meio, e o
+   botao "Voltar" fixo ABAIXO (a altura reservada deixa a caixa acima dele). */
 .secao-demandas {
-  padding-bottom: 5.5rem;
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - 10rem);
 }
-/* no celular, afasta mais o botao da borda inferior */
+.secao-demandas > .filtros {
+  flex-shrink: 0;
+}
+/* no celular o botao fica mais alto -> reserva um pouco mais de espaco */
 @media (max-width: 640px) {
   .voltar-inicio {
     bottom: calc(2.5rem + env(safe-area-inset-bottom, 0px));
   }
   .secao-demandas {
-    padding-bottom: 6.5rem;
+    height: calc(100dvh - 11rem);
   }
 }
 

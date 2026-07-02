@@ -343,18 +343,22 @@ export default function Demandas({
         listaFiltrada.length === 0 ? (
           <p className="vazio">Nenhuma demanda encontrada com esses filtros.</p>
         ) : (
-          <ul className="lista-demandas">
-            {listaFiltrada.map((d) => (
-              <li key={d.id}>
-                <div className="linha-demanda">{botaoDemanda(d, 0)}</div>
-              </li>
-            ))}
-          </ul>
+          <div className="caixa-lista">
+            <ul className="lista-demandas">
+              {listaFiltrada.map((d) => (
+                <li key={d.id}>
+                  <div className="linha-demanda">{botaoDemanda(d, 0)}</div>
+                </li>
+              ))}
+            </ul>
+          </div>
         )
       ) : (
-        <ul className="lista-demandas">
-          {raizesOrdenadas.map((d) => renderArvore(d, 0))}
-        </ul>
+        <div className="caixa-lista">
+          <ul className="lista-demandas">
+            {raizesOrdenadas.map((d) => renderArvore(d, 0))}
+          </ul>
+        </div>
       )}
 
       <button type="button" className="voltar-inicio" onClick={aoVoltarInicio}>
