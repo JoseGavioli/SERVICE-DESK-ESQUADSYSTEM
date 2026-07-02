@@ -1483,6 +1483,37 @@ textarea::placeholder {
 .botao-aplicar:hover {
   background: var(--primaria-hover);
 }
+/* atalho "Precisam de atencao" no topo da lista (§issue #4) */
+.atalho-atencao {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.2rem 0;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--perigo);
+  border-radius: var(--raio-sm);
+  background: color-mix(in srgb, var(--perigo) 8%, transparent);
+  color: var(--perigo);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.atalho-atencao.ativo {
+  background: var(--perigo);
+  color: var(--perigo-texto);
+}
+.atalho-contador {
+  background: var(--perigo);
+  color: var(--perigo-texto);
+  border-radius: var(--raio-pill);
+  padding: 0.05rem 0.5rem;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+.atalho-atencao.ativo .atalho-contador {
+  background: var(--perigo-texto);
+  color: var(--perigo);
+}
 
 /* ── Notificações ──────────────────────────────────────────── */
 .badge-menu {

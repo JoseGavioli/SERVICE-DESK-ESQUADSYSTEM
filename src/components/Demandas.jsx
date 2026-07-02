@@ -17,6 +17,7 @@ const FILTROS_VAZIOS = {
   status: '',
   urgencia: '',
   soAtivas: false,
+  soAtencao: false, // atalho "precisam de atencao" (§issue #4)
   ordenacao: 'padrao', // padrao | urgencia | recentes | antigas
 }
 
@@ -90,6 +91,11 @@ export default function Demandas({
   function precisaAtencao(d) {
     return custoAtrasado(d) || prazoVencido(d)
   }
+  // Atalho "Precisam de atencao" (§issue #4): o vermelho acima + as demandas
+  // com cancelamento SOLICITADO (aguardando o admin decidir).
+  function mereceAtencao(d) {
+    return precisaAtencao(d) || d.cancelamento_solicitado
+  }
 
   useEffect(() => {
     carregar()
@@ -159,11 +165,16 @@ export default function Demandas({
     f.status !== '' ||
     f.urgencia !== '' ||
     f.soAtivas ||
+    f.soAtencao ||
     f.ordenacao !== 'padrao'
+
+  // Quantas demandas visiveis "merecem atencao" (para o atalho, §issue #4).
+  const qtdAtencao = demandas.filter(mereceAtencao).length
 
   function calcularLista() {
     const termo = f.busca.trim().toLowerCase()
     let lista = demandas.filter((d) => {
+      if (f.soAtencao && !mereceAtencao(d)) return false
       if (f.status && d.status !== f.status) return false
       if (f.soAtivas && (d.status === 'enviado' || d.status === 'cancelada'))
         return false
@@ -357,6 +368,19 @@ export default function Demandas({
       <p className="saudacao">
         Olá, <strong>{perfil.nome_completo}</strong> 👋
       </p>
+      {qtdAtencao > 0 && (
+        <button
+          type="button"
+          className={`atalho-atencao ${f.soAtencao ? 'ativo' : ''}`}
+          onClick={() =>
+            setF((prev) => ({ ...prev, soAtencao: !prev.soAtencao }))
+          }
+          aria-pressed={f.soAtencao}
+        >
+          ⚠️ Precisam de atenção
+          <span className="atalho-contador">{qtdAtencao}</span>
+        </button>
+      )}
       <FiltrosDemandas
         f={f}
         aoBuscar={aoBuscar}
