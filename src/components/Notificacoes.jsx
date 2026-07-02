@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { textoNotificacao } from '../lib/notificacaoTexto'
+import EstadoVazio from './EstadoVazio'
 
 // Drawer de Notificacoes: desliza da DIREITA (aberto pelo sino do topo), com
 // backdrop escurecido atras — mesmo padrao do menu lateral (que vem da esquerda).
@@ -95,7 +96,11 @@ export default function Notificacoes({
         )}
 
         {notificacoes.length === 0 ? (
-          <p className="vazio">Nenhuma notificação por enquanto.</p>
+          <EstadoVazio
+            icone="🔔"
+            titulo="Tudo em dia"
+            dica="Nenhuma notificação por enquanto."
+          />
         ) : (
           <ul className="lista-notif">
             {notificacoes.map((n) => (

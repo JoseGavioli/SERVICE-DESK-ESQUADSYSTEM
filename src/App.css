@@ -565,6 +565,63 @@ textarea::placeholder {
   padding: 0;
   margin: 0;
 }
+/* Skeleton de carregamento (§issue #20) */
+.skel-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.85rem 0.9rem;
+}
+.skel-linha {
+  height: 0.8rem;
+  border-radius: var(--raio-sm);
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 0%,
+    var(--borda) 50%,
+    var(--surface-2) 100%
+  );
+  background-size: 200% 100%;
+  animation: skel-shimmer 1.3s linear infinite;
+}
+.skel-lg {
+  width: 55%;
+}
+.skel-md {
+  width: 38%;
+}
+.skel-sm {
+  width: 28%;
+}
+@keyframes skel-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+/* Estado vazio amigavel (§issue #20) */
+.estado-vazio {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: var(--texto-suave);
+}
+.estado-vazio-icone {
+  font-size: 2.4rem;
+  display: block;
+  margin-bottom: 0.5rem;
+  opacity: 0.85;
+}
+.estado-vazio-titulo {
+  font-weight: 600;
+  color: var(--texto);
+  margin: 0 0 0.25rem;
+}
+.estado-vazio-dica {
+  font-size: 0.9rem;
+  margin: 0;
+}
 .lista-demandas li {
   border-bottom: 1px solid var(--borda);
 }

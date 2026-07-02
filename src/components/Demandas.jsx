@@ -6,6 +6,7 @@ import NovaDemanda from './NovaDemanda'
 import DetalheDemanda from './DetalheDemanda'
 import SeloUrgencia from './SeloUrgencia'
 import FiltrosDemandas from './FiltrosDemandas'
+import EstadoVazio from './EstadoVazio'
 
 // Rank de urgencia (0 = mais critico) para ordenar a fila.
 const RANK_URGENCIA = Object.fromEntries(
@@ -392,12 +393,32 @@ export default function Demandas({
       {erro && <p className="erro">{erro}</p>}
 
       {carregando ? (
-        <p>Carregando demandas…</p>
+        <div className="caixa-lista">
+          <ul className="lista-demandas">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <li key={i}>
+                <div className="skel-item">
+                  <div className="skel-linha skel-lg" />
+                  <div className="skel-linha skel-md" />
+                  <div className="skel-linha skel-sm" />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : demandas.length === 0 ? (
-        <p className="vazio">Nenhuma demanda ainda.</p>
+        <EstadoVazio
+          icone="📋"
+          titulo="Nenhuma demanda ainda"
+          dica="Toque no + para criar a primeira."
+        />
       ) : filtrando ? (
         listaFiltrada.length === 0 ? (
-          <p className="vazio">Nenhuma demanda encontrada com esses filtros.</p>
+          <EstadoVazio
+            icone="🔍"
+            titulo="Nada com esses filtros"
+            dica="Tente afrouxar a busca ou limpar os filtros."
+          />
         ) : (
           <div className="caixa-lista">
             <ul className="lista-demandas">
