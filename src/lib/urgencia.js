@@ -88,3 +88,15 @@ export function estaCustoAtrasado(status, dataPrimeiraRevisaoIso) {
 
   return diasUteisEntre(de, hoje) >= DIAS_CUSTO_ATRASADO
 }
+
+// Dias uteis desde uma data (ISO) ate hoje. Usado no detalhe para mostrar
+// "ha X dias uteis em revisao de custo" (§issue #13) — mesma conta do alerta.
+export function diasUteisDesde(dataIso) {
+  if (!dataIso) return null
+  const de = new Date(dataIso)
+  de.setHours(0, 0, 0, 0)
+  const hoje = new Date()
+  hoje.setHours(0, 0, 0, 0)
+  if (hoje <= de) return 0
+  return diasUteisEntre(de, hoje)
+}

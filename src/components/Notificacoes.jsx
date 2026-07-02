@@ -12,6 +12,7 @@ const TIPO_ICONE = {
   cancelamento_efetivado: '❌',
   novo_comentario: '💬',
   solicitacao_cancelamento: '⚠️',
+  prazo_proximo: '⏰',
   prazo_vencido: '⏰',
   custo_atrasado: '⏰',
 }

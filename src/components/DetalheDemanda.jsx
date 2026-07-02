@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { STATUS_ROTULO } from '../lib/status'
+import { diasUteisDesde } from '../lib/urgencia'
 import SeloUrgencia from './SeloUrgencia'
 import Cancelamento from './Cancelamento'
 import AcoesStatus from './AcoesStatus'
@@ -25,6 +26,7 @@ export default function DetalheDemanda({
   const [erro, setErro] = useState('')
   const [versao, setVersao] = useState(0) // muda apos uma acao p/ recarregar os filhos
   const [criandoFilha, setCriandoFilha] = useState(false)
+  const [dataRevisao, setDataRevisao] = useState(null) // 1a entrada em revisao (§issue #13)
 
   async function carregar() {
     const { data, error } = await supabase
@@ -36,6 +38,18 @@ export default function DetalheDemanda({
       .single()
     if (error) setErro('Não foi possível carregar a demanda.')
     else setD(data)
+
+    // Data da 1a entrada em "revisao de custo" (para "ha X dias", §issue #13).
+    const { data: rev } = await supabase
+      .from('historico_status')
+      .select('created_at')
+      .eq('demanda_id', demandaId)
+      .eq('para_status', 'em_revisao_custo')
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+    setDataRevisao(rev?.created_at ?? null)
+
     setCarregando(false)
   }
 
@@ -90,6 +104,8 @@ export default function DetalheDemanda({
 
   // So o vendedor dono cria filha, e so de uma demanda ENVIADA (§5/§11).
   const podeCriarFilha = d.status === 'enviado' && perfil.id === d.vendedor_id
+  // Dias uteis em revisao de custo (§issue #13); null se nunca entrou.
+  const diasRevisao = diasUteisDesde(dataRevisao)
 
   return (
     <div className="detalhe-demanda">
@@ -104,6 +120,18 @@ export default function DetalheDemanda({
         </span>
         <SeloUrgencia prazo={d.prazo} status={d.status} />
       </div>
+
+      {d.status === 'em_revisao_custo' && diasRevisao != null && (
+        <p className={`tempo-revisao ${diasRevisao >= 5 ? 'atrasado' : ''}`}>
+          ⏱️{' '}
+          {diasRevisao === 0
+            ? 'Em revisão de custo desde hoje'
+            : `Em revisão de custo há ${diasRevisao} ${
+                diasRevisao === 1 ? 'dia útil' : 'dias úteis'
+              }`}
+          {diasRevisao >= 5 && ' — custo atrasado'}
+        </p>
+      )}
 
       {podeCriarFilha && (
         <div className="filha">

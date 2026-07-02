@@ -906,6 +906,16 @@ textarea::placeholder {
   gap: 0.5rem;
   margin-top: 0.35rem;
 }
+/* "ha X dias em revisao de custo" no detalhe (§issue #13) */
+.tempo-revisao {
+  font-size: 0.9rem;
+  color: var(--texto-suave);
+  margin: 0.4rem 0 0;
+}
+.tempo-revisao.atrasado {
+  color: var(--perigo);
+  font-weight: 600;
+}
 .urgencia {
   font-size: 0.75rem;
   padding: 0.2rem 0.55rem;

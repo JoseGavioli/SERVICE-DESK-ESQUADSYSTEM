@@ -39,6 +39,8 @@ export function textoNotificacao(n) {
     case 'mudanca_status':
       return `${autor} ${verboStatus(n.de_status, n.para_status)}${deCliente}`
     // Notificacoes do SISTEMA (job diario, migracao 0020) — nao tem autor.
+    case 'prazo_proximo':
+      return `⏰ O prazo da demanda${deCliente} vence em breve`
     case 'prazo_vencido':
       return `⏰ O prazo da demanda${deCliente} venceu`
     case 'custo_atrasado':
