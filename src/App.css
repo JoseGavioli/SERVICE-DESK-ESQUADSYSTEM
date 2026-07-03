@@ -1309,6 +1309,187 @@ textarea::placeholder {
   color: var(--texto);
 }
 
+/* ── Detalhe: layout em cards (B2, estilo "Order details") ─── */
+.det-cabecalho {
+  margin-bottom: 0.85rem;
+}
+.det-cabecalho h2 {
+  margin: 0.25rem 0 0.45rem;
+}
+/* card base + secoes que passam a ser card */
+.det-card,
+.detalhe-demanda .acoes-status,
+.detalhe-demanda .historico,
+.detalhe-demanda .comentarios,
+.detalhe-demanda .anexos {
+  background: var(--surface);
+  border: 0;
+  border-radius: var(--raio-card);
+  box-shadow: var(--sombra-sm);
+  padding: 1.1rem 1.15rem;
+  margin: 0 0 0.85rem;
+}
+.det-card-titulo,
+.detalhe-demanda .acoes-status h3,
+.detalhe-demanda .historico h3,
+.detalhe-demanda .comentarios h3,
+.detalhe-demanda .anexos h3 {
+  margin: 0 0 0.85rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--texto);
+}
+/* campos em linhas rotulo/valor */
+.det-info {
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
+}
+.info-linha {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.62rem 0;
+  border-bottom: 1px solid var(--borda);
+}
+.info-linha:last-child {
+  border-bottom: 0;
+}
+.info-rot {
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.info-val {
+  color: var(--texto);
+  font-weight: 600;
+  text-align: right;
+}
+.det-descricao {
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.5;
+  color: var(--texto);
+}
+
+/* ── Linha do tempo de status (stepper vertical) ───────────── */
+.linha-tempo {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.lt-passo {
+  position: relative;
+  display: flex;
+  gap: 0.85rem;
+  padding-bottom: 1.15rem;
+}
+.lt-passo:last-child {
+  padding-bottom: 0;
+}
+/* linha vertical conectando os nós */
+.lt-passo:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: 30px;
+  bottom: 0;
+  width: 2px;
+  background: var(--borda-forte);
+}
+.lt-passo.lt-feito:not(:last-child)::before {
+  background: var(--primaria);
+}
+.lt-no {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-2);
+  border: 2px solid var(--borda-forte);
+  color: var(--texto-fraco);
+}
+.lt-ponto {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.lt-feito .lt-no {
+  background: var(--primaria);
+  border-color: var(--primaria);
+  color: #fff;
+}
+.lt-atual .lt-no {
+  background: var(--primaria-suave);
+  border-color: var(--primaria);
+  color: var(--primaria);
+}
+.lt-sucesso .lt-no {
+  background: var(--st-enviado-fg);
+  border-color: var(--st-enviado-fg);
+  color: #fff;
+}
+.lt-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding-top: 0.35rem;
+  min-width: 0;
+}
+.lt-passo strong {
+  font-weight: 600;
+  font-size: 0.98rem;
+  color: var(--texto);
+}
+.lt-atual strong {
+  color: var(--primaria);
+}
+.lt-futuro strong {
+  color: var(--texto-suave);
+  font-weight: 500;
+}
+.lt-sub {
+  font-size: 0.82rem;
+  color: var(--texto-suave);
+}
+.lt-sub.atrasado {
+  color: var(--perigo);
+  font-weight: 600;
+}
+.lt-congelado {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--st-congelado-fg);
+}
+/* cancelada: bloco vermelho no lugar do stepper */
+.linha-tempo-cancelada {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+.lt-no-cancel {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--st-cancelada-bg);
+  color: var(--st-cancelada-fg);
+}
+.linha-tempo-cancelada strong {
+  color: var(--st-cancelada-fg);
+}
+
 /* ── Urgência ──────────────────────────────────────────────── */
 .badges {
   display: flex;

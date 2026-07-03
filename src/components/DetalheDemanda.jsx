@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { STATUS_ROTULO } from '../lib/status'
 import { diasUteisDesde } from '../lib/urgencia'
 import SeloUrgencia from './SeloUrgencia'
+import LinhaTempoStatus from './LinhaTempoStatus'
 import Cancelamento from './Cancelamento'
 import AcoesStatus from './AcoesStatus'
 import HistoricoStatus from './HistoricoStatus'
@@ -114,25 +115,22 @@ export default function DetalheDemanda({
         <Icone nome="voltar" size={20} /> Voltar
       </button>
 
-      <h2>Demanda #{codigo ?? d.id}</h2>
-      <div className="badges-linha">
-        <span className={`status status-${d.status}`}>
-          {STATUS_ROTULO[d.status]}
-        </span>
-        <SeloUrgencia prazo={d.prazo} status={d.status} />
-      </div>
+      <header className="det-cabecalho">
+        <h2>Demanda #{codigo ?? d.id}</h2>
+        <div className="badges-linha">
+          <span className={`status status-${d.status}`}>
+            {STATUS_ROTULO[d.status]}
+          </span>
+          <SeloUrgencia prazo={d.prazo} status={d.status} />
+        </div>
+      </header>
 
-      {d.status === 'em_revisao_custo' && diasRevisao != null && (
-        <p className={`tempo-revisao ${diasRevisao >= 5 ? 'atrasado' : ''}`}>
-          <Icone nome="relogio" size={16} />{' '}
-          {diasRevisao === 0
-            ? 'Em revisão de custo desde hoje'
-            : `Em revisão de custo há ${diasRevisao} ${
-                diasRevisao === 1 ? 'dia útil' : 'dias úteis'
-              }`}
-          {diasRevisao >= 5 && ' — custo atrasado'}
-        </p>
-      )}
+      <section className="det-card">
+        <h3 className="det-card-titulo">Andamento</h3>
+        <LinhaTempoStatus status={d.status} diasRevisao={diasRevisao} />
+      </section>
+
+      <AcoesStatus demanda={d} perfil={perfil} aoMover={recarregar} />
 
       {podeCriarFilha && (
         <div className="filha">
@@ -158,39 +156,51 @@ export default function DetalheDemanda({
         </div>
       )}
 
-      <dl>
-        <dt>Tipo</dt>
-        <dd>{d.tipo_demanda?.nome}</dd>
+      <section className="det-card det-info">
+        <div className="info-linha">
+          <span className="info-rot">Tipo</span>
+          <span className="info-val">{d.tipo_demanda?.nome}</span>
+        </div>
+        <div className="info-linha">
+          <span className="info-rot">Cliente</span>
+          <span className="info-val">{d.obra?.cliente?.nome}</span>
+        </div>
+        <div className="info-linha">
+          <span className="info-rot">Obra</span>
+          <span className="info-val">
+            {d.obra?.nome}
+            {d.obra?.endereco ? ` — ${d.obra.endereco}` : ''}
+          </span>
+        </div>
+        <div className="info-linha">
+          <span className="info-rot">Vendedor</span>
+          <span className="info-val">{d.vendedor?.nome_completo}</span>
+        </div>
+        <div className="info-linha">
+          <span className="info-rot">Prazo</span>
+          <span className="info-val">
+            {d.prazo?.split('-').reverse().join('/')}
+          </span>
+        </div>
+        <div className="info-linha">
+          <span className="info-rot">Criada em</span>
+          <span className="info-val">
+            {new Date(d.created_at).toLocaleString('pt-BR', {
+              dateStyle: 'short',
+              timeStyle: 'short',
+            })}
+          </span>
+        </div>
+      </section>
 
-        <dt>Cliente</dt>
-        <dd>{d.obra?.cliente?.nome}</dd>
-
-        <dt>Obra</dt>
-        <dd>
-          {d.obra?.nome}
-          {d.obra?.endereco ? ` — ${d.obra.endereco}` : ''}
-        </dd>
-
-        <dt>Vendedor</dt>
-        <dd>{d.vendedor?.nome_completo}</dd>
-
-        <dt>Prazo</dt>
-        <dd>{d.prazo}</dd>
-
-        <dt>Criada em</dt>
-        <dd>{new Date(d.created_at).toLocaleString('pt-BR')}</dd>
-      </dl>
-
-      <div className="descricao">
-        <h3>Descrição</h3>
-        <p>{d.descricao}</p>
-      </div>
+      <section className="det-card">
+        <h3 className="det-card-titulo">Descrição</h3>
+        <p className="det-descricao">{d.descricao}</p>
+      </section>
 
       <Anexos demanda={d} perfil={perfil} />
 
       <Cancelamento demanda={d} perfil={perfil} aoMudar={recarregar} />
-
-      <AcoesStatus demanda={d} perfil={perfil} aoMover={recarregar} />
 
       <HistoricoStatus key={`h${versao}`} demandaId={d.id} />
 

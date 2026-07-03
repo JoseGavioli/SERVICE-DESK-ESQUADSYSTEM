@@ -29,6 +29,8 @@ import {
   Lock,
   Eye,
   EyeOff,
+  Check,
+  Snowflake,
 } from 'lucide-react'
 
 // Fonte UNICA dos icones do app (§issue #9). Uso: <Icone nome="sino" />.
@@ -65,6 +67,8 @@ const MAPA = {
   cadeado: Lock,
   olho: Eye,
   'olho-fechado': EyeOff,
+  check: Check,
+  neve: Snowflake,
 }
 
 export default function Icone({ nome, size = 18, strokeWidth = 2, className }) {
