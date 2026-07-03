@@ -1758,20 +1758,33 @@ button.card-corpo:hover {
   width: 100%;
   text-align: left;
   background: var(--surface);
-  border: 1px solid var(--borda);
-  border-left: 5px solid var(--primaria);
-  border-radius: var(--raio-sm);
-  padding: 0.9rem 1rem;
+  border: 0;
+  border-radius: var(--raio-card);
+  box-shadow: var(--sombra-sm);
+  padding: 1rem 1.15rem;
   cursor: pointer;
   font: inherit;
   color: var(--texto);
-  transition: background 0.12s ease;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 .box-inicio:hover {
-  background: var(--surface-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--sombra);
 }
+/* box "DEMANDAS EM ABERTO": card hero preenchido de navy */
 .box-total {
-  margin: 0 0 1.25rem;
+  margin: 0 0 1rem;
+  background: var(--primaria);
+  box-shadow: var(--sombra);
+}
+.box-total .box-titulo {
+  color: rgba(255, 255, 255, 0.82);
+}
+.box-total .box-numero {
+  color: #ffffff;
+}
+.box-total .box-hint {
+  color: rgba(255, 255, 255, 0.7);
 }
 .box-titulo {
   font-size: 0.85rem;
@@ -1798,12 +1811,8 @@ button.card-corpo:hover {
   gap: 0.75rem;
 }
 
-/* container "Dashboard" que agrupa as boxes das demandas */
+/* container "Dashboard": so agrupa (as boxes ja sao cards proprios) */
 .dashboard {
-  background: var(--surface-2);
-  border: 1px solid var(--borda);
-  border-radius: var(--raio);
-  padding: 1rem;
   margin: 0 0 1.25rem;
 }
 .dashboard-titulo {
@@ -1816,13 +1825,7 @@ button.card-corpo:hover {
    --c = cor forte do status; --cbg = tom claro. Fallback solido se o
    navegador nao suportar color-mix. */
 .box-status-cor {
-  border-left-color: var(--c);
-  background: var(--cbg);
-  background: linear-gradient(
-    135deg,
-    var(--cbg),
-    color-mix(in srgb, var(--cbg) 70%, var(--c))
-  );
+  border-left: 4px solid var(--c);
 }
 .box-status-cor .box-titulo,
 .box-status-cor .box-numero {
@@ -1839,15 +1842,13 @@ button.card-corpo:hover {
   justify-content: center;
   text-align: center;
   gap: 0.15rem;
-  margin: 0 0 1.25rem;
-  border-left: 5px solid var(--marca-navy);
-  border-right: 5px solid var(--marca-navy);
+  margin: 0 0 1rem;
 }
 .box-novo-mais {
   font-size: 1.9rem;
   font-weight: 700;
   line-height: 1;
-  color: var(--primaria);
+  color: var(--perigo);
 }
 .box-novo-texto {
   font-size: 0.85rem;
