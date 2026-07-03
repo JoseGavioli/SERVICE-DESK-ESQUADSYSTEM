@@ -551,19 +551,18 @@ textarea::placeholder {
 .secao-demandas .cabecalho button:hover {
   background: var(--primaria-hover);
 }
-/* Caixa da lista: card com a lista dentro (sem margem interna). A rolagem e a
-   normal da pagina — o botao "Voltar" saiu (issue #1). */
+/* Caixa da lista: apenas um espacador; cada demanda e um CARD branco proprio
+   flutuando no fundo cinza-claro (reforma visual, Bloco B). */
 .caixa-lista {
   margin-top: 1rem;
-  background: var(--surface);
-  border: 1px solid var(--borda);
-  border-radius: var(--raio);
-  overflow: hidden;
 }
 .lista-demandas {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
 }
 /* Skeleton de carregamento (§issue #20) */
 .skel-item {
@@ -628,10 +627,10 @@ textarea::placeholder {
   margin: 0;
 }
 .lista-demandas li {
-  border-bottom: 1px solid var(--borda);
-}
-.lista-demandas li:last-child {
-  border-bottom: 0;
+  background: var(--surface);
+  border-radius: var(--raio-card);
+  box-shadow: var(--sombra-sm);
+  overflow: hidden;
 }
 .linha-demanda {
   display: flex;
@@ -641,10 +640,10 @@ textarea::placeholder {
   flex: 1;
   min-width: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.8rem 0.9rem;
+  padding: 0.95rem 1.05rem;
   background: transparent;
   border: 0;
   border-left: 4px solid transparent;
@@ -740,16 +739,16 @@ textarea::placeholder {
   height: 3.5rem;
   border: 0;
   border-radius: 50%;
-  background: var(--primaria);
-  color: var(--primaria-texto);
+  background: var(--perigo);
+  color: var(--perigo-texto);
   font-size: 2rem;
   line-height: 1;
   cursor: pointer;
-  box-shadow: var(--sombra);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--perigo) 42%, transparent);
   transition: background 0.15s ease;
 }
 .fab-nova:hover {
-  background: var(--primaria-hover);
+  background: var(--perigo-hover);
 }
 /* folga no rodape da lista para o ultimo item nao ficar sob o FAB */
 .secao-demandas {
@@ -1462,6 +1461,14 @@ textarea::placeholder {
 .filtros select {
   padding: 0.5rem 0.6rem;
   font-size: 0.9rem;
+}
+/* busca vira um card (reforma visual, Bloco B) */
+.filtros .busca {
+  background: var(--surface);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra-sm);
+  padding: 0.72rem 0.85rem;
 }
 /* barra recolhida: botao "Filtrar" + tags do que esta aplicado */
 .filtro-barra {

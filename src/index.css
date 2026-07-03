@@ -8,7 +8,7 @@
 
   /* Cores da marca */
   --marca-navy: #2e3a4e;
-  --marca-red: #d11f2a;
+  --marca-red: #cb2027;
 
   /* Superficies e texto (claro) */
   --bg: #eef1f5;
@@ -27,9 +27,9 @@
   --primaria-texto: #ffffff;
   --primaria-suave: #e7ebf1;
 
-  /* Perigo / acento (vermelho) */
-  --perigo: #d11f2a;
-  --perigo-hover: #b21a23;
+  /* Perigo / acento (vermelho da marca) */
+  --perigo: #cb2027;
+  --perigo-hover: #a81b21;
   --perigo-texto: #ffffff;
 
   /* Sucesso (mensagens) */
@@ -45,6 +45,7 @@
   --aviso-borda: #ffe08a;
 
   /* Formas */
+  --raio-card: 16px;
   --raio: 12px;
   --raio-sm: 8px;
   --raio-pill: 999px;
