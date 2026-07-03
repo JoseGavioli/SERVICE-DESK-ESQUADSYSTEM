@@ -21,6 +21,10 @@ import {
   ZoomIn,
   ZoomOut,
   ClipboardList,
+  Home,
+  LayoutDashboard,
+  Users,
+  MoreHorizontal,
 } from 'lucide-react'
 
 // Fonte UNICA dos icones do app (§issue #9). Uso: <Icone nome="sino" />.
@@ -49,6 +53,10 @@ const MAPA = {
   'zoom-mais': ZoomIn,
   'zoom-menos': ZoomOut,
   lista: ClipboardList,
+  casa: Home,
+  painel: LayoutDashboard,
+  clientes: Users,
+  'mais-opcoes': MoreHorizontal,
 }
 
 export default function Icone({ nome, size = 18, strokeWidth = 2, className }) {

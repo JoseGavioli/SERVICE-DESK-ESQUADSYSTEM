@@ -1,24 +1,15 @@
-// Menu lateral (drawer) que desliza da esquerda, sobre o conteudo, com um
-// fundo escurecido atras. Fecha ao escolher um item ou tocar no fundo.
-// Cabecalho com a marca (icone + titulo + subtitulo, como no login), depois
-// os atalhos das telas, "Tema" e "Sair".
-
-const ITENS_BASE = [
-  { id: 'inicio', rotulo: 'Início' },
-  { id: 'dashboard', rotulo: 'Dashboard' },
-  { id: 'clientes', rotulo: 'Clientes' },
-]
-
+// Menu "Mais" (drawer que desliza da esquerda). As telas principais vivem no
+// bottom-nav; aqui ficam os EXTRAS: Equipe (admin), Tema e Sair.
+// Cabecalho com a marca (icone + titulo + subtitulo, como no login).
 export default function MenuLateral({
   aberto,
   aoFechar,
   perfil,
   secao,
-  novidadesCount,
   aoNavegar,
   aoSair,
 }) {
-  const itens = [...ITENS_BASE]
+  const itens = []
   if (perfil.papel === 'admin') itens.push({ id: 'equipe', rotulo: 'Equipe' })
   itens.push({ id: 'tema', rotulo: 'Tema' })
 
@@ -45,9 +36,6 @@ export default function MenuLateral({
               onClick={() => aoNavegar(it.id)}
             >
               {it.rotulo}
-              {it.id === 'inicio' && novidadesCount > 0 && (
-                <span className="badge-menu">{novidadesCount}</span>
-              )}
             </button>
           ))}
           <button type="button" className="menu-sair" onClick={aoSair}>

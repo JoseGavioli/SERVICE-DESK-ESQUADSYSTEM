@@ -5,6 +5,7 @@ import Demandas from './Demandas'
 import Clientes from './Clientes'
 import Equipe from './Equipe'
 import MenuLateral from './MenuLateral'
+import BottomNav from './BottomNav'
 import Tema from './Tema'
 import Notificacoes from './Notificacoes'
 import ToastNotificacao from './ToastNotificacao'
@@ -120,17 +121,7 @@ export default function Painel({ sessao }) {
   return (
     <div className="app">
       <header className="topo">
-        <div className="topo-esq">
-          <button
-            type="button"
-            className="botao-menu"
-            onClick={() => setMenuAberto(true)}
-            aria-label="Abrir menu"
-          >
-            <Icone nome="menu" size={20} />
-          </button>
-          <span className="titulo-tela">{NOME_TELA[secao] ?? ''}</span>
-        </div>
+        <span className="titulo-tela">{NOME_TELA[secao] ?? ''}</span>
         <button
           type="button"
           className="sino"
@@ -148,7 +139,6 @@ export default function Painel({ sessao }) {
         aoFechar={() => setMenuAberto(false)}
         perfil={perfil}
         secao={secao}
-        novidadesCount={demandasComNovidade.size}
         aoNavegar={(s) => {
           setSecao(s)
           setMenuAberto(false)
@@ -204,6 +194,13 @@ export default function Painel({ sessao }) {
           descartarToast()
         }}
         aoFechar={descartarToast}
+      />
+
+      <BottomNav
+        secao={secao}
+        aoNavegar={(s) => setSecao(s)}
+        aoMais={() => setMenuAberto(true)}
+        novidadesCount={demandasComNovidade.size}
       />
     </div>
   )
