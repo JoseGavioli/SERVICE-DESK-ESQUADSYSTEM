@@ -110,6 +110,8 @@ textarea::placeholder {
 .campo-icone-esq {
   position: absolute;
   left: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
   display: inline-flex;
   color: var(--texto-suave);
   pointer-events: none;
@@ -123,9 +125,14 @@ textarea::placeholder {
 .input-icone.com-olho {
   padding-right: 2.7rem;
 }
-.campo-olho {
+/* Seletor mais especifico que ".cartao button" (0,1,1) p/ o olho nao herdar o
+   estilo do botao primario (margin-top/padding/fundo navy). */
+.cartao-login .campo-olho {
   position: absolute;
   right: 0.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -136,7 +143,7 @@ textarea::placeholder {
   color: var(--texto-suave);
   cursor: pointer;
 }
-.campo-olho:hover {
+.cartao-login .campo-olho:hover {
   color: var(--texto);
   background: var(--surface-hover);
 }
