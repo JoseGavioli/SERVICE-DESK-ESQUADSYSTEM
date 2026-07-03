@@ -153,7 +153,11 @@ export default function Anexos({ demanda, perfil }) {
     )
   }
 
+  // A box de saida so aparece em "Concluido" (p/ anexar/ver) ou quando JA ha
+  // saida (ex.: "Enviado", p/ o vendedor ver o orcamento entregue). Mesma
+  // regra p/ staff e vendedor. Antes disso, nem renderiza.
   if (carregando) {
+    if (demanda.status !== 'concluido') return null
     return (
       <div className="anexos">
         <h3>Anexos (saída)</h3>
@@ -161,6 +165,9 @@ export default function Anexos({ demanda, perfil }) {
       </div>
     )
   }
+
+  const mostrar = demanda.status === 'concluido' || anexos.length > 0
+  if (!mostrar) return null
 
   return (
     <div className="anexos">

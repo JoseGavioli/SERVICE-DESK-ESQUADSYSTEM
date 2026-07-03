@@ -41,8 +41,24 @@ export default function AcoesStatus({ demanda, perfil, aoMover }) {
     }
   }
 
-  function clicar(t) {
+  async function clicar(t) {
     setErro('')
+    // Ao marcar como ENVIADO sem nenhum anexo de saida (orcamento), confirma.
+    if (t.para === 'enviado') {
+      const { count } = await supabase
+        .from('anexo')
+        .select('id', { count: 'exact', head: true })
+        .eq('demanda_id', demanda.id)
+        .eq('tipo', 'saida')
+      if (
+        !count &&
+        !window.confirm(
+          'Esta demanda não tem nenhum anexo de saída (orçamento). Tem certeza que deseja marcar como enviada mesmo assim?',
+        )
+      ) {
+        return
+      }
+    }
     if (t.exigeComentario) {
       setAcaoAtiva(t) // troca o sheet para a caixa de comentario obrigatorio
       setComentario('')
