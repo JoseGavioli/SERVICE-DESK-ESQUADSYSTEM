@@ -71,8 +71,10 @@ export default function Demandas({
   // Mapa demanda_id -> data da 1a entrada em "revisao de custo" (para o atraso).
   const [datasRevisao, setDatasRevisao] = useState({})
 
-  async function carregar() {
-    setCarregando(true)
+  // silencioso: recarrega sem mostrar o skeleton (ex.: ao voltar do detalhe,
+  // para refletir mudancas de status sem "piscar" a lista inteira).
+  async function carregar({ silencioso = false } = {}) {
+    if (!silencioso) setCarregando(true)
     const [{ data, error }, { data: datas }] = await Promise.all([
       supabase
         .from('demanda')
@@ -298,9 +300,12 @@ export default function Demandas({
         demandaId={detalheId}
         codigo={codigos[detalheId]}
         perfil={perfil}
-        aoVoltar={() => setDetalheId(null)}
+        aoVoltar={() => {
+          setDetalheId(null)
+          carregar({ silencioso: true }) // reflete o que mudou no detalhe
+        }}
         aoAbrir={(id) => {
-          carregar()
+          carregar({ silencioso: true })
           setDetalheId(id)
         }}
         aoVisto={() => marcarLidaDemanda(detalheId)}
