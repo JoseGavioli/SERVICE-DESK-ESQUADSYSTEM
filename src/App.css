@@ -1626,6 +1626,53 @@ textarea::placeholder {
   color: var(--texto-suave);
   font-size: 0.9rem;
 }
+/* gerenciar entrada no hero (§C4): remover (sobre a imagem) + adicionar */
+.hero-principal-wrap {
+  position: relative;
+}
+.hero-remover {
+  position: absolute;
+  top: 0.7rem;
+  left: 0.7rem;
+  z-index: 1;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.6);
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+.hero-remover:hover {
+  background: var(--perigo);
+}
+.hero-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  margin-top: 0.7rem;
+  padding: 0.7rem 1rem;
+  border: 2px dashed var(--borda-forte);
+  border-radius: var(--raio);
+  background: var(--surface-2);
+  color: var(--primaria);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.hero-add:hover {
+  background: var(--surface-hover);
+}
+.hero-add input {
+  display: none;
+}
 
 /* ── Detalhe C1: tipo / cliente / obra / tags ──────────────── */
 .det-tipo {

@@ -150,7 +150,7 @@ export default function DetalheDemanda({
       </header>
 
       {/* "Hero": anexos de entrada (o que o vendedor enviou) */}
-      <CarrosselEntrada demandaId={d.id} />
+      <CarrosselEntrada demanda={d} perfil={perfil} />
 
       {/* Tipo + Cliente/Obra + tags (status/urgencia) empilhadas */}
       <p className="det-tipo">{d.tipo_demanda?.nome}</p>
