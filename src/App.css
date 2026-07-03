@@ -1789,8 +1789,8 @@ textarea::placeholder {
   bottom: 0;
   z-index: 46;
   padding: 0.7rem 1rem calc(0.7rem + env(safe-area-inset-bottom, 0px));
-  background: var(--surface);
-  box-shadow: 0 -4px 18px rgba(15, 23, 42, 0.1);
+  background: var(--marca-navy);
+  box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.22);
 }
 .btn-alterar-status {
   display: flex;
@@ -1803,15 +1803,15 @@ textarea::placeholder {
   padding: 0.9rem;
   border: 0;
   border-radius: var(--raio);
-  background: var(--primaria);
-  color: var(--primaria-texto);
+  background: #fff;
+  color: var(--marca-navy);
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
   transition: background 0.15s ease;
 }
 .btn-alterar-status:hover {
-  background: var(--primaria-hover);
+  background: rgba(255, 255, 255, 0.88);
 }
 /* backdrop cobre tudo (o nav ja esta coberto pela barra) */
 .status-backdrop {
@@ -1834,10 +1834,10 @@ textarea::placeholder {
   bottom: 0;
   z-index: 57;
   max-height: 70vh;
-  background: var(--surface);
+  background: var(--marca-navy);
   border-top-left-radius: 22px;
   border-top-right-radius: 22px;
-  box-shadow: 0 -10px 34px rgba(15, 23, 42, 0.2);
+  box-shadow: 0 -10px 34px rgba(15, 23, 42, 0.35);
   transform: translateY(110%);
   transition: transform 0.25s ease;
   display: flex;
@@ -1848,11 +1848,15 @@ textarea::placeholder {
 .status-sheet.aberto {
   transform: translateY(0);
 }
+/* grabber claro sobre o fundo navy */
+.status-sheet .sheet-handle {
+  background: rgba(255, 255, 255, 0.3);
+}
 .status-sheet-titulo {
   margin: 0 0 0.75rem;
   font-size: 1.05rem;
   font-weight: 700;
-  color: var(--texto);
+  color: #fff;
 }
 .status-sheet-opcoes {
   display: flex;
@@ -1862,10 +1866,10 @@ textarea::placeholder {
 .status-opcao {
   width: 100%;
   padding: 0.85rem 1rem;
-  border: 1px solid var(--borda);
+  border: 0;
   border-radius: var(--raio);
-  background: var(--surface);
-  color: var(--texto);
+  background: #fff;
+  color: var(--marca-navy);
   font-size: 1rem;
   font-weight: 600;
   text-align: left;
@@ -1873,14 +1877,26 @@ textarea::placeholder {
   transition: background 0.15s ease;
 }
 .status-opcao:hover:not(:disabled) {
-  background: var(--surface-2);
+  background: rgba(255, 255, 255, 0.88);
 }
+/* cancelar continua vermelho (agora botao cheio, p/ destacar no menu navy) */
 .status-opcao.perigo {
-  border-color: var(--perigo);
-  color: var(--perigo);
+  background: var(--perigo);
+  color: #fff;
 }
 .status-opcao.perigo:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--perigo) 8%, transparent);
+  background: var(--perigo-hover);
+}
+/* caixa de comentario (congelar/cancelar/voltas) dentro do sheet navy */
+.status-sheet .form-transicao p {
+  color: #fff;
+}
+.status-sheet .form-transicao .acoes button[type='submit'] {
+  background: #fff;
+  color: var(--marca-navy);
+}
+.status-sheet .form-transicao .link {
+  color: rgba(255, 255, 255, 0.85);
 }
 
 /* ── Urgência ──────────────────────────────────────────────── */
@@ -2109,14 +2125,15 @@ textarea::placeholder {
   margin-top: 1.25rem;
 }
 .cancelamento > button.perigo {
-  padding: 0.55rem 0.95rem;
+  width: 100%;
+  padding: 0.9rem;
   border: 0;
-  border-radius: var(--raio-sm);
+  border-radius: var(--raio);
   background: var(--perigo);
   color: var(--perigo-texto);
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 1rem;
   transition: background 0.15s ease;
 }
 .cancelamento > button.perigo:hover {

@@ -68,8 +68,8 @@ export default function Cancelamento({ demanda, perfil, aoMudar }) {
     )
   }
 
-  // Botao de solicitar: so o vendedor dono, em demanda nao-terminal.
-  if (!souDono || terminal) return null
+  // Botao de solicitar: so o VENDEDOR dono, em demanda nao-terminal.
+  if (perfil.papel !== 'vendedor' || !souDono || terminal) return null
 
   return (
     <div className="cancelamento">
