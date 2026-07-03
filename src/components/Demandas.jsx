@@ -23,6 +23,15 @@ const FILTROS_VAZIOS = {
   ordenacao: 'padrao', // padrao | urgencia | recentes | antigas
 }
 
+// Chips de status no cabecalho (segmentos, estilo referencia). Cada chip mapeia
+// para um recorte de `f`: status e soAtivas. "Todas" = sem recorte.
+const ABAS_STATUS = [
+  { id: 'todas', rotulo: 'Todas' },
+  { id: 'em_aberto', rotulo: 'Em aberto' },
+  { id: 'enviados', rotulo: 'Enviados' },
+  { id: 'cancelados', rotulo: 'Cancelados' },
+]
+
 // Status finalizados que ganham destaque (borda colorida) na lista.
 const STATUS_FINAL = ['enviado', 'cancelada']
 
@@ -48,6 +57,8 @@ export default function Demandas({
   aoConsumirFiltro,
   criarInicial,
   aoConsumirCriar,
+  naoLidas,
+  aoAbrirNotif,
 }) {
   const [demandas, setDemandas] = useState([])
   const [carregando, setCarregando] = useState(true)
@@ -56,6 +67,7 @@ export default function Demandas({
   const [detalheId, setDetalheId] = useState(null)
   const [recolhidos, setRecolhidos] = useState(new Set())
   const [f, setF] = useState(FILTROS_VAZIOS)
+  const [buscaAberta, setBuscaAberta] = useState(false) // barra de busca (lupa)
   // Mapa demanda_id -> data da 1a entrada em "revisao de custo" (para o atraso).
   const [datasRevisao, setDatasRevisao] = useState({})
 
@@ -230,18 +242,40 @@ export default function Demandas({
   function aoAplicarFiltros(rascunho) {
     setF((prev) => ({ ...prev, ...rascunho }))
   }
+  // "Filtrar" avancado cuida so de urgencia + ordenacao (status vive nos chips).
   function aoRemoverFiltro(campo) {
-    const PADRAO = { status: '', urgencia: '', soAtivas: false, ordenacao: 'padrao' }
+    const PADRAO = { urgencia: '', ordenacao: 'padrao' }
     setF((prev) => ({ ...prev, [campo]: PADRAO[campo] }))
   }
   function aoLimparFiltros() {
+    setF((prev) => ({ ...prev, urgencia: '', ordenacao: 'padrao' }))
+  }
+
+  // ── Chips de status + busca (cabecalho) ─────────────────────────
+  // Qual chip esta ativo (deriva de f) e como aplicar cada um.
+  const abaAtiva =
+    f.status === 'enviado'
+      ? 'enviados'
+      : f.status === 'cancelada'
+        ? 'cancelados'
+        : f.soAtivas
+          ? 'em_aberto'
+          : 'todas'
+  function selecionarAba(aba) {
     setF((prev) => ({
       ...prev,
-      status: '',
-      urgencia: '',
-      soAtivas: false,
-      ordenacao: 'padrao',
+      status:
+        aba === 'enviados' ? 'enviado' : aba === 'cancelados' ? 'cancelada' : '',
+      soAtivas: aba === 'em_aberto',
     }))
+  }
+  // A lupa abre/fecha a barra de busca; ao fechar, limpa o termo (nao deixa
+  // filtro escondido ativo).
+  function alternarBusca() {
+    setBuscaAberta((v) => {
+      if (v) aoBuscar('')
+      return !v
+    })
   }
 
   if (criando) {
@@ -380,25 +414,74 @@ export default function Demandas({
 
   return (
     <div className="secao-demandas">
+      <header className="hero-demandas">
+        <h1 className="hero-titulo">Orçamentos e Revisões</h1>
+        <div className="hero-acoes">
+          <button
+            type="button"
+            className={`btn-circular ${buscaAberta ? 'ativo' : ''}`}
+            onClick={alternarBusca}
+            aria-label="Buscar"
+            aria-pressed={buscaAberta}
+          >
+            <Icone nome="lupa" size={20} />
+          </button>
+          <button
+            type="button"
+            className="btn-circular"
+            onClick={aoAbrirNotif}
+            aria-label="Notificações"
+            title="Notificações"
+          >
+            <Icone nome="sino" size={20} />
+            {naoLidas > 0 && <span className="sino-badge">{naoLidas}</span>}
+          </button>
+        </div>
+      </header>
+
       <p className="saudacao">
         Olá, <strong>{perfil.nome_completo}</strong> 👋
       </p>
-      {qtdAtencao > 0 && (
-        <button
-          type="button"
-          className={`atalho-atencao ${f.soAtencao ? 'ativo' : ''}`}
-          onClick={() =>
-            setF((prev) => ({ ...prev, soAtencao: !prev.soAtencao }))
-          }
-          aria-pressed={f.soAtencao}
-        >
-          <Icone nome="aviso" size={15} /> Atenção
-          <span className="atalho-contador">{qtdAtencao}</span>
-        </button>
+
+      <div className="chips-status">
+        {ABAS_STATUS.map((a) => (
+          <button
+            key={a.id}
+            type="button"
+            className={`chip-status ${abaAtiva === a.id ? 'ativo' : ''}`}
+            onClick={() => selecionarAba(a.id)}
+          >
+            {a.rotulo}
+          </button>
+        ))}
+        {qtdAtencao > 0 && (
+          <button
+            type="button"
+            className={`chip-status chip-atencao ${f.soAtencao ? 'ativo' : ''}`}
+            onClick={() =>
+              setF((prev) => ({ ...prev, soAtencao: !prev.soAtencao }))
+            }
+            aria-pressed={f.soAtencao}
+          >
+            <Icone nome="aviso" size={14} /> Atenção
+            <span className="chip-contador">{qtdAtencao}</span>
+          </button>
+        )}
+      </div>
+
+      {buscaAberta && (
+        <input
+          type="search"
+          className="busca busca-solta"
+          placeholder="Buscar (cliente, obra, descrição)…"
+          value={f.busca}
+          onChange={(e) => aoBuscar(e.target.value)}
+          autoFocus
+        />
       )}
+
       <FiltrosDemandas
         f={f}
-        aoBuscar={aoBuscar}
         aoAplicar={aoAplicarFiltros}
         aoRemover={aoRemoverFiltro}
         aoLimpar={aoLimparFiltros}

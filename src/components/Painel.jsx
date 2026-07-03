@@ -120,19 +120,23 @@ export default function Painel({ sessao }) {
 
   return (
     <div className="app">
-      <header className="topo">
-        <span className="titulo-tela">{NOME_TELA[secao] ?? ''}</span>
-        <button
-          type="button"
-          className="sino"
-          onClick={() => setNotifAberto(true)}
-          aria-label="Notificações"
-          title="Notificações"
-        >
-          <Icone nome="sino" size={20} />
-          {naoLidas > 0 && <span className="sino-badge">{naoLidas}</span>}
-        </button>
-      </header>
+      {/* Na Inicio o cabecalho vira um "hero" (titulo grande + lupa + sino)
+          dentro de Demandas; nas demais telas fica esta barra enxuta. */}
+      {secao !== 'inicio' && (
+        <header className="topo">
+          <span className="titulo-tela">{NOME_TELA[secao] ?? ''}</span>
+          <button
+            type="button"
+            className="sino"
+            onClick={() => setNotifAberto(true)}
+            aria-label="Notificações"
+            title="Notificações"
+          >
+            <Icone nome="sino" size={20} />
+            {naoLidas > 0 && <span className="sino-badge">{naoLidas}</span>}
+          </button>
+        </header>
+      )}
 
       <MenuLateral
         aberto={menuAberto}
@@ -159,7 +163,7 @@ export default function Painel({ sessao }) {
         aoLimpar={limparTodas}
       />
 
-      <section className="conteudo">
+      <section className={`conteudo${secao === 'inicio' ? ' sem-topo' : ''}`}>
         {secao === 'inicio' && (
           <Demandas
             perfil={perfil}
@@ -172,6 +176,8 @@ export default function Painel({ sessao }) {
             aoConsumirFiltro={() => setFiltroInicial(null)}
             criarInicial={criarInicial}
             aoConsumirCriar={() => setCriarInicial(false)}
+            naoLidas={naoLidas}
+            aoAbrirNotif={() => setNotifAberto(true)}
           />
         )}
         {secao === 'dashboard' && (

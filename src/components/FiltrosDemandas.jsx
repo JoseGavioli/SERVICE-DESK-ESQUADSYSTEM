@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import Icone from './Icone'
-import { STATUS_ROTULO } from '../lib/status'
 import { URGENCIA_NIVEIS } from '../lib/urgencia'
 
 // Rotulos de ordenacao (valor -> texto exibido / na tag).
@@ -11,30 +10,18 @@ const ORDENACAO = {
   antigas: 'Mais antigas',
 }
 const URG_ROTULO = Object.fromEntries(URGENCIA_NIVEIS.map((u) => [u.nivel, u.rotulo]))
-const RASCUNHO_VAZIO = { status: '', urgencia: '', soAtivas: false, ordenacao: 'padrao' }
+const RASCUNHO_VAZIO = { urgencia: '', ordenacao: 'padrao' }
 
-// Filtros da lista. A BUSCA e ao vivo (barra sempre visivel). Os filtros
-// ESTRUTURADOS (status/urgencia/so-ativas/ordenacao) ficam numa box que abre ao
-// tocar "Filtrar" e so valem quando se aplica; depois a box recolhe e o que
-// esta ativo vira TAGS removiveis (× em cada) + "limpar tudo".
-export default function FiltrosDemandas({
-  f,
-  aoBuscar,
-  aoAplicar,
-  aoRemover,
-  aoLimpar,
-}) {
+// Filtro AVANCADO (urgencia + ordenacao). O status agora vive nos chips do
+// cabecalho e a busca na lupa; aqui fica so o "Filtrar" que abre uma box e, ao
+// aplicar, vira TAGS removiveis (× em cada) + "limpar tudo".
+export default function FiltrosDemandas({ f, aoAplicar, aoRemover, aoLimpar }) {
   const [aberto, setAberto] = useState(false)
   const [rascunho, setRascunho] = useState(RASCUNHO_VAZIO)
 
   // Ao abrir, o rascunho parte do que ja esta aplicado.
   function abrir() {
-    setRascunho({
-      status: f.status,
-      urgencia: f.urgencia,
-      soAtivas: f.soAtivas,
-      ordenacao: f.ordenacao,
-    })
+    setRascunho({ urgencia: f.urgencia, ordenacao: f.ordenacao })
     setAberto(true)
   }
 
@@ -47,24 +34,14 @@ export default function FiltrosDemandas({
     setRascunho((prev) => ({ ...prev, [campo]: valor }))
   }
 
-  // Tags do que esta APLICADO (status, urgencia, so-ativas, ordem).
+  // Tags do que esta APLICADO (urgencia, ordem).
   const tags = []
-  if (f.status) tags.push({ campo: 'status', texto: STATUS_ROTULO[f.status] })
   if (f.urgencia) tags.push({ campo: 'urgencia', texto: URG_ROTULO[f.urgencia] })
-  if (f.soAtivas) tags.push({ campo: 'soAtivas', texto: 'Só ativas' })
   if (f.ordenacao !== 'padrao')
     tags.push({ campo: 'ordenacao', texto: `Ordem: ${ORDENACAO[f.ordenacao]}` })
 
   return (
     <div className="filtros">
-      <input
-        type="search"
-        className="busca"
-        placeholder="Buscar (cliente, obra, descrição)…"
-        value={f.busca}
-        onChange={(e) => aoBuscar(e.target.value)}
-      />
-
       <div className="filtro-barra">
         <button
           type="button"
@@ -99,21 +76,6 @@ export default function FiltrosDemandas({
       {aberto && (
         <div className="filtro-box">
           <label>
-            Status
-            <select
-              value={rascunho.status}
-              onChange={(e) => setR('status', e.target.value)}
-            >
-              <option value="">Todos os status</option>
-              {Object.entries(STATUS_ROTULO).map(([valor, rotulo]) => (
-                <option key={valor} value={valor}>
-                  {rotulo}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
             Urgência
             <select
               value={rascunho.urgencia}
@@ -139,15 +101,6 @@ export default function FiltrosDemandas({
               <option value="recentes">Mais recentes</option>
               <option value="antigas">Mais antigas</option>
             </select>
-          </label>
-
-          <label className="check">
-            <input
-              type="checkbox"
-              checked={rascunho.soAtivas}
-              onChange={(e) => setR('soAtivas', e.target.checked)}
-            />
-            Só ativas (esconde enviadas e canceladas)
           </label>
 
           <div className="filtro-acoes">
