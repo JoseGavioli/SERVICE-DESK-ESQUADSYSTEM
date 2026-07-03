@@ -392,7 +392,7 @@ export default function Demandas({
           }
           aria-pressed={f.soAtencao}
         >
-          <Icone nome="aviso" size={15} /> Precisam de atenção
+          <Icone nome="aviso" size={15} /> Atenção
           <span className="atalho-contador">{qtdAtencao}</span>
         </button>
       )}

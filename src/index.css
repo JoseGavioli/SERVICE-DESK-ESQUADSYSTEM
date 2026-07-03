@@ -35,9 +35,9 @@
   /* Sucesso (mensagens) */
   --sucesso: #2e7d32;
 
-  /* Barra do topo */
-  --topo-bg: #2e3a4e;
-  --topo-texto: #ffffff;
+  /* Barra do topo (clara e arejada) */
+  --topo-bg: #ffffff;
+  --topo-texto: #1f2733;
 
   /* Avisos */
   --aviso-bg: #fff8e1;
