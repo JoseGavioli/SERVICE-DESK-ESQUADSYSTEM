@@ -444,48 +444,52 @@ export default function Demandas({
       </p>
 
       <div className="chips-status">
-        {ABAS_STATUS.map((a) => (
-          <button
-            key={a.id}
-            type="button"
-            className={`chip-status ${abaAtiva === a.id ? 'ativo' : ''}`}
-            onClick={() => selecionarAba(a.id)}
-          >
-            {a.rotulo}
-          </button>
+        {ABAS_STATUS.map((a, i) => (
+          <Fragment key={a.id}>
+            <button
+              type="button"
+              className={`chip-status ${abaAtiva === a.id ? 'ativo' : ''}`}
+              onClick={() => selecionarAba(a.id)}
+            >
+              {a.rotulo}
+            </button>
+            {/* "Atenção" entra logo apos "Todas", quando ha demandas na flag (#2). */}
+            {i === 0 && qtdAtencao > 0 && (
+              <button
+                type="button"
+                className={`chip-status chip-atencao ${f.soAtencao ? 'ativo' : ''}`}
+                onClick={() =>
+                  setF((prev) => ({ ...prev, soAtencao: !prev.soAtencao }))
+                }
+                aria-pressed={f.soAtencao}
+              >
+                <Icone nome="aviso" size={14} /> Atenção
+                <span className="chip-contador">{qtdAtencao}</span>
+              </button>
+            )}
+          </Fragment>
         ))}
-        {qtdAtencao > 0 && (
-          <button
-            type="button"
-            className={`chip-status chip-atencao ${f.soAtencao ? 'ativo' : ''}`}
-            onClick={() =>
-              setF((prev) => ({ ...prev, soAtencao: !prev.soAtencao }))
-            }
-            aria-pressed={f.soAtencao}
-          >
-            <Icone nome="aviso" size={14} /> Atenção
-            <span className="chip-contador">{qtdAtencao}</span>
-          </button>
-        )}
       </div>
 
+      {/* Busca + Filtrar avancado aparecem JUNTOS, so ao tocar na lupa (#1). */}
       {buscaAberta && (
-        <input
-          type="search"
-          className="busca busca-solta"
-          placeholder="Buscar (cliente, obra, descrição)…"
-          value={f.busca}
-          onChange={(e) => aoBuscar(e.target.value)}
-          autoFocus
-        />
+        <>
+          <input
+            type="search"
+            className="busca busca-solta"
+            placeholder="Buscar (cliente, obra, descrição)…"
+            value={f.busca}
+            onChange={(e) => aoBuscar(e.target.value)}
+            autoFocus
+          />
+          <FiltrosDemandas
+            f={f}
+            aoAplicar={aoAplicarFiltros}
+            aoRemover={aoRemoverFiltro}
+            aoLimpar={aoLimparFiltros}
+          />
+        </>
       )}
-
-      <FiltrosDemandas
-        f={f}
-        aoAplicar={aoAplicarFiltros}
-        aoRemover={aoRemoverFiltro}
-        aoLimpar={aoLimparFiltros}
-      />
 
       {erro && <p className="erro">{erro}</p>}
 

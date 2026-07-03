@@ -204,7 +204,10 @@ export default function Painel({ sessao }) {
 
       <BottomNav
         secao={secao}
-        aoNavegar={(s) => setSecao(s)}
+        aoNavegar={(s) => {
+          setSecao(s)
+          setMenuAberto(false)
+        }}
         aoMais={() => setMenuAberto(true)}
         novidadesCount={demandasComNovidade.size}
       />

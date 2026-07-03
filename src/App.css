@@ -322,12 +322,16 @@ textarea::placeholder {
   text-overflow: ellipsis;
 }
 
-/* ── Menu lateral (drawer) ─────────────────────────────────── */
+/* ── Menu "Mais" (bottom-sheet que sobe de baixo) ──────────── */
+/* fundo escurecido: cobre tudo MENOS a barra inferior (que fica clicavel) */
 .menu-backdrop {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px));
   background: rgba(0, 0, 0, 0.45);
-  z-index: 60;
+  z-index: 54;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease;
@@ -336,26 +340,39 @@ textarea::placeholder {
   opacity: 1;
   pointer-events: auto;
 }
+/* Menu "Mais": sobe de baixo e para ACIMA da barra inferior (nao a encobre). */
 .menu-lateral {
   position: fixed;
-  top: 0;
   left: 0;
-  bottom: 0;
-  width: 270px;
-  max-width: 80vw;
-  z-index: 61;
+  right: 0;
+  bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px));
+  z-index: 55;
+  max-height: 60vh;
   background: var(--surface);
-  border-right: 1px solid var(--borda);
-  box-shadow: var(--sombra);
-  transform: translateX(-100%);
-  transition: transform 0.2s ease;
+  border-top-left-radius: 22px;
+  border-top-right-radius: 22px;
+  box-shadow: 0 -10px 34px rgba(15, 23, 42, 0.2);
+  transform: translateY(calc(100% + 5rem));
+  transition: transform 0.25s ease;
   display: flex;
   flex-direction: column;
-  padding: 1.25rem 1rem;
+  padding: 1.5rem 1rem 1rem;
   overflow-y: auto;
 }
+/* "pegador" (grabber) no topo da folha */
+.menu-lateral::before {
+  content: '';
+  position: absolute;
+  top: 0.6rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 4px;
+  border-radius: var(--raio-pill);
+  background: var(--borda-forte);
+}
 .menu-lateral.aberto {
-  transform: translateX(0);
+  transform: translateY(0);
 }
 .menu-cabecalho {
   display: flex;
