@@ -1725,6 +1725,13 @@ textarea::placeholder {
   font-size: 0.85rem;
   color: var(--texto-suave);
 }
+/* dica quando o envio de anexo esta indisponivel no status atual (§C2) */
+.anexo-dica {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  font-style: italic;
+  color: var(--texto-suave);
+}
 
 /* ── Urgência ──────────────────────────────────────────────── */
 .badges {

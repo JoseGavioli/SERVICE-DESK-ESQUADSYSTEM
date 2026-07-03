@@ -16,8 +16,12 @@ export default function Anexos({ demanda, perfil }) {
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
 
-  const podeEntrada = perfil.id === demanda.vendedor_id
-  const podeSaida = perfil.papel === 'admin' || perfil.papel === 'atendente'
+  const ehDono = perfil.id === demanda.vendedor_id
+  const ehStaff = perfil.papel === 'admin' || perfil.papel === 'atendente'
+  // Entrada: so o vendedor dono, e SO enquanto "nao iniciado" (depois trava).
+  const podeEntrada = ehDono && demanda.status === 'nao_iniciado'
+  // Saida: so staff, e SO no "concluido" (onde se anexa o orcamento final).
+  const podeSaida = ehStaff && demanda.status === 'concluido'
 
   async function carregar() {
     setCarregando(true)
@@ -174,7 +178,7 @@ export default function Anexos({ demanda, perfil }) {
 
       <h4>Entrada</h4>
       {renderLista(entrada)}
-      {podeEntrada && (
+      {podeEntrada ? (
         <label className="enviar-arquivo">
           {enviando ? 'Enviando…' : (<><Icone nome="mais" size={16} /> Anexar entrada (JPG/PNG/PDF, ≤ 2 MB)</>)}
           <input
@@ -187,11 +191,17 @@ export default function Anexos({ demanda, perfil }) {
             }}
           />
         </label>
+      ) : (
+        ehDono && (
+          <p className="anexo-dica">
+            Anexos de entrada só até a demanda ser iniciada (“Não iniciado”).
+          </p>
+        )
       )}
 
       <h4>Saída</h4>
       {renderLista(saida)}
-      {podeSaida && (
+      {podeSaida ? (
         <label className="enviar-arquivo">
           {enviando ? 'Enviando…' : (<><Icone nome="mais" size={16} /> Anexar saída (≤ 10 MB)</>)}
           <input
@@ -203,6 +213,12 @@ export default function Anexos({ demanda, perfil }) {
             }}
           />
         </label>
+      ) : (
+        ehStaff && (
+          <p className="anexo-dica">
+            A saída (orçamento) é anexada quando a demanda está em “Concluído”.
+          </p>
+        )
       )}
 
       {lightboxIdx !== null && (

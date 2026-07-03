@@ -19,12 +19,12 @@ export const TRANSICOES = {
     { para: 'cancelada', rotulo: 'Cancelar', exigeComentario: true, soAdmin: true },
   ],
   em_revisao_custo: [
-    { para: 'enviado', rotulo: 'Marcar como enviado', exigeComentario: false },
+    { para: 'concluido', rotulo: 'Concluir (orçamento pronto)', exigeComentario: false },
     { para: 'em_andamento', rotulo: 'Voltar p/ em andamento', exigeComentario: true },
     { para: 'cancelada', rotulo: 'Cancelar', exigeComentario: true, soAdmin: true },
   ],
-  // Legado: nenhuma demanda nova entra em 'concluido' (em_revisao_custo vai
-  // direto p/ 'enviado'). Mantido para demandas que ja estavam nesse estado.
+  // Concluido (§0022): orçamento pronto — é aqui que o atendente anexa a SAÍDA
+  // (o orçamento) antes de "Marcar como enviado".
   concluido: [
     { para: 'enviado', rotulo: 'Marcar como enviado', exigeComentario: false },
     { para: 'em_revisao_custo', rotulo: 'Voltar p/ revisão de custo', exigeComentario: true },
