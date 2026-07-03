@@ -154,6 +154,87 @@ textarea::placeholder {
   color: var(--texto-suave);
 }
 
+/* ── Boas-vindas (onboarding antes do login) ───────────────────── */
+.boas-vindas {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+}
+.bv-top {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+.bv-logo {
+  height: 120px;
+  width: auto;
+}
+[data-theme='dark'] .bv-logo {
+  filter: brightness(0) invert(1);
+}
+.bv-painel {
+  background: var(--marca-navy);
+  color: #fff;
+  border-top-left-radius: 28px;
+  border-top-right-radius: 28px;
+  padding: 1.75rem 1.5rem calc(2rem + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.9rem;
+}
+.bv-dots {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 0.3rem;
+}
+.bv-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--raio-pill);
+  background: rgba(255, 255, 255, 0.35);
+  transition: width 0.2s ease;
+}
+.bv-dot.ativo {
+  width: 20px;
+  background: #fff;
+}
+.bv-titulo {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.bv-texto {
+  margin: 0;
+  max-width: 420px;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.5;
+  font-size: 0.98rem;
+}
+.bv-continuar {
+  margin-top: 0.6rem;
+  width: 100%;
+  max-width: 420px;
+  padding: 0.95rem;
+  border: 0;
+  border-radius: var(--raio);
+  background: #fff;
+  color: var(--marca-navy);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+.bv-continuar:hover {
+  opacity: 0.9;
+}
+
 .erro {
   color: var(--perigo);
   font-size: 0.9rem;

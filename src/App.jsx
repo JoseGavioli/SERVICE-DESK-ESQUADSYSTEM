@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
+import BoasVindas from './components/BoasVindas'
 import Login from './components/Login'
 import Painel from './components/Painel'
 import './App.css'
@@ -9,6 +10,9 @@ import './App.css'
 export default function App() {
   const [sessao, setSessao] = useState(null)
   const [carregando, setCarregando] = useState(true)
+  // Boas-vindas: aparece antes do login a cada abertura do app sem sessao.
+  // Estado em memoria (reseta a cada carregamento da pagina); "Continuar" fecha.
+  const [mostrarBoasVindas, setMostrarBoasVindas] = useState(true)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -33,6 +37,12 @@ export default function App() {
     )
   }
 
-  // Sem sessao -> Login (centralizado). Com sessao -> casca do app logado.
-  return sessao ? <Painel sessao={sessao} /> : <Login />
+  // Com sessao -> casca do app. Sem sessao -> boas-vindas (uma passagem por
+  // abertura) e, ao "Continuar", o Login.
+  if (sessao) return <Painel sessao={sessao} />
+  return mostrarBoasVindas ? (
+    <BoasVindas aoContinuar={() => setMostrarBoasVindas(false)} />
+  ) : (
+    <Login />
+  )
 }
