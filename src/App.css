@@ -75,6 +75,78 @@ textarea::placeholder {
   cursor: default;
 }
 
+/* ── Login (estilo "Welcome back": titulo grande + campos com icone) ── */
+.cartao-login {
+  gap: 1rem;
+}
+.cartao-login .logo-login {
+  height: 52px;
+  align-self: flex-start;
+  margin-bottom: 0.25rem;
+}
+.login-cabecalho {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.cartao-login h1 {
+  text-align: left;
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.cartao-login .subtitulo {
+  text-align: left;
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+/* campo com icone embutido (email/cadeado a esquerda, olho a direita) */
+.campo-login {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.campo-icone-esq {
+  position: absolute;
+  left: 0.9rem;
+  display: inline-flex;
+  color: var(--texto-suave);
+  pointer-events: none;
+}
+.input-icone {
+  width: 100%;
+  padding-left: 2.7rem;
+  background: var(--surface-2);
+  border-color: var(--borda);
+}
+.input-icone.com-olho {
+  padding-right: 2.7rem;
+}
+.campo-olho {
+  position: absolute;
+  right: 0.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem;
+  background: transparent;
+  border: 0;
+  border-radius: var(--raio-sm);
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+.campo-olho:hover {
+  color: var(--texto);
+  background: var(--surface-hover);
+}
+.login-ajuda {
+  margin: 0.1rem 0 0;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+
 .erro {
   color: var(--perigo);
   font-size: 0.9rem;

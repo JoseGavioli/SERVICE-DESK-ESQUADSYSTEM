@@ -25,6 +25,10 @@ import {
   LayoutDashboard,
   Users,
   MoreHorizontal,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
 } from 'lucide-react'
 
 // Fonte UNICA dos icones do app (§issue #9). Uso: <Icone nome="sino" />.
@@ -57,6 +61,10 @@ const MAPA = {
   painel: LayoutDashboard,
   clientes: Users,
   'mais-opcoes': MoreHorizontal,
+  email: Mail,
+  cadeado: Lock,
+  olho: Eye,
+  'olho-fechado': EyeOff,
 }
 
 export default function Icone({ nome, size = 18, strokeWidth = 2, className }) {
