@@ -201,9 +201,6 @@ export default function DetalheDemanda({
         <LinhaTempoStatus status={d.status} diasRevisao={diasRevisao} />
       </section>
 
-      {/* Acoes de status (staff) — TEMPORARIO: vai para o rodape na fase C3 */}
-      <AcoesStatus demanda={d} perfil={perfil} aoMover={recarregar} />
-
       {podeCriarFilha && (
         <div className="filha">
           {criandoFilha ? (
@@ -236,6 +233,9 @@ export default function DetalheDemanda({
 
       {/* Solicitar cancelamento (so vendedor dono, em demanda nao-terminal) */}
       <Cancelamento demanda={d} perfil={perfil} aoMudar={recarregar} />
+
+      {/* Rodape "Alterar status" (barra fixa; so staff, so com acoes) — §C3 */}
+      <AcoesStatus demanda={d} perfil={perfil} aoMover={recarregar} />
     </div>
   )
 }

@@ -1,11 +1,15 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { TRANSICOES } from '../lib/transicoes'
+import Icone from './Icone'
 
-// Botoes de transicao de status (so atendente/admin; vendedor nunca).
-// Quando a transicao exige comentario (§13), abre uma caixa antes de
-// confirmar. A mudanca em si vai pela funcao mover_status() no banco.
+// Acoes de status (so atendente/admin; vendedor nunca). No detalhe, aparece
+// como uma BARRA fixa no rodape ("Alterar status", §C3) que COBRE o bottom-nav;
+// ao tocar, sobe um bottom-sheet com as transicoes validas do status atual.
+// Quando a transicao exige comentario (§13), o sheet troca para a caixa de
+// motivo antes de confirmar. A mudanca em si vai pela funcao mover_status().
 export default function AcoesStatus({ demanda, perfil, aoMover }) {
+  const [aberto, setAberto] = useState(false) // sheet aberto?
   const [acaoAtiva, setAcaoAtiva] = useState(null) // transicao aguardando comentario
   const [comentario, setComentario] = useState('')
   const [processando, setProcessando] = useState(false)
@@ -18,7 +22,7 @@ export default function AcoesStatus({ demanda, perfil, aoMover }) {
   const opcoes = (TRANSICOES[demanda.status] || []).filter(
     (t) => !t.soAdmin || perfil.papel === 'admin',
   )
-  if (opcoes.length === 0) return null // estado terminal
+  if (opcoes.length === 0) return null // estado terminal — sem barra (nav aparece)
 
   async function executar(transicao, texto) {
     setProcessando(true)
@@ -32,8 +36,7 @@ export default function AcoesStatus({ demanda, perfil, aoMover }) {
     if (error) {
       setErro(error.message || 'Não foi possível mover o status.')
     } else {
-      setAcaoAtiva(null)
-      setComentario('')
+      fechar()
       aoMover() // pede ao detalhe para recarregar tudo
     }
   }
@@ -41,63 +44,97 @@ export default function AcoesStatus({ demanda, perfil, aoMover }) {
   function clicar(t) {
     setErro('')
     if (t.exigeComentario) {
-      setAcaoAtiva(t) // abre a caixa de comentario obrigatorio
+      setAcaoAtiva(t) // troca o sheet para a caixa de comentario obrigatorio
       setComentario('')
     } else {
       executar(t, null)
     }
   }
 
-  return (
-    <div className="acoes-status">
-      <h3>Mover status</h3>
-      {erro && <p className="erro">{erro}</p>}
+  function fechar() {
+    setAberto(false)
+    setAcaoAtiva(null)
+    setComentario('')
+    setErro('')
+  }
 
-      {acaoAtiva ? (
-        <form
-          className="form-transicao"
-          onSubmit={(e) => {
-            e.preventDefault()
-            executar(acaoAtiva, comentario.trim())
-          }}
+  return (
+    <>
+      {/* Barra fixa no rodape (cobre o bottom-nav; so staff, so com acoes). */}
+      <div className="det-barra-acao">
+        <button
+          type="button"
+          className="btn-alterar-status"
+          onClick={() => setAberto(true)}
         >
-          <p>
-            <strong>{acaoAtiva.rotulo}</strong> — explique o motivo (obrigatório):
-          </p>
-          <textarea
-            value={comentario}
-            onChange={(e) => setComentario(e.target.value)}
-            rows={3}
-            required
-          />
-          <div className="acoes">
-            <button type="submit" disabled={processando || !comentario.trim()}>
-              {processando ? 'Movendo…' : 'Confirmar'}
-            </button>
-            <button
-              type="button"
-              className="link"
-              onClick={() => setAcaoAtiva(null)}
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
-      ) : (
-        <div className="botoes-transicao">
-          {opcoes.map((t) => (
-            <button
-              key={t.para}
-              type="button"
-              className={t.para === 'cancelada' ? 'perigo' : ''}
-              onClick={() => clicar(t)}
-              disabled={processando}
-            >
-              {t.rotulo}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+          <Icone nome="atualizar" size={18} /> Alterar status
+        </button>
+      </div>
+
+      {/* Backdrop + bottom-sheet com as opcoes. */}
+      <div
+        className={`status-backdrop ${aberto ? 'aberto' : ''}`}
+        onClick={fechar}
+        aria-hidden="true"
+      />
+      <aside
+        className={`status-sheet ${aberto ? 'aberto' : ''}`}
+        role="dialog"
+        aria-label="Alterar status"
+      >
+        <div className="sheet-handle" aria-hidden="true" />
+        {erro && <p className="erro">{erro}</p>}
+
+        {acaoAtiva ? (
+          <form
+            className="form-transicao"
+            onSubmit={(e) => {
+              e.preventDefault()
+              executar(acaoAtiva, comentario.trim())
+            }}
+          >
+            <p>
+              <strong>{acaoAtiva.rotulo}</strong> — explique o motivo
+              (obrigatório):
+            </p>
+            <textarea
+              value={comentario}
+              onChange={(e) => setComentario(e.target.value)}
+              rows={3}
+              required
+            />
+            <div className="acoes">
+              <button type="submit" disabled={processando || !comentario.trim()}>
+                {processando ? 'Movendo…' : 'Confirmar'}
+              </button>
+              <button
+                type="button"
+                className="link"
+                onClick={() => setAcaoAtiva(null)}
+              >
+                Voltar
+              </button>
+            </div>
+          </form>
+        ) : (
+          <>
+            <h3 className="status-sheet-titulo">Alterar status</h3>
+            <div className="status-sheet-opcoes">
+              {opcoes.map((t) => (
+                <button
+                  key={t.para}
+                  type="button"
+                  className={`status-opcao ${t.para === 'cancelada' ? 'perigo' : ''}`}
+                  onClick={() => clicar(t)}
+                  disabled={processando}
+                >
+                  {t.rotulo}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </aside>
+    </>
   )
 }

@@ -1733,6 +1733,109 @@ textarea::placeholder {
   color: var(--texto-suave);
 }
 
+/* ── Detalhe C3: rodape "Alterar status" (staff) ───────────── */
+/* barra fixa que COBRE o bottom-nav quando ha acoes de status. */
+.det-barra-acao {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 46;
+  padding: 0.7rem 1rem calc(0.7rem + env(safe-area-inset-bottom, 0px));
+  background: var(--surface);
+  box-shadow: 0 -4px 18px rgba(15, 23, 42, 0.1);
+}
+.btn-alterar-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0.9rem;
+  border: 0;
+  border-radius: var(--raio);
+  background: var(--primaria);
+  color: var(--primaria-texto);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.btn-alterar-status:hover {
+  background: var(--primaria-hover);
+}
+/* backdrop cobre tudo (o nav ja esta coberto pela barra) */
+.status-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 56;
+  background: rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.status-backdrop.aberto {
+  opacity: 1;
+  pointer-events: auto;
+}
+.status-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 57;
+  max-height: 70vh;
+  background: var(--surface);
+  border-top-left-radius: 22px;
+  border-top-right-radius: 22px;
+  box-shadow: 0 -10px 34px rgba(15, 23, 42, 0.2);
+  transform: translateY(110%);
+  transition: transform 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 1.15rem calc(1.25rem + env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+}
+.status-sheet.aberto {
+  transform: translateY(0);
+}
+.status-sheet-titulo {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--texto);
+}
+.status-sheet-opcoes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.status-opcao {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: var(--surface);
+  color: var(--texto);
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.status-opcao:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+.status-opcao.perigo {
+  border-color: var(--perigo);
+  color: var(--perigo);
+}
+.status-opcao.perigo:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--perigo) 8%, transparent);
+}
+
 /* ── Urgência ──────────────────────────────────────────────── */
 .badges {
   display: flex;
