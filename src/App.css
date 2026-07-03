@@ -660,19 +660,25 @@ textarea::placeholder {
 .item-demanda.fim-concluido {
   border-left-color: var(--st-concluido-fg);
 }
+/* Enviada = card VERDE; cancelada = card VERMELHO (estados terminais). */
 .item-demanda.fim-enviado {
   border-left-color: var(--st-enviado-fg);
+  background: var(--st-enviado-bg);
+}
+.item-demanda.fim-enviado:hover {
+  background: color-mix(in srgb, var(--st-enviado-bg) 85%, var(--st-enviado-fg));
 }
 .item-demanda.fim-cancelada {
   border-left-color: var(--st-cancelada-fg);
+  background: var(--st-cancelada-bg);
 }
-/* ATENCAO (prazo vencido OU custo atrasado): fundo vermelho + evidencia */
+.item-demanda.fim-cancelada:hover {
+  background: color-mix(in srgb, var(--st-cancelada-bg) 85%, var(--st-cancelada-fg));
+}
+/* ATENCAO (prazo vencido / custo atrasado): SO o traco vermelho, sem fundo —
+   pra nao sobrecarregar quando ha muitas. O selo/tag mantem o sinal. */
 .item-demanda.atencao {
-  background: color-mix(in srgb, var(--perigo) 12%, transparent);
   border-left-color: var(--perigo);
-}
-.item-demanda.atencao:hover {
-  background: color-mix(in srgb, var(--perigo) 20%, transparent);
 }
 .selo-custo-atrasado {
   font-size: 0.72rem;
@@ -1566,15 +1572,15 @@ textarea::placeholder {
 .atalho-atencao {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   margin: 0.2rem 0;
-  padding: 0.5rem 0.9rem;
+  padding: 0.35rem 0.7rem;
   border: 1px solid var(--perigo);
-  border-radius: var(--raio-sm);
+  border-radius: var(--raio-pill);
   background: color-mix(in srgb, var(--perigo) 8%, transparent);
   color: var(--perigo);
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   cursor: pointer;
 }
 .atalho-atencao.ativo {
@@ -1585,9 +1591,9 @@ textarea::placeholder {
   background: var(--perigo);
   color: var(--perigo-texto);
   border-radius: var(--raio-pill);
-  padding: 0.05rem 0.5rem;
-  font-size: 0.85rem;
-  line-height: 1.4;
+  padding: 0.02rem 0.42rem;
+  font-size: 0.76rem;
+  line-height: 1.5;
 }
 .atalho-atencao.ativo .atalho-contador {
   background: var(--perigo-texto);
@@ -1748,8 +1754,8 @@ button.card-corpo:hover {
 
 /* ── Início: painel de boxes (total + por status) ──────────── */
 .saudacao {
-  font-size: 1.05rem;
-  margin: 0.4rem 0 1.25rem;
+  font-size: 0.98rem;
+  margin: 0.2rem 0 0.85rem;
 }
 .box-inicio {
   display: flex;
