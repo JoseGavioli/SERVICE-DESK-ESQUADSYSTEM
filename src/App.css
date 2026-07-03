@@ -1490,6 +1490,242 @@ textarea::placeholder {
   color: var(--st-cancelada-fg);
 }
 
+/* ── Detalhe C1: topo (voltar + titulo + sino) ─────────────── */
+.det-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.det-topo-btn {
+  position: relative;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  border: 1px solid var(--borda);
+  background: var(--surface);
+  color: var(--texto);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--sombra-sm);
+  flex-shrink: 0;
+}
+.det-topo-btn:hover {
+  background: var(--surface-2);
+}
+.det-topo-titulo {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+/* ── Detalhe C1: hero (anexos de entrada) ──────────────────── */
+.hero-anexo {
+  position: relative;
+  margin-bottom: 1.1rem;
+}
+.hero-principal {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 230px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--raio-card);
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--surface-2);
+}
+.hero-principal img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.hero-arquivo {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  color: var(--texto-suave);
+}
+.hero-arquivo-nome {
+  max-width: 100%;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  word-break: break-word;
+}
+.hero-contador {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--raio-pill);
+  background: rgba(15, 23, 42, 0.6);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.hero-carrossel {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  margin-top: 0.6rem;
+  padding-bottom: 0.15rem;
+  scrollbar-width: none;
+}
+.hero-carrossel::-webkit-scrollbar {
+  display: none;
+}
+.hero-thumb {
+  flex-shrink: 0;
+  width: 3.4rem;
+  height: 3.4rem;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: var(--raio-sm);
+  overflow: hidden;
+  background: var(--surface-2);
+  color: var(--texto-suave);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.hero-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.hero-thumb.ativo {
+  border-color: var(--primaria);
+}
+.hero-anexo-vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  height: 160px;
+  border-radius: var(--raio-card);
+  background: var(--surface-2);
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}
+
+/* ── Detalhe C1: tipo / cliente / obra / tags ──────────────── */
+.det-tipo {
+  margin: 0 0 0.2rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--primaria);
+}
+.det-nome-linha {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.det-nome {
+  min-width: 0;
+}
+.detalhe-demanda .det-cliente {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--texto);
+}
+.det-obra {
+  margin: 0.15rem 0 0;
+  color: var(--texto-suave);
+  font-size: 0.95rem;
+}
+.det-tags {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+/* ── Detalhe C1: descricao / prazo / autor ─────────────────── */
+.det-secao {
+  margin-bottom: 1rem;
+}
+.det-secao-titulo {
+  margin: 0 0 0.4rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--texto);
+}
+.det-prazo {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 1.1rem;
+  font-size: 0.95rem;
+  color: var(--texto);
+}
+.det-autor {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.85rem 0;
+  margin-bottom: 0.85rem;
+  border-top: 1px solid var(--borda);
+  border-bottom: 1px solid var(--borda);
+}
+.det-avatar {
+  flex-shrink: 0;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primaria-suave);
+  color: var(--primaria);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+.det-autor-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.det-autor-info strong {
+  font-size: 0.95rem;
+  color: var(--texto);
+}
+.det-autor-sub {
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+}
+.det-autor-data {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+
 /* ── Urgência ──────────────────────────────────────────────── */
 .badges {
   display: flex;

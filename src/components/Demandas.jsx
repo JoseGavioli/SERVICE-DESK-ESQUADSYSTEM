@@ -309,6 +309,8 @@ export default function Demandas({
           setDetalheId(id)
         }}
         aoVisto={() => marcarLidaDemanda(detalheId)}
+        naoLidas={naoLidas}
+        aoAbrirNotif={aoAbrirNotif}
       />
     )
   }

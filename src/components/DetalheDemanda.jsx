@@ -4,6 +4,7 @@ import { STATUS_ROTULO } from '../lib/status'
 import { diasUteisDesde } from '../lib/urgencia'
 import SeloUrgencia from './SeloUrgencia'
 import LinhaTempoStatus from './LinhaTempoStatus'
+import CarrosselEntrada from './CarrosselEntrada'
 import Cancelamento from './Cancelamento'
 import AcoesStatus from './AcoesStatus'
 import HistoricoStatus from './HistoricoStatus'
@@ -15,6 +16,15 @@ import Icone from './Icone'
 // Detalhe da demanda (campos somente leitura) + cancelamento, acoes de
 // status, demanda-filha, historico e comentarios. Recebe o perfil para
 // saber o que mostrar e aoAbrir para navegar a outra demanda (a filha nova).
+// Iniciais (ate 2 letras) para o mini-avatar do autor.
+function iniciais(nome) {
+  if (!nome) return '?'
+  const partes = nome.trim().split(/\s+/)
+  const a = partes[0]?.[0] ?? ''
+  const b = partes.length > 1 ? partes[partes.length - 1][0] : ''
+  return (a + b).toUpperCase()
+}
+
 export default function DetalheDemanda({
   demandaId,
   codigo,
@@ -22,6 +32,8 @@ export default function DetalheDemanda({
   aoVoltar,
   aoAbrir,
   aoVisto,
+  naoLidas,
+  aoAbrirNotif,
 }) {
   const [d, setD] = useState(null)
   const [carregando, setCarregando] = useState(true)
@@ -109,27 +121,87 @@ export default function DetalheDemanda({
   // Dias uteis em revisao de custo (§issue #13); null se nunca entrou.
   const diasRevisao = diasUteisDesde(dataRevisao)
 
+  const criadaEm = new Date(d.created_at).toLocaleDateString('pt-BR')
+
   return (
     <div className="detalhe-demanda">
-      <button type="button" className="botao-voltar" onClick={aoVoltar}>
-        <Icone nome="voltar" size={20} /> Voltar
-      </button>
+      {/* Topo: voltar + titulo + sino (§C1) */}
+      <header className="det-topo">
+        <button
+          type="button"
+          className="det-topo-btn"
+          onClick={aoVoltar}
+          aria-label="Voltar"
+          title="Voltar"
+        >
+          <Icone nome="voltar" size={20} />
+        </button>
+        <span className="det-topo-titulo">Demanda #{codigo ?? d.id}</span>
+        <button
+          type="button"
+          className="det-topo-btn"
+          onClick={aoAbrirNotif}
+          aria-label="Notificações"
+          title="Notificações"
+        >
+          <Icone nome="sino" size={20} />
+          {naoLidas > 0 && <span className="sino-badge">{naoLidas}</span>}
+        </button>
+      </header>
 
-      <header className="det-cabecalho">
-        <h2>Demanda #{codigo ?? d.id}</h2>
-        <div className="badges-linha">
+      {/* "Hero": anexos de entrada (o que o vendedor enviou) */}
+      <CarrosselEntrada demandaId={d.id} />
+
+      {/* Tipo + Cliente/Obra + tags (status/urgencia) empilhadas */}
+      <p className="det-tipo">{d.tipo_demanda?.nome}</p>
+      <div className="det-nome-linha">
+        <div className="det-nome">
+          <h2 className="det-cliente">{d.obra?.cliente?.nome}</h2>
+          <p className="det-obra">
+            {d.obra?.nome}
+            {d.obra?.endereco ? ` — ${d.obra.endereco}` : ''}
+          </p>
+        </div>
+        <div className="det-tags">
           <span className={`status status-${d.status}`}>
             {STATUS_ROTULO[d.status]}
           </span>
           <SeloUrgencia prazo={d.prazo} status={d.status} />
         </div>
-      </header>
+      </div>
 
+      {/* Descricao */}
+      <div className="det-secao">
+        <h3 className="det-secao-titulo">Descrição</h3>
+        <p className="det-descricao">{d.descricao}</p>
+      </div>
+
+      {/* Prazo (logo apos a descricao) */}
+      <p className="det-prazo">
+        <Icone nome="relogio" size={15} /> <strong>Prazo:</strong>{' '}
+        {d.prazo?.split('-').reverse().join('/')}
+      </p>
+
+      {/* Anexos (box completa) */}
+      <Anexos demanda={d} perfil={perfil} />
+
+      {/* Autor + data de criacao */}
+      <div className="det-autor">
+        <span className="det-avatar">{iniciais(d.vendedor?.nome_completo)}</span>
+        <div className="det-autor-info">
+          <strong>{d.vendedor?.nome_completo}</strong>
+          <span className="det-autor-sub">Autor da demanda</span>
+        </div>
+        <span className="det-autor-data">{criadaEm}</span>
+      </div>
+
+      {/* Andamento (linha do tempo) */}
       <section className="det-card">
         <h3 className="det-card-titulo">Andamento</h3>
         <LinhaTempoStatus status={d.status} diasRevisao={diasRevisao} />
       </section>
 
+      {/* Acoes de status (staff) — TEMPORARIO: vai para o rodape na fase C3 */}
       <AcoesStatus demanda={d} perfil={perfil} aoMover={recarregar} />
 
       {podeCriarFilha && (
@@ -156,55 +228,14 @@ export default function DetalheDemanda({
         </div>
       )}
 
-      <section className="det-card det-info">
-        <div className="info-linha">
-          <span className="info-rot">Tipo</span>
-          <span className="info-val">{d.tipo_demanda?.nome}</span>
-        </div>
-        <div className="info-linha">
-          <span className="info-rot">Cliente</span>
-          <span className="info-val">{d.obra?.cliente?.nome}</span>
-        </div>
-        <div className="info-linha">
-          <span className="info-rot">Obra</span>
-          <span className="info-val">
-            {d.obra?.nome}
-            {d.obra?.endereco ? ` — ${d.obra.endereco}` : ''}
-          </span>
-        </div>
-        <div className="info-linha">
-          <span className="info-rot">Vendedor</span>
-          <span className="info-val">{d.vendedor?.nome_completo}</span>
-        </div>
-        <div className="info-linha">
-          <span className="info-rot">Prazo</span>
-          <span className="info-val">
-            {d.prazo?.split('-').reverse().join('/')}
-          </span>
-        </div>
-        <div className="info-linha">
-          <span className="info-rot">Criada em</span>
-          <span className="info-val">
-            {new Date(d.created_at).toLocaleString('pt-BR', {
-              dateStyle: 'short',
-              timeStyle: 'short',
-            })}
-          </span>
-        </div>
-      </section>
-
-      <section className="det-card">
-        <h3 className="det-card-titulo">Descrição</h3>
-        <p className="det-descricao">{d.descricao}</p>
-      </section>
-
-      <Anexos demanda={d} perfil={perfil} />
-
-      <Cancelamento demanda={d} perfil={perfil} aoMudar={recarregar} />
-
+      {/* Historico */}
       <HistoricoStatus key={`h${versao}`} demandaId={d.id} />
 
+      {/* Comentarios */}
       <Comentarios key={`c${versao}`} demandaId={d.id} />
+
+      {/* Solicitar cancelamento (so vendedor dono, em demanda nao-terminal) */}
+      <Cancelamento demanda={d} perfil={perfil} aoMudar={recarregar} />
     </div>
   )
 }

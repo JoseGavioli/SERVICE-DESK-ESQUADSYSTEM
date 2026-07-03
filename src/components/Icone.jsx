@@ -31,6 +31,7 @@ import {
   EyeOff,
   Check,
   Snowflake,
+  FileText,
 } from 'lucide-react'
 
 // Fonte UNICA dos icones do app (§issue #9). Uso: <Icone nome="sino" />.
@@ -69,6 +70,7 @@ const MAPA = {
   'olho-fechado': EyeOff,
   check: Check,
   neve: Snowflake,
+  arquivo: FileText,
 }
 
 export default function Icone({ nome, size = 18, strokeWidth = 2, className }) {
