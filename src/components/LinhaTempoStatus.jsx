@@ -1,14 +1,12 @@
 import Icone from './Icone'
 import { STATUS_ROTULO } from '../lib/status'
 
-// Linha do tempo (stepper vertical) do "caminho feliz" de uma demanda:
-// Não iniciado → Em andamento → Em revisão de custo → Enviado.
+// Linha do tempo (stepper vertical) do fluxo da demanda — 5 passos SEMPRE:
+// Não iniciado → Em andamento → Em revisão de custo → Concluído → Enviado.
 // Casos especiais:
 //  - congelado: pausa no passo "Em andamento" (tag ❄ congelado);
-//  - concluido (legado): entra como passo extra antes de "Enviado";
 //  - cancelada: terminal de falha — bloco vermelho no lugar do stepper.
-const PASSOS_PADRAO = ['nao_iniciado', 'em_andamento', 'em_revisao_custo', 'enviado']
-const PASSOS_CONCLUIDO = [
+const PASSOS = [
   'nao_iniciado',
   'em_andamento',
   'em_revisao_custo',
@@ -22,7 +20,8 @@ const INDICE = {
   em_andamento: 1,
   congelado: 1,
   em_revisao_custo: 2,
-  enviado: 3,
+  concluido: 3,
+  enviado: 4,
 }
 
 export default function LinhaTempoStatus({ status, diasRevisao }) {
@@ -41,15 +40,13 @@ export default function LinhaTempoStatus({ status, diasRevisao }) {
     )
   }
 
-  const concluido = status === 'concluido'
-  const passos = concluido ? PASSOS_CONCLUIDO : PASSOS_PADRAO
-  const alcancado = concluido ? 3 : (INDICE[status] ?? 0)
+  const alcancado = INDICE[status] ?? 0
   const enviado = status === 'enviado'
   const congelado = status === 'congelado'
 
   return (
     <ol className="linha-tempo">
-      {passos.map((p, i) => {
+      {PASSOS.map((p, i) => {
         // "feito" = passos anteriores; o proprio "Enviado" tambem conta.
         const feito = i < alcancado || (enviado && i === alcancado)
         const atual = i === alcancado && !enviado

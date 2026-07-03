@@ -24,10 +24,10 @@ export const TRANSICOES = {
     { para: 'cancelada', rotulo: 'Cancelar', exigeComentario: true, soAdmin: true },
   ],
   // Concluido (§0022): orçamento pronto — é aqui que o atendente anexa a SAÍDA
-  // (o orçamento) antes de "Marcar como enviado".
+  // (o orçamento) antes de "Marcar como enviado". A "volta" é só para
+  // 'em_andamento' (§0023): revisão de custo só vem DEPOIS do andamento.
   concluido: [
     { para: 'enviado', rotulo: 'Marcar como enviado', exigeComentario: false },
-    { para: 'em_revisao_custo', rotulo: 'Voltar p/ revisão de custo', exigeComentario: true },
     { para: 'em_andamento', rotulo: 'Voltar p/ em andamento', exigeComentario: true },
     { para: 'cancelada', rotulo: 'Cancelar', exigeComentario: true, soAdmin: true },
   ],
