@@ -3,8 +3,15 @@ import { supabase } from '../lib/supabase'
 import ObrasDoCliente from './ObrasDoCliente'
 import Icone from './Icone'
 
-// Lista + busca-primeiro + criacao de clientes.
-// Ao selecionar um cliente, mostra as obras dele (relacao 1 -> N).
+// Iniciais (ate 2 letras) para o avatar do cliente.
+function iniciais(nome) {
+  if (!nome) return '?'
+  const p = nome.trim().split(/\s+/)
+  return ((p[0]?.[0] ?? '') + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase()
+}
+
+// Lista + busca-primeiro + criacao de clientes. Ao tocar num cliente, faz
+// DRILL-IN para as obras dele (relacao 1 -> N).
 export default function Clientes({ perfil }) {
   const [clientes, setClientes] = useState([])
   const [busca, setBusca] = useState('')
@@ -12,13 +19,14 @@ export default function Clientes({ perfil }) {
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
 
-  // formulario de novo cliente
+  // formulario de novo cliente (aparece so ao tocar em "+ Novo cliente")
+  const [mostrarForm, setMostrarForm] = useState(false)
   const [novoNome, setNovoNome] = useState('')
   const [novaObs, setNovaObs] = useState('')
   const [salvando, setSalvando] = useState(false)
 
-  // Editar/excluir e so para admin/atendente. O banco (RLS) garante isso
-  // de verdade; aqui apenas escondemos o botao para nao confundir.
+  // Editar/excluir e so para admin/atendente. O banco (RLS) garante de verdade;
+  // aqui apenas escondemos o botao para nao confundir.
   const podeEditar = perfil.papel === 'admin' || perfil.papel === 'atendente'
 
   async function carregar() {
@@ -48,6 +56,13 @@ export default function Clientes({ perfil }) {
     (c) => c.nome.toLowerCase() === novoNome.trim().toLowerCase(),
   )
 
+  // "+ Novo cliente": abre o form ja com o termo buscado no nome (anti-duplicata).
+  function abrirForm() {
+    setNovoNome(busca.trim())
+    setNovaObs('')
+    setMostrarForm(true)
+  }
+
   async function criarCliente(evento) {
     evento.preventDefault()
     setSalvando(true)
@@ -65,8 +80,9 @@ export default function Clientes({ perfil }) {
       setNovoNome('')
       setNovaObs('')
       setBusca('')
+      setMostrarForm(false)
       await carregar()
-      setSelecionado(data) // ja abre as obras do recem-criado
+      setSelecionado(data) // ja entra nas obras do recem-criado
     }
     setSalvando(false)
   }
@@ -83,81 +99,116 @@ export default function Clientes({ perfil }) {
     }
   }
 
+  // Drill-in: cliente selecionado -> tela das obras dele.
+  if (selecionado) {
+    return (
+      <ObrasDoCliente
+        cliente={selecionado}
+        perfil={perfil}
+        aoVoltar={() => setSelecionado(null)}
+      />
+    )
+  }
+
   if (carregando) return <p>Carregando clientes…</p>
 
   return (
     <div className="secao-clientes">
-      <input
-        type="search"
-        placeholder="Buscar cliente pelo nome…"
-        value={busca}
-        onChange={(e) => setBusca(e.target.value)}
-      />
+      <div className="campo-busca">
+        <span className="campo-busca-icone">
+          <Icone nome="lupa" size={18} />
+        </span>
+        <input
+          type="search"
+          className="input-busca"
+          placeholder="Buscar cliente pelo nome…"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+        />
+      </div>
 
       {erro && <p className="erro">{erro}</p>}
 
       {filtrados.length === 0 ? (
         <p className="vazio">Nenhum cliente encontrado.</p>
       ) : (
-        <div className="cards">
+        <ul className="lista-cad">
           {filtrados.map((c) => (
-            <div
-              key={c.id}
-              className={`card ${selecionado?.id === c.id ? 'sel' : ''}`}
-            >
+            <li key={c.id} className="cad-linha">
               <button
                 type="button"
-                className="card-corpo"
+                className="cad-item"
                 onClick={() => setSelecionado(c)}
               >
-                <span className="id">#{c.id}</span>
-                <span className="nome">{c.nome}</span>
-                {c.observacoes && <span className="obs">{c.observacoes}</span>}
+                <span className="cad-avatar">{iniciais(c.nome)}</span>
+                <span className="cad-texto">
+                  <strong className="cad-nome">{c.nome}</strong>
+                  {c.observacoes && (
+                    <span className="cad-sub">{c.observacoes}</span>
+                  )}
+                </span>
+                <span className="cad-chevron">
+                  <Icone nome="chevron-direita" size={20} />
+                </span>
               </button>
               {podeEditar && (
                 <button
                   type="button"
-                  className="excluir"
+                  className="cad-excluir"
                   title="Excluir cliente"
+                  aria-label="Excluir cliente"
                   onClick={() => excluirCliente(c)}
                 >
-                  <Icone nome="lixeira" size={18} />
+                  <Icone nome="lixeira" size={16} />
                 </button>
               )}
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
 
-      {/* Busca-primeiro: o "criar" aparece sempre, mas avisa se houver nome igual */}
-      <form className="form-novo" onSubmit={criarCliente}>
-        <h3><Icone nome="mais" size={18} /> Novo cliente</h3>
-        <input
-          type="text"
-          placeholder="Nome do cliente"
-          value={novoNome}
-          onChange={(e) => setNovoNome(e.target.value)}
-          required
-        />
-        <input
-          type="text"
-          placeholder="Observações (opcional)"
-          value={novaObs}
-          onChange={(e) => setNovaObs(e.target.value)}
-        />
-        {nomeJaExiste && (
-          <p className="aviso">
-            Já existe um cliente com esse nome — confira a lista acima antes de
-            criar.
-          </p>
-        )}
-        <button type="submit" disabled={salvando || !novoNome.trim()}>
-          {salvando ? 'Salvando…' : 'Criar cliente'}
+      {/* Busca-primeiro: o "criar" aparece ao tocar no botao (avisa se ha nome igual) */}
+      {mostrarForm ? (
+        <form className="form-novo form-cad" onSubmit={criarCliente}>
+          <h3>Novo cliente</h3>
+          <input
+            type="text"
+            placeholder="Nome do cliente"
+            value={novoNome}
+            onChange={(e) => setNovoNome(e.target.value)}
+            required
+            autoFocus
+          />
+          <input
+            type="text"
+            placeholder="Observações (opcional)"
+            value={novaObs}
+            onChange={(e) => setNovaObs(e.target.value)}
+          />
+          {nomeJaExiste && (
+            <p className="aviso">
+              Já existe um cliente com esse nome — confira a lista acima antes de
+              criar.
+            </p>
+          )}
+          <div className="form-cad-acoes">
+            <button type="submit" disabled={salvando || !novoNome.trim()}>
+              {salvando ? 'Salvando…' : 'Criar cliente'}
+            </button>
+            <button
+              type="button"
+              className="link"
+              onClick={() => setMostrarForm(false)}
+            >
+              Cancelar
+            </button>
+          </div>
+        </form>
+      ) : (
+        <button type="button" className="botao-novo-cad" onClick={abrirForm}>
+          <Icone nome="mais" size={18} /> Novo cliente
         </button>
-      </form>
-
-      {/* Obras do cliente selecionado */}
-      {selecionado && <ObrasDoCliente cliente={selecionado} perfil={perfil} />}
+      )}
     </div>
   )
 }

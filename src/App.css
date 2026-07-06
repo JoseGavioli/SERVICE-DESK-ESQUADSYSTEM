@@ -856,11 +856,7 @@ textarea::placeholder {
   font-size: 0.9rem;
 }
 
-.secao-obras {
-  margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 2px solid var(--borda);
-}
+/* .secao-obras agora e uma tela propria (drill-in), sem separador empilhado */
 
 /* ── Equipe ────────────────────────────────────────────────── */
 .secao-equipe .dica {
@@ -2678,6 +2674,161 @@ button.card-corpo:hover {
 }
 .card .excluir {
   margin: 0.4rem 0.4rem 0 0;
+}
+
+/* ── Clientes/Obras B3: busca com lupa + lista vertical + drill-in ── */
+.campo-busca {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.85rem;
+}
+.campo-busca-icone {
+  position: absolute;
+  left: 0.9rem;
+  display: inline-flex;
+  color: var(--texto-suave);
+  pointer-events: none;
+}
+.campo-busca .input-busca {
+  width: 100%;
+  padding-left: 2.6rem;
+  background: var(--surface);
+  border-color: var(--borda);
+  box-shadow: var(--sombra-sm);
+}
+.lista-cad {
+  list-style: none;
+  margin: 0 0 0.85rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.cad-linha {
+  display: flex;
+  align-items: stretch;
+  background: var(--surface);
+  border-radius: var(--raio-card);
+  box-shadow: var(--sombra-sm);
+  overflow: hidden;
+  transition: box-shadow 0.15s ease;
+}
+.cad-linha:hover {
+  box-shadow: var(--sombra);
+}
+.cad-item {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.75rem 0.9rem;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: var(--texto);
+  transition: background 0.15s ease;
+}
+button.cad-item:hover {
+  background: var(--surface-hover);
+}
+.cad-item-estatico {
+  cursor: default;
+}
+.cad-avatar {
+  flex-shrink: 0;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primaria-suave);
+  color: var(--primaria);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+.cad-texto {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.cad-nome {
+  font-weight: 600;
+  color: var(--texto);
+  word-break: break-word;
+}
+.cad-sub {
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cad-chevron {
+  flex-shrink: 0;
+  display: inline-flex;
+  color: var(--texto-fraco);
+}
+.cad-excluir {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0.9rem;
+  border: 0;
+  background: transparent;
+  color: var(--texto-fraco);
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.cad-excluir:hover {
+  color: var(--perigo);
+  background: color-mix(in srgb, var(--perigo) 10%, transparent);
+}
+/* botao "+ Novo" que expande o formulario */
+.botao-novo-cad {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px dashed var(--borda-forte);
+  border-radius: var(--raio);
+  background: var(--surface-2);
+  color: var(--primaria);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.botao-novo-cad:hover {
+  background: var(--surface-hover);
+}
+.form-cad-acoes {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+/* obras (drill-in): cabecalho com voltar + nome do cliente */
+.obras-topo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.85rem;
+}
+.obras-topo h3 {
+  margin: 0;
+  min-width: 0;
+  font-size: 1.15rem;
+  color: var(--texto);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ── Início: resumo + notificações ─────────────────────────── */
