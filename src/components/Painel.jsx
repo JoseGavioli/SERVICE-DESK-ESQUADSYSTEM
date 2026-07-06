@@ -34,6 +34,7 @@ export default function Painel({ sessao }) {
   const [filtroInicial, setFiltroInicial] = useState(null) // filtro a aplicar ao ir p/ Demandas
   const [criarInicial, setCriarInicial] = useState(false) // abrir o form de nova demanda
   const [detalheAberto, setDetalheAberto] = useState(false) // detalhe de demanda aberto
+  const [criandoAberto, setCriandoAberto] = useState(false) // form de nova demanda aberto
   const {
     notificacoes,
     naoLidas,
@@ -182,6 +183,7 @@ export default function Painel({ sessao }) {
             naoLidas={naoLidas}
             aoAbrirNotif={() => setNotifAberto(true)}
             aoDetalhe={setDetalheAberto}
+            aoCriando={setCriandoAberto}
           />
         )}
         {secao === 'dashboard' && (
@@ -212,9 +214,11 @@ export default function Painel({ sessao }) {
         aoFechar={descartarToast}
       />
 
-      {/* No detalhe de uma demanda, o staff usa a barra "Alterar status" no
-          rodape -> escondemos o bottom-nav (e o FAB) pra nao conflitar. */}
-      {!(perfil.papel !== 'vendedor' && detalheAberto) && (
+      {/* Escondemos o bottom-nav (e o FAB) quando ele conflitaria com uma
+          barra fixa de rodape: (a) staff no detalhe (barra "Alterar status");
+          (b) form de nova demanda aberto (barra "Criar demanda" — senao o FAB
+          "+" espia por cima dela). */}
+      {!((perfil.papel !== 'vendedor' && detalheAberto) || criandoAberto) && (
         <BottomNav
           secao={secao}
           aoNavegar={(s) => {

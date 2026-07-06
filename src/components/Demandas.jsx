@@ -60,6 +60,7 @@ export default function Demandas({
   naoLidas,
   aoAbrirNotif,
   aoDetalhe,
+  aoCriando,
 }) {
   const [demandas, setDemandas] = useState([])
   const [carregando, setCarregando] = useState(true)
@@ -149,6 +150,14 @@ export default function Demandas({
     aoDetalhe?.(!!detalheId)
   }, [detalheId])
   useEffect(() => () => aoDetalhe?.(false), [])
+
+  // Avisa o Painel quando o form de nova demanda abre/fecha, para ele esconder
+  // o bottom-nav (senao o FAB "+" espia por cima da barra fixa "Criar
+  // demanda"). Reseta ao desmontar.
+  useEffect(() => {
+    aoCriando?.(criando)
+  }, [criando])
+  useEffect(() => () => aoCriando?.(false), [])
 
   function alternar(id) {
     setRecolhidos((prev) => {
