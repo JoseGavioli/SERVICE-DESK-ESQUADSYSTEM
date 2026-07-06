@@ -166,6 +166,7 @@ export default function Painel({ sessao }) {
       />
 
       <section
+        key={secao}
         className={`conteudo${secao === 'inicio' || secao === 'clientes' ? ' sem-topo' : ''}`}
       >
         {secao === 'inicio' && (

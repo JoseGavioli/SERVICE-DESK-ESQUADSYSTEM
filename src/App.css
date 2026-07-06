@@ -444,6 +444,8 @@ textarea::placeholder {
   display: flex;
   background: var(--marca-navy);
   border-top: 0;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
   box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.22);
   padding: 0.35rem 0.25rem calc(0.35rem + env(safe-area-inset-bottom, 0px));
 }
@@ -616,11 +618,24 @@ textarea::placeholder {
   font-weight: 600;
 }
 
+/* Transicao suave ao trocar de tela pela barra inferior: um fade rapido
+   (so opacity — NAO usar transform aqui, senao criaria containing-block
+   para as barras fixas de rodape .det-barra-acao). Reaplica a cada troca
+   via key={secao} no .conteudo (React remonta -> a animacao roda de novo). */
+@keyframes tela-entra {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
 .conteudo {
   padding: 1.25rem 1rem calc(4.75rem + env(safe-area-inset-bottom, 0px));
   max-width: 760px;
   width: 100%;
   margin: 0 auto;
+  animation: tela-entra 0.22s ease;
 }
 /* Inicio nao tem barra de topo (vira "hero"): respeita o notch no celular. */
 .conteudo.sem-topo {
@@ -1931,6 +1946,8 @@ textarea::placeholder {
   padding: 0.7rem 1rem calc(0.7rem + env(safe-area-inset-bottom, 0px));
   background: var(--marca-navy);
   box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.22);
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
 }
 .btn-alterar-status {
   display: flex;
