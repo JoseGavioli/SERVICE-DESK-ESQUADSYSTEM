@@ -297,6 +297,8 @@ export default function Demandas({
           setDetalheId(novoId)
         }}
         aoCancelar={() => setCriando(false)}
+        naoLidas={naoLidas}
+        aoAbrirNotif={aoAbrirNotif}
       />
     )
   }

@@ -14,8 +14,18 @@ import Icone from './Icone'
 //
 // O vendedor_id NAO e enviado: o banco preenche com auth.uid() (autor
 // inforjavel, §5).
-export default function NovaDemanda({ aoCriar, aoCancelar, obraFixa, demandaPaiId }) {
+export default function NovaDemanda({
+  aoCriar,
+  aoCancelar,
+  obraFixa,
+  demandaPaiId,
+  naoLidas,
+  aoAbrirNotif,
+}) {
   const ehFilha = Boolean(obraFixa)
+  // Hero (titulo + voltar + sino) so no modo TELA CHEIA (via "+"); na filha
+  // inline (dentro do detalhe) mantemos so um titulo simples.
+  const comHero = Boolean(aoAbrirNotif)
   const [cliente, setCliente] = useState(null)
   const [obra, setObra] = useState(obraFixa ?? null)
   const [tipos, setTipos] = useState([])
@@ -149,7 +159,34 @@ export default function NovaDemanda({ aoCriar, aoCancelar, obraFixa, demandaPaiI
 
   return (
     <form className="nova-demanda" onSubmit={salvar}>
-      <h2>{ehFilha ? 'Nova demanda vinculada' : 'Nova demanda'}</h2>
+      {comHero ? (
+        <header className="hero-demandas">
+          <h1 className="hero-titulo">Nova demanda</h1>
+          <div className="hero-acoes">
+            <button
+              type="button"
+              className="btn-circular"
+              onClick={aoCancelar}
+              aria-label="Voltar"
+              title="Voltar"
+            >
+              <Icone nome="voltar" size={20} />
+            </button>
+            <button
+              type="button"
+              className="btn-circular"
+              onClick={aoAbrirNotif}
+              aria-label="Notificações"
+              title="Notificações"
+            >
+              <Icone nome="sino" size={20} />
+              {naoLidas > 0 && <span className="sino-badge">{naoLidas}</span>}
+            </button>
+          </div>
+        </header>
+      ) : (
+        <h2>{ehFilha ? 'Nova demanda vinculada' : 'Nova demanda'}</h2>
+      )}
 
       {ehFilha ? (
         <div className="seletor selecionado">
