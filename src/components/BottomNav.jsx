@@ -48,7 +48,8 @@ export default function BottomNav({
         <span className="bottom-nav-rotulo">Mais</span>
       </button>
 
-      {/* FAB central: nova demanda */}
+      {/* FAB central: nova demanda. Camada externa = borda navy; interna = o
+          botao vermelho + glow (que aparece no anel, entre os dois). */}
       <button
         type="button"
         className="bottom-nav-fab"
@@ -56,7 +57,9 @@ export default function BottomNav({
         aria-label="Nova demanda"
         title="Nova demanda"
       >
-        <Icone nome="mais" size={28} />
+        <span className="bottom-nav-fab-btn">
+          <Icone nome="mais" size={26} />
+        </span>
       </button>
     </nav>
   )

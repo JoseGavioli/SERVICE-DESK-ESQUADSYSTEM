@@ -502,32 +502,45 @@ textarea::placeholder {
 .bottom-nav-espaco {
   flex: 1;
 }
-/* FAB central vermelho ("+", nova demanda) que salta acima da barra */
+/* FAB central. Camada EXTERNA = a BORDA NAVY (mesma cor da barra), redonda, um
+   pouco mais alta que a barra mas com boa parte DENTRO dela. */
 .bottom-nav-fab {
   position: absolute;
   left: 50%;
-  top: 0;
-  transform: translate(-50%, -42%);
-  width: 3.6rem;
-  height: 3.6rem;
+  top: -5px;
+  transform: translate(-50%, -10%);
+  width: 5.3rem;
+  height: 5.3rem;
+  padding: 0;
   border: 0;
   border-radius: 50%;
-  background: var(--perigo);
-  color: #fff;
+  background: var(--marca-navy);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow:
-    0 0 26px 3px color-mix(in srgb, var(--perigo) 55%, transparent),
-    0 6px 14px rgba(0, 0, 0, 0.35);
-  transition: background 0.15s ease, transform 0.1s ease;
+  /* box-shadow: 0 6px 16px rgba(0, 0, 0, 0.32);*/
+  transition: transform 0.1s ease;
 }
-.bottom-nav-fab:hover {
+/* Camada INTERNA = o BOTAO VERMELHO (menor). O glow sai dele e aparece no ANEL
+   navy — ou seja, ENTRE o botao e a borda — com um leve bleed de fundo. */
+.bottom-nav-fab-btn {
+  width: 4.3rem;
+  height: 4.3rem;
+  border-radius: 50%;
+  background: var(--perigo);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 15px 5px color-mix(in srgb, var(--perigo) 65%, transparent);
+  transition: background 0.15s ease;
+}
+.bottom-nav-fab:hover .bottom-nav-fab-btn {
   background: var(--perigo-hover);
 }
 .bottom-nav-fab:active {
-  transform: translate(-50%, -42%) scale(0.94);
+  transform: translate(-50%, -10%) scale(0.95);
 }
 
 /* ── Drawer de Notificacoes (espelho do menu, desliza da DIREITA) ── */
