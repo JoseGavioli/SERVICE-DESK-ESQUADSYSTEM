@@ -498,6 +498,37 @@ textarea::placeholder {
   line-height: 1rem;
   text-align: center;
 }
+/* espaco central reservado (o FAB fica absoluto por cima dele) */
+.bottom-nav-espaco {
+  flex: 1;
+}
+/* FAB central vermelho ("+", nova demanda) que salta acima da barra */
+.bottom-nav-fab {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translate(-50%, -42%);
+  width: 3.6rem;
+  height: 3.6rem;
+  border: 0;
+  border-radius: 50%;
+  background: var(--perigo);
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 0 26px 3px color-mix(in srgb, var(--perigo) 55%, transparent),
+    0 6px 14px rgba(0, 0, 0, 0.35);
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.bottom-nav-fab:hover {
+  background: var(--perigo-hover);
+}
+.bottom-nav-fab:active {
+  transform: translate(-50%, -42%) scale(0.94);
+}
 
 /* ── Drawer de Notificacoes (espelho do menu, desliza da DIREITA) ── */
 .drawer-notif {
@@ -1083,36 +1114,9 @@ textarea::placeholder {
   text-transform: uppercase;
   font-weight: 700;
 }
-/* botão "Voltar" fixo na parte inferior, a frente de tudo, na largura do conteudo */
-/* Botao flutuante "+" (FAB) para criar demanda a partir da home (issue #1). */
-.fab-nova {
-  position: fixed;
-  bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
-  right: 1.25rem;
-  z-index: 40;
-  width: 3.5rem;
-  height: 3.5rem;
-  border: 0;
-  border-radius: 50%;
-  background: var(--perigo);
-  color: var(--perigo-texto);
-  font-size: 2rem;
-  line-height: 1;
-  cursor: pointer;
-  box-shadow: 0 8px 22px color-mix(in srgb, var(--perigo) 42%, transparent);
-  transition: background 0.15s ease;
-}
-.fab-nova:hover {
-  background: var(--perigo-hover);
-}
-/* folga no rodape da lista p/ o ultimo item nao ficar sob o FAB (acima do nav) */
+/* folga no rodape da lista (o "+" agora vive no centro do bottom-nav) */
 .secao-demandas {
-  padding-bottom: 3.5rem;
-}
-@media (max-width: 640px) {
-  .fab-nova {
-    bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
-  }
+  padding-bottom: 0.5rem;
 }
 
 /* selos de status */

@@ -59,6 +59,7 @@ export default function Demandas({
   aoConsumirCriar,
   naoLidas,
   aoAbrirNotif,
+  aoDetalhe,
 }) {
   const [demandas, setDemandas] = useState([])
   const [carregando, setCarregando] = useState(true)
@@ -141,6 +142,13 @@ export default function Demandas({
       aoConsumirCriar?.()
     }
   }, [criarInicial])
+
+  // Avisa o Painel quando um detalhe abre/fecha (p/ ele esconder o bottom-nav
+  // e o FAB quando o staff esta no detalhe). Reseta ao desmontar.
+  useEffect(() => {
+    aoDetalhe?.(!!detalheId)
+  }, [detalheId])
+  useEffect(() => () => aoDetalhe?.(false), [])
 
   function alternar(id) {
     setRecolhidos((prev) => {
@@ -546,15 +554,6 @@ export default function Demandas({
         </div>
       )}
 
-      <button
-        type="button"
-        className="fab-nova"
-        onClick={() => setCriando(true)}
-        aria-label="Nova demanda"
-        title="Nova demanda"
-      >
-        <Icone nome="mais" size={26} />
-      </button>
     </div>
   )
 }
