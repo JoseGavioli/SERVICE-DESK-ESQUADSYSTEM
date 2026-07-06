@@ -157,207 +157,256 @@ export default function NovaDemanda({
     prazo &&
     (!rt || String(rtPercentual).trim() !== '')
 
-  return (
-    <form className="nova-demanda" onSubmit={salvar}>
-      {comHero ? (
-        <header className="hero-demandas">
-          <h1 className="hero-titulo">Nova demanda</h1>
-          <div className="hero-acoes">
-            <button
-              type="button"
-              className="btn-circular"
-              onClick={aoCancelar}
-              aria-label="Voltar"
-              title="Voltar"
-            >
-              <Icone nome="voltar" size={20} />
-            </button>
-            <button
-              type="button"
-              className="btn-circular"
-              onClick={aoAbrirNotif}
-              aria-label="Notificações"
-              title="Notificações"
-            >
-              <Icone nome="sino" size={20} />
-              {naoLidas > 0 && <span className="sino-badge">{naoLidas}</span>}
-            </button>
-          </div>
-        </header>
-      ) : (
-        <h2>{ehFilha ? 'Nova demanda vinculada' : 'Nova demanda'}</h2>
-      )}
+  const textoBotao = salvando
+    ? 'Salvando…'
+    : ehFilha
+      ? 'Criar demanda vinculada'
+      : 'Criar demanda'
 
-      {ehFilha ? (
-        <div className="seletor selecionado">
-          <span>
-            Obra: <strong>{obraFixa.nome}</strong> <em>(herdada da demanda-pai)</em>
-          </span>
-        </div>
-      ) : (
-        <>
-          <SeletorCliente selecionado={cliente} aoSelecionar={selecionarCliente} />
-          {cliente && (
+  // O form e a barra "Criar demanda" sao IRMAOS: assim a barra pode ficar fixa
+  // no rodape (modo principal) cobrindo o bottom-nav. O botao submete o form
+  // pelo atributo nativo form="form-nova-demanda", sem precisar de estado extra.
+  return (
+    <>
+      <form id="form-nova-demanda" className="nova-demanda" onSubmit={salvar}>
+        {comHero ? (
+          <header className="hero-demandas">
+            <h1 className="hero-titulo">Nova demanda</h1>
+            <div className="hero-acoes">
+              <button
+                type="button"
+                className="btn-circular"
+                onClick={aoCancelar}
+                aria-label="Voltar"
+                title="Voltar"
+              >
+                <Icone nome="voltar" size={20} />
+              </button>
+              <button
+                type="button"
+                className="btn-circular"
+                onClick={aoAbrirNotif}
+                aria-label="Notificações"
+                title="Notificações"
+              >
+                <Icone nome="sino" size={20} />
+                {naoLidas > 0 && <span className="sino-badge">{naoLidas}</span>}
+              </button>
+            </div>
+          </header>
+        ) : (
+          <h2 className="titulo-filha">
+            {ehFilha ? 'Nova demanda vinculada' : 'Nova demanda'}
+          </h2>
+        )}
+
+        {/* Card 1 — Cliente e obra (ou obra herdada, no modo filha) */}
+        <section className="det-card">
+          <h3 className="det-card-titulo">Cliente e obra</h3>
+          {ehFilha ? (
+            <p className="campo-obra-fixa">
+              Obra: <strong>{obraFixa.nome}</strong>{' '}
+              <em>(herdada da demanda-pai)</em>
+            </p>
+          ) : (
             <>
-              <SeletorObra
-                cliente={cliente}
-                selecionado={obra}
-                aoSelecionar={setObra}
+              <SeletorCliente
+                selecionado={cliente}
+                aoSelecionar={selecionarCliente}
               />
-              {!obra && (
-                <p className="dica-obra">
-                  Sem obra específica? Pode deixar em branco — usaremos{' '}
-                  <strong>Obra de {cliente.nome}</strong>.
-                </p>
+              {cliente && (
+                <>
+                  <SeletorObra
+                    cliente={cliente}
+                    selecionado={obra}
+                    aoSelecionar={setObra}
+                  />
+                  {!obra && (
+                    <p className="dica-obra">
+                      Sem obra específica? Pode deixar em branco — usaremos{' '}
+                      <strong>Obra de {cliente.nome}</strong>.
+                    </p>
+                  )}
+                </>
               )}
             </>
           )}
-        </>
-      )}
+        </section>
 
-      <label>
-        Tipo
-        <select
-          value={tipoId}
-          onChange={(e) => setTipoId(e.target.value)}
-          required
-        >
-          <option value="">— escolha —</option>
-          {tipos.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.nome}
-            </option>
-          ))}
-        </select>
-      </label>
+        {/* Card 2 — Detalhes da demanda */}
+        <section className="det-card nd-card">
+          <h3 className="det-card-titulo">Detalhes da demanda</h3>
 
-      <label>
-        Descrição <em>(não poderá ser editada depois)</em>
-        <textarea
-          value={descricao}
-          onChange={(e) => setDescricao(e.target.value)}
-          rows={4}
-          required
-        />
-      </label>
-
-      <label>
-        Prazo
-        <input
-          type="date"
-          value={prazo}
-          onChange={(e) => setPrazo(e.target.value)}
-          required
-        />
-      </label>
-
-      <div className="linha-opcoes">
-        <label className="opcao-check">
-          <input
-            type="checkbox"
-            checked={clubCasa}
-            onChange={(e) => setClubCasa(e.target.checked)}
-          />
-          <span>CLUB CASA</span>
-        </label>
-
-        <div className="opcao-radio">
-          <span className="opcao-titulo">RT</span>
-          <label>
-            <input
-              type="radio"
-              name="rt"
-              checked={!rt}
-              onChange={() => setRt(false)}
-            />{' '}
-            Não
+          <label className="campo-linha">
+            <span className="campo-rot">Tipo</span>
+            <select
+              value={tipoId}
+              onChange={(e) => setTipoId(e.target.value)}
+              required
+            >
+              <option value="">— escolha —</option>
+              {tipos.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.nome}
+                </option>
+              ))}
+            </select>
           </label>
-          <label>
-            <input
-              type="radio"
-              name="rt"
-              checked={rt}
-              onChange={() => setRt(true)}
-            />{' '}
-            Sim
-          </label>
-        </div>
 
-        {rt && (
-          <label className="opcao-pct">
-            <input
-              type="number"
-              min="0"
-              max="100"
-              step="0.5"
-              className="input-pct"
-              value={rtPercentual}
-              onChange={(e) => setRtPercentual(e.target.value)}
-              aria-label="Porcentagem da RT"
+          <label className="campo-linha campo-descricao">
+            <span className="campo-rot">
+              Descrição{' '}
+              <span className="selo-imutavel">não editável depois</span>
+            </span>
+            <textarea
+              value={descricao}
+              onChange={(e) => setDescricao(e.target.value)}
+              rows={4}
               required
             />
-            <span>%</span>
           </label>
-        )}
-      </div>
 
-      <label>
-        Arquiteto/engenheiro <em>(se houver)</em>
-        <input
-          type="text"
-          value={arquiteto}
-          onChange={(e) => setArquiteto(e.target.value)}
-        />
-      </label>
+          <label className="campo-linha">
+            <span className="campo-rot">Prazo</span>
+            <input
+              type="date"
+              value={prazo}
+              onChange={(e) => setPrazo(e.target.value)}
+              required
+            />
+          </label>
+        </section>
 
-      <div className="anexos-novos">
-        <span className="rotulo-anexos">Anexos de entrada (opcional)</span>
-        {arquivos.length > 0 && (
-          <ul className="arquivos-escolhidos">
-            {arquivos.map((f, i) => (
-              <li key={i}>
-                <span>
-                  {f.name} ({formatarTamanho(f.size)})
+        {/* Card 3 — Condições comerciais */}
+        <section className="det-card nd-card">
+          <h3 className="det-card-titulo">Condições comerciais</h3>
+
+          <label className="campo-linha campo-inline">
+            <span className="campo-rot">CLUB CASA</span>
+            <input
+              type="checkbox"
+              className="campo-check"
+              checked={clubCasa}
+              onChange={(e) => setClubCasa(e.target.checked)}
+            />
+          </label>
+
+          <div className="campo-linha campo-inline">
+            <span className="campo-rot">RT</span>
+            <div className="campo-rt">
+              <label className="pilula-radio">
+                <input
+                  type="radio"
+                  name="rt"
+                  checked={!rt}
+                  onChange={() => setRt(false)}
+                />{' '}
+                Não
+              </label>
+              <label className="pilula-radio">
+                <input
+                  type="radio"
+                  name="rt"
+                  checked={rt}
+                  onChange={() => setRt(true)}
+                />{' '}
+                Sim
+              </label>
+              {rt && (
+                <span className="campo-pct">
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.5"
+                    className="input-pct"
+                    value={rtPercentual}
+                    onChange={(e) => setRtPercentual(e.target.value)}
+                    aria-label="Porcentagem da RT"
+                    required
+                  />
+                  <span>%</span>
                 </span>
-                <button
-                  type="button"
-                  className="remover"
-                  onClick={() => removerArquivo(i)}
-                >
-                  <Icone nome="fechar" size={14} />
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-        <label className="enviar-arquivo">
-          <Icone nome="mais" size={16} /> Escolher arquivos (JPG/PNG/PDF, ≤ 2 MB)
-          <input
-            type="file"
-            multiple
-            accept="image/jpeg,image/png,application/pdf"
-            onChange={(e) => {
-              adicionarArquivos(e.target.files)
-              e.target.value = ''
-            }}
-          />
-        </label>
-      </div>
+              )}
+            </div>
+          </div>
 
-      {erro && <p className="erro">{erro}</p>}
+          <label className="campo-linha">
+            <span className="campo-rot">
+              Arquiteto/engenheiro <em>(se houver)</em>
+            </span>
+            <input
+              type="text"
+              value={arquiteto}
+              onChange={(e) => setArquiteto(e.target.value)}
+            />
+          </label>
+        </section>
 
-      <div className="acoes">
-        <button type="submit" disabled={!pronto || salvando}>
-          {salvando
-            ? 'Salvando…'
-            : ehFilha
-              ? 'Criar demanda vinculada'
-              : 'Criar demanda'}
-        </button>
-        <button type="button" className="link" onClick={aoCancelar}>
-          Cancelar
-        </button>
-      </div>
-    </form>
+        {/* Card 4 — Anexos de entrada */}
+        <section className="det-card">
+          <h3 className="det-card-titulo">
+            Anexos de entrada <span className="titulo-opc">opcional</span>
+          </h3>
+          {arquivos.length > 0 && (
+            <ul className="arquivos-escolhidos">
+              {arquivos.map((f, i) => (
+                <li key={i}>
+                  <span>
+                    {f.name} ({formatarTamanho(f.size)})
+                  </span>
+                  <button
+                    type="button"
+                    className="remover"
+                    onClick={() => removerArquivo(i)}
+                  >
+                    <Icone nome="fechar" size={14} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <label className="enviar-arquivo">
+            <Icone nome="mais" size={16} /> Escolher arquivos (JPG/PNG/PDF, ≤ 2 MB)
+            <input
+              type="file"
+              multiple
+              accept="image/jpeg,image/png,application/pdf"
+              onChange={(e) => {
+                adicionarArquivos(e.target.files)
+                e.target.value = ''
+              }}
+            />
+          </label>
+        </section>
+
+        {erro && <p className="erro">{erro}</p>}
+      </form>
+
+      {/* Barra "Criar demanda". Modo principal: barra FIXA navy no rodape
+          (reusa .det-barra-acao; z-46 cobre o bottom-nav z-45). Modo filha:
+          botao inline no fluxo (nao cobre o nav da tela de detalhe). */}
+      {comHero ? (
+        <div className="det-barra-acao">
+          <button
+            type="submit"
+            form="form-nova-demanda"
+            className="btn-alterar-status"
+            disabled={!pronto || salvando}
+          >
+            {textoBotao}
+          </button>
+        </div>
+      ) : (
+        <div className="acoes-filha">
+          <button type="submit" form="form-nova-demanda" disabled={!pronto || salvando}>
+            {textoBotao}
+          </button>
+          <button type="button" className="link" onClick={aoCancelar}>
+            Cancelar
+          </button>
+        </div>
+      )}
+    </>
   )
 }

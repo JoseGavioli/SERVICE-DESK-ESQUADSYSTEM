@@ -1146,92 +1146,214 @@ textarea::placeholder {
 .status-enviado { background: var(--st-enviado-bg); color: var(--st-enviado-fg); }
 .status-cancelada { background: var(--st-cancelada-bg); color: var(--st-cancelada-fg); }
 
-/* formulario nova demanda + seletores */
+/* ─────────────────────────────────────────────────────────────
+   NOVA DEMANDA — reforma visual (sintese do painel de design).
+   Varios .det-card titulados (mesma linguagem do Detalhe), cada um
+   com "linhas de campo" empilhadas (rotulo em cima, controle embaixo)
+   divididas por hairline. Descricao em destaque. O submit vira a
+   barra FIXA "Criar demanda" no rodape (reusa .det-barra-acao, que
+   por ser z-46 cobre o bottom-nav z-45). Tudo em tokens (claro E
+   escuro), mobile-first.
+   ───────────────────────────────────────────────────────────── */
 .nova-demanda {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
 }
-.nova-demanda h2 {
+/* titulo simples no modo filha (inline no Detalhe, sem hero) */
+.nova-demanda .titulo-filha {
+  margin: 0 0 0.85rem;
   color: var(--texto);
+  font-size: 1.2rem;
+  font-weight: 800;
 }
-.nova-demanda label {
+/* "opcional" discreto ao lado do titulo de um card */
+.det-card-titulo .titulo-opc {
+  font-weight: 500;
+  font-size: 0.8rem;
+  color: var(--texto-fraco);
+}
+/* nos cards de campos, o titulo cola mais na 1a linha */
+.nova-demanda .nd-card .det-card-titulo {
+  margin-bottom: 0.25rem;
+}
+
+/* Cada campo e uma "linha": rotulo em cima, controle embaixo, dividida
+   por hairline (mesma do .info-linha do Detalhe). */
+.nova-demanda .campo-linha {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
-  font-size: 0.9rem;
+  gap: 0.45rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--borda);
+}
+.nova-demanda .campo-linha:last-child {
+  border-bottom: 0;
+}
+/* mini-rotulo do campo */
+.nova-demanda .campo-rot {
+  font-size: 0.85rem;
+  font-weight: 700;
   color: var(--texto-suave);
+  letter-spacing: 0.01em;
 }
-.nova-demanda select,
-.nova-demanda textarea,
-.nova-demanda input[type='date'] {
+.nova-demanda .campo-rot em {
+  font-weight: 400;
+  font-style: normal;
+  color: var(--texto-fraco);
+}
+
+/* Controles (Tipo/Descricao/Prazo/Arquiteto) ocupam a largura toda,
+   com borda/fundo sutis. O anel de foco ja e global. */
+.nova-demanda .campo-linha > select,
+.nova-demanda .campo-linha > textarea,
+.nova-demanda .campo-linha > input[type='date'],
+.nova-demanda .campo-linha > input[type='text'] {
+  width: 100%;
   font-size: 1rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--borda-forte);
+  border-radius: var(--raio-sm);
+  background: var(--surface-2);
+  color: var(--texto);
+  font-family: inherit;
 }
-/* campos extras: CLUB CASA (check) e RT (sim/nao) */
-.nova-demanda .opcao-check {
+.nova-demanda .campo-linha > textarea {
+  resize: vertical;
+  min-height: 6rem;
+  line-height: 1.5;
+}
+
+/* Descricao em destaque: campo primario e IMUTAVEL (faixa de acento +
+   selo tingido no rotulo). */
+.nova-demanda .campo-descricao {
+  border-left: 3px solid var(--primaria);
+  padding-left: 0.85rem;
+}
+.selo-imutavel {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.08rem 0.5rem;
+  border-radius: var(--raio-pill);
+  background: var(--primaria-suave);
+  color: var(--primaria);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  vertical-align: middle;
+}
+
+/* Linhas "inline": rotulo a esquerda, controle a direita (CLUB CASA, RT) */
+.nova-demanda .campo-inline {
   flex-direction: row;
   align-items: center;
-  gap: 0.5rem;
-  color: var(--texto);
-  font-size: 0.95rem;
+  justify-content: space-between;
+  gap: 1rem;
 }
-.nova-demanda .opcao-radio {
+.nova-demanda .campo-inline .campo-rot {
+  font-size: 0.95rem;
+  color: var(--texto);
+}
+.campo-check {
+  width: 1.2rem;
+  height: 1.2rem;
+  margin: 0;
+  accent-color: var(--primaria);
+  flex-shrink: 0;
+}
+
+/* RT: pilulas Nao/Sim + % condicional */
+.campo-rt {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
+  gap: 0.9rem;
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
-.nova-demanda .opcao-radio .opcao-titulo {
-  font-weight: 600;
-  color: var(--texto-suave);
-  font-size: 0.9rem;
-}
-.nova-demanda .opcao-radio label {
-  flex-direction: row;
+.pilula-radio {
+  display: inline-flex;
   align-items: center;
   gap: 0.35rem;
   color: var(--texto);
   font-size: 0.95rem;
+  cursor: pointer;
 }
-.nova-demanda input[type='checkbox'],
-.nova-demanda input[type='radio'] {
+.pilula-radio input[type='radio'] {
   width: auto;
   margin: 0;
+  accent-color: var(--primaria);
 }
-/* CLUB CASA + RT + % na mesma linha; % em campo pequeno (~5 caracteres) */
-.nova-demanda .linha-opcoes {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-}
-.nova-demanda .opcao-pct {
-  flex-direction: row;
+.campo-pct {
+  display: inline-flex;
   align-items: center;
   gap: 0.3rem;
   color: var(--texto);
 }
-.nova-demanda .input-pct {
+.campo-pct .input-pct {
   width: 4.5rem;
   font-size: 1rem;
+  padding: 0.45rem 0.5rem;
+  border: 1px solid var(--borda-forte);
+  border-radius: var(--raio-sm);
+  background: var(--surface-2);
+  color: var(--texto);
+  font-family: inherit;
 }
-/* dica de "obra opcional" abaixo do seletor de obra (issue #2) */
+
+/* Seletores de cliente/obra dentro do card: recuados (--surface-2) para
+   lerem como area de input, com o search input no mesmo estilo dos demais. */
+.nova-demanda .seletor {
+  background: var(--surface-2);
+}
+.nova-demanda .seletor input[type='search'] {
+  width: 100%;
+  font-size: 1rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--borda-forte);
+  border-radius: var(--raio-sm);
+  background: var(--surface);
+  color: var(--texto);
+  font-family: inherit;
+}
+/* obra herdada (modo filha) */
+.campo-obra-fixa {
+  margin: 0;
+  color: var(--texto);
+  font-size: 0.95rem;
+}
+.campo-obra-fixa em {
+  font-style: normal;
+  color: var(--texto-suave);
+  font-size: 0.85rem;
+}
+
+/* dica de "obra opcional" abaixo do seletor de obra (reaproveitada, issue #2) */
 .dica-obra {
   font-size: 0.85rem;
   color: var(--texto-suave);
-  margin: 0.1rem 0 0;
+  margin: 0.5rem 0 0;
 }
 .dica-obra strong {
   color: var(--texto);
 }
-.nova-demanda .acoes {
+
+/* Barra fixa "Criar demanda": reusa .det-barra-acao + .btn-alterar-status
+   (navy + botao branco). z-46 cobre o bottom-nav (z-45). So o estado
+   disabled do botao branco e novo aqui. */
+.det-barra-acao .btn-alterar-status:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Modo FILHA (inline no Detalhe): SEM barra fixa (cobriria o nav do
+   Detalhe); botao normal no fluxo + link Cancelar. */
+.acoes-filha {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 0.5rem;
-  margin-top: 0.25rem;
+  margin-top: 0.85rem;
 }
-.nova-demanda .acoes button[type='submit'] {
+.acoes-filha button[type='submit'] {
   width: 100%;
   padding: 0.95rem;
   border: 0;
@@ -1243,14 +1365,14 @@ textarea::placeholder {
   cursor: pointer;
   transition: background 0.15s ease;
 }
-.nova-demanda .acoes button[type='submit']:hover:not(:disabled) {
+.acoes-filha button[type='submit']:hover:not(:disabled) {
   background: var(--primaria-hover);
 }
-.nova-demanda .acoes button:disabled {
+.acoes-filha button:disabled {
   opacity: 0.6;
   cursor: default;
 }
-.nova-demanda .acoes .link {
+.acoes-filha .link {
   align-self: center;
 }
 
