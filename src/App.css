@@ -3164,13 +3164,168 @@ button.cad-item:hover {
   gap: 0.75rem;
 }
 
-/* container "Dashboard": so agrupa (as boxes ja sao cards proprios) */
-.dashboard {
-  margin: 0 0 1.25rem;
+/* ── Dashboard (Resumo) — reforma #30 ──────────────────────────
+   Reaproveita .box-inicio/.box-total/.box-titulo/.box-numero/.box-hint/
+   .grade-status/.box-status-cor. Layout por PRIORIDADE (Atencao -> Em
+   aberto -> Distribuicao). Tudo em tokens (claro/escuro). */
+.secao-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
-.dashboard-titulo {
-  font-size: 1.1rem;
-  margin: 0 0 0.85rem;
+/* o gap dita o ritmo: neutraliza margens herdadas do hero e da box-total */
+.secao-dashboard .hero-demandas {
+  margin-bottom: 0;
+}
+.secao-dashboard .box-total {
+  margin: 0;
+}
+/* subtitulo discreto: a virada de "acao" para "panorama" */
+.secao-rotulo {
+  margin: 0.15rem 0 -0.15rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--texto-fraco);
+}
+
+/* 1) ATENCAO: card largo vermelho (tokens solidos, sem color-mix) */
+.box-atencao {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.85rem;
+  background: var(--st-cancelada-bg);
+  border-left: 4px solid var(--perigo);
+}
+.box-atencao-icone {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--perigo);
+}
+.box-atencao-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+.box-atencao .box-titulo {
+  color: var(--perigo);
+}
+.box-atencao .box-hint {
+  color: var(--st-cancelada-fg);
+}
+.box-atencao .box-numero {
+  margin-left: auto;
+  color: var(--perigo);
+  font-size: 2rem;
+}
+
+/* 3) POR STATUS: cards mais compactos na grade (sem hint) */
+.grade-status .box-inicio {
+  padding: 0.85rem 1rem;
+}
+.grade-status .box-numero {
+  font-size: 1.5rem;
+}
+
+/* cards "container" (urgencia / vendedor): card sem virar botao clicavel */
+.card-resumo {
+  background: var(--surface);
+  border-radius: var(--raio-card);
+  box-shadow: var(--sombra-sm);
+  padding: 1rem 1.15rem;
+}
+.card-resumo .box-titulo {
+  display: block;
+  margin-bottom: 0.7rem;
+}
+
+/* 4) POR URGENCIA: barra segmentada (largura = contagem via flex-grow) */
+.urg-barra {
+  display: flex;
+  gap: 2px;
+  height: 0.8rem;
+  border-radius: var(--raio-pill);
+  overflow: hidden;
+}
+.urg-seg {
+  border: 0;
+  padding: 0;
+  min-width: 8px;
+  cursor: pointer;
+}
+.urg-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 1rem;
+  margin-top: 0.7rem;
+}
+.urg-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+}
+.urg-ponto {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.urg-rotulo {
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+.urg-num {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+/* 5) POR VENDEDOR: lista nome | barra proporcional | numero */
+.vend-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.vend-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 2.2fr auto;
+  align-items: center;
+  gap: 0.6rem;
+}
+.vend-nome {
+  font-size: 0.9rem;
+  color: var(--texto);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.vend-barra {
+  height: 0.55rem;
+  background: var(--surface-2);
+  border-radius: var(--raio-pill);
+  overflow: hidden;
+}
+.vend-fill {
+  display: block;
+  height: 100%;
+  background: var(--primaria);
+  border-radius: var(--raio-pill);
+}
+.vend-num {
+  min-width: 1.5rem;
+  text-align: right;
+  font-size: 0.9rem;
+  font-weight: 700;
   color: var(--texto);
 }
 
@@ -3189,24 +3344,6 @@ button.cad-item:hover {
   opacity: 0.85;
 }
 
-/* botão "incluir nova demanda" (mesmo padrão das boxes, conteúdo centralizado) */
-.box-novo {
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  gap: 0.15rem;
-  margin: 0 0 1rem;
-}
-.box-novo-mais {
-  font-size: 1.9rem;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--perigo);
-}
-.box-novo-texto {
-  font-size: 0.85rem;
-  color: var(--texto-suave);
-}
 .notificacoes-inicio {
   margin-top: 1.5rem;
 }

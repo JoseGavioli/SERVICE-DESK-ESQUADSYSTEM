@@ -125,9 +125,12 @@ export default function Painel({ sessao }) {
   }
 
   // Telas com "hero" proprio (titulo grande + acoes) no lugar da barra de topo
-  // enxuta: Inicio, Clientes e Equipe.
+  // enxuta: Inicio, Clientes, Equipe e Dashboard.
   const telaComHero =
-    secao === 'inicio' || secao === 'clientes' || secao === 'equipe'
+    secao === 'inicio' ||
+    secao === 'clientes' ||
+    secao === 'equipe' ||
+    secao === 'dashboard'
 
   return (
     <div className="app">
@@ -200,7 +203,8 @@ export default function Painel({ sessao }) {
           <Dashboard
             perfil={perfil}
             aoAbrirComFiltro={abrirDemandasComFiltro}
-            aoNovaDemanda={abrirNovaDemanda}
+            naoLidas={naoLidas}
+            aoAbrirNotif={() => setNotifAberto(true)}
           />
         )}
         {secao === 'clientes' && (
