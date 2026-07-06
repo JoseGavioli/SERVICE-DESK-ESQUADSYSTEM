@@ -81,12 +81,16 @@ export default function Painel({ sessao }) {
     async function buscarPerfil() {
       const { data, error } = await supabase
         .from('perfil')
-        .select('id, nome_completo, papel')
+        .select('id, nome_completo, papel, ativo')
         .eq('id', sessao.user.id)
         .single()
 
       if (error) {
         setErro('Seu usuário ainda não tem um perfil cadastrado.')
+      } else if (!data.ativo) {
+        // Conta desativada: a RLS (migracao 0025) ja bloqueia as ACOES no
+        // banco; aqui barramos logo na entrada, com aviso claro.
+        setErro('Sua conta está desativada. Fale com o administrador para reativá-la.')
       } else {
         setPerfil(data)
       }
