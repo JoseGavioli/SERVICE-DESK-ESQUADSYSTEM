@@ -332,7 +332,6 @@ Cada fase é pequena o bastante para eu ler, entender e aprovar antes da próxim
 **Ainda em aberto:**
 1. **Fronteiras exatas da urgência** (§8) — os limites hoje são **provisórios** (em `lib/urgencia.js`); falta alinhar com os vendedores o tratamento de "exatamente 2/3 dias".
 4. **Limite de tamanho do anexo de saída** (§14) — a confirmar/ajustar (é só configuração).
-6. **`perfil.ativo` na RLS** — um vendedor desativado ainda consegue agir; falta aplicar a checagem na RLS.
 7. **Reset dos dados de teste** antes do lançamento real (apagar demandas/clientes/obras/comentários/histórico/anexos/notificações + arquivos do Storage + vendedor de teste; manter admin + 6 tipos). Só na virada — vira destrutivo com dados reais.
 8. **Cadastro de usuários in-app** — Edge Function `criar-usuario` criada, **não deployada** (falta o deploy + o formulário na Equipe).
 9. **Tela admin de tipos de demanda** — hoje os 6 tipos são semeados no banco.
@@ -341,3 +340,4 @@ Cada fase é pequena o bastante para eu ler, entender e aprovar antes da próxim
 2. ~~Login = email ou username~~ → **email** (Supabase Auth nativo).
 3. ~~Permissão de criar cliente/obra pelo vendedor~~ → **pode**, com **busca-primeiro** (anti-duplicata).
 5. ~~Hosting do frontend~~ → **Vercel** (CD ativo).
+6. ~~**`perfil.ativo` na RLS**~~ → **aplicado** (migração `0025`: helper `sou_ativo()` exigido em **todas** as policies de escrita + nas funções de ação `mover_status`/`solicitar`/`descartar`; + **bloqueio no login** para conta desativada). Issue #21 fechada.
