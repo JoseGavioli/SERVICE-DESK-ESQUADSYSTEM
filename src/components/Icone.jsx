@@ -33,6 +33,7 @@ import {
   Snowflake,
   FileText,
   Building2,
+  Pencil,
 } from 'lucide-react'
 
 // Fonte UNICA dos icones do app (§issue #9). Uso: <Icone nome="sino" />.
@@ -73,6 +74,7 @@ const MAPA = {
   neve: Snowflake,
   arquivo: FileText,
   predio: Building2,
+  editar: Pencil,
 }
 
 export default function Icone({ nome, size = 18, strokeWidth = 2, className }) {

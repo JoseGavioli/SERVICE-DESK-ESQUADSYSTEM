@@ -2831,6 +2831,58 @@ button.cad-item:hover {
   text-overflow: ellipsis;
 }
 
+/* ── Clientes: accordion de obras + botao editar (§) ───────── */
+.cad-bloco {
+  list-style: none;
+}
+/* botao editar (staff): igual ao excluir, mas hover navy */
+.cad-editar {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0.7rem;
+  border: 0;
+  background: transparent;
+  color: var(--texto-fraco);
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.cad-editar:hover {
+  color: var(--primaria);
+  background: var(--primaria-suave);
+}
+/* chevron gira ao abrir o accordion */
+.cad-chevron {
+  transition: transform 0.15s ease;
+}
+.cad-chevron.aberto {
+  transform: rotate(90deg);
+}
+/* card aberto: base reta, para conectar com a box de obras */
+.cad-linha.aberto {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+/* box das obras (submenu abaixo do cliente) */
+.obras-box {
+  padding: 0.85rem;
+  background: var(--surface-2);
+  border-top: 1px solid var(--borda);
+  border-radius: 0 0 var(--raio-card) var(--raio-card);
+}
+.obras-conteudo {
+  display: flex;
+  flex-direction: column;
+}
+.obras-conteudo .campo-busca {
+  margin-bottom: 0.6rem;
+}
+/* variante menor do botao "+ Nova" dentro da box */
+.botao-novo-sm {
+  padding: 0.6rem;
+  font-size: 0.9rem;
+}
+
 /* ── Início: resumo + notificações ─────────────────────────── */
 .resumo-aberto {
   background: var(--surface);

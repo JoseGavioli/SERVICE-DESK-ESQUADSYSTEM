@@ -121,9 +121,9 @@ export default function Painel({ sessao }) {
 
   return (
     <div className="app">
-      {/* Na Inicio o cabecalho vira um "hero" (titulo grande + lupa + sino)
-          dentro de Demandas; nas demais telas fica esta barra enxuta. */}
-      {secao !== 'inicio' && (
+      {/* Inicio e Clientes tem "hero" (titulo grande + acoes) dentro do proprio
+          componente; nas demais telas fica esta barra enxuta. */}
+      {secao !== 'inicio' && secao !== 'clientes' && (
         <header className="topo">
           <span className="titulo-tela">{NOME_TELA[secao] ?? ''}</span>
           <button
@@ -164,7 +164,9 @@ export default function Painel({ sessao }) {
         aoLimpar={limparTodas}
       />
 
-      <section className={`conteudo${secao === 'inicio' ? ' sem-topo' : ''}`}>
+      <section
+        className={`conteudo${secao === 'inicio' || secao === 'clientes' ? ' sem-topo' : ''}`}
+      >
         {secao === 'inicio' && (
           <Demandas
             perfil={perfil}
@@ -189,7 +191,13 @@ export default function Painel({ sessao }) {
             aoNovaDemanda={abrirNovaDemanda}
           />
         )}
-        {secao === 'clientes' && <Clientes perfil={perfil} />}
+        {secao === 'clientes' && (
+          <Clientes
+            perfil={perfil}
+            naoLidas={naoLidas}
+            aoAbrirNotif={() => setNotifAberto(true)}
+          />
+        )}
         {secao === 'equipe' && <Equipe perfil={perfil} />}
         {secao === 'tema' && <Tema />}
       </section>
@@ -215,6 +223,7 @@ export default function Painel({ sessao }) {
           }}
           aoMais={() => setMenuAberto(true)}
           aoNova={abrirNovaDemanda}
+          mostrarFab={secao === 'inicio' || secao === 'dashboard'}
           novidadesCount={demandasComNovidade.size}
         />
       )}

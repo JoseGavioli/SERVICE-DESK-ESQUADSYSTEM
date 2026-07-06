@@ -14,6 +14,7 @@ export default function BottomNav({
   aoNavegar,
   aoMais,
   aoNova,
+  mostrarFab,
   novidadesCount,
 }) {
   function item(a) {
@@ -38,8 +39,10 @@ export default function BottomNav({
   return (
     <nav className="bottom-nav">
       {ABAS_ESQ.map(item)}
-      {/* espaco reservado no centro para o FAB (posicionado absoluto) */}
-      <span className="bottom-nav-espaco" aria-hidden="true" />
+      {/* espaco central reservado para o FAB (so quando ele aparece) */}
+      {mostrarFab && (
+        <span className="bottom-nav-espaco" aria-hidden="true" />
+      )}
       {ABAS_DIR.map(item)}
       <button type="button" className="bottom-nav-item" onClick={aoMais}>
         <span className="bottom-nav-icone">
@@ -48,19 +51,21 @@ export default function BottomNav({
         <span className="bottom-nav-rotulo">Mais</span>
       </button>
 
-      {/* FAB central: nova demanda. Camada externa = borda navy; interna = o
-          botao vermelho + glow (que aparece no anel, entre os dois). */}
-      <button
-        type="button"
-        className="bottom-nav-fab"
-        onClick={aoNova}
-        aria-label="Nova demanda"
-        title="Nova demanda"
-      >
-        <span className="bottom-nav-fab-btn">
-          <Icone nome="mais" size={26} />
-        </span>
-      </button>
+      {/* FAB central: nova demanda (so em Inicio/Dashboard). Camada externa =
+          borda navy; interna = botao vermelho + glow (no anel, entre os dois). */}
+      {mostrarFab && (
+        <button
+          type="button"
+          className="bottom-nav-fab"
+          onClick={aoNova}
+          aria-label="Nova demanda"
+          title="Nova demanda"
+        >
+          <span className="bottom-nav-fab-btn">
+            <Icone nome="mais" size={26} />
+          </span>
+        </button>
+      )}
     </nav>
   )
 }

@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import Icone from './Icone'
 
-// Lista + busca + criacao das obras de UM cliente (drill-in). "aoVoltar"
-// retorna para a lista de clientes.
-export default function ObrasDoCliente({ cliente, perfil, aoVoltar }) {
+// Obras de UM cliente, exibidas INLINE (box/accordion abaixo do cliente).
+// Lista + busca + criacao/edicao. Editar/excluir so para staff (podeEditar).
+export default function ObrasDoCliente({ cliente, perfil }) {
   const [obras, setObras] = useState([])
   const [busca, setBusca] = useState('')
   const [carregando, setCarregando] = useState(true)
@@ -13,6 +13,11 @@ export default function ObrasDoCliente({ cliente, perfil, aoVoltar }) {
   const [mostrarForm, setMostrarForm] = useState(false)
   const [nome, setNome] = useState('')
   const [endereco, setEndereco] = useState('')
+
+  const [editandoId, setEditandoId] = useState(null)
+  const [editNome, setEditNome] = useState('')
+  const [editEndereco, setEditEndereco] = useState('')
+
   const [salvando, setSalvando] = useState(false)
 
   const podeEditar = perfil.papel === 'admin' || perfil.papel === 'atendente'
@@ -39,6 +44,13 @@ export default function ObrasDoCliente({ cliente, perfil, aoVoltar }) {
     ? obras.filter((o) => o.nome.toLowerCase().includes(termo))
     : obras
 
+  // Duplicata na edicao (case-insensitive; ignora a propria obra), dentro do cliente.
+  const editNomeDuplicado = obras.some(
+    (o) =>
+      o.id !== editandoId &&
+      o.nome.trim().toLowerCase() === editNome.trim().toLowerCase(),
+  )
+
   function abrirForm() {
     setNome(busca.trim())
     setEndereco('')
@@ -49,7 +61,6 @@ export default function ObrasDoCliente({ cliente, perfil, aoVoltar }) {
     evento.preventDefault()
     setSalvando(true)
     setErro('')
-
     const { error } = await supabase.from('obra').insert({
       cliente_id: cliente.id,
       nome: nome.trim(),
@@ -68,6 +79,30 @@ export default function ObrasDoCliente({ cliente, perfil, aoVoltar }) {
     setSalvando(false)
   }
 
+  function iniciarEdicao(o) {
+    setEditandoId(o.id)
+    setEditNome(o.nome)
+    setEditEndereco(o.endereco ?? '')
+    setErro('')
+  }
+
+  async function salvarEdicao(evento) {
+    evento.preventDefault()
+    setSalvando(true)
+    setErro('')
+    const { error } = await supabase
+      .from('obra')
+      .update({ nome: editNome.trim(), endereco: editEndereco.trim() || null })
+      .eq('id', editandoId)
+
+    if (error) setErro('Não foi possível salvar a obra.')
+    else {
+      setEditandoId(null)
+      await carregar()
+    }
+    setSalvando(false)
+  }
+
   async function excluirObra(obra) {
     if (!window.confirm(`Excluir a obra "${obra.nome}"?`)) return
     const { error } = await supabase.from('obra').delete().eq('id', obra.id)
@@ -76,23 +111,10 @@ export default function ObrasDoCliente({ cliente, perfil, aoVoltar }) {
   }
 
   return (
-    <div className="secao-obras">
-      <header className="obras-topo">
-        <button
-          type="button"
-          className="det-topo-btn"
-          onClick={aoVoltar}
-          aria-label="Voltar aos clientes"
-          title="Voltar aos clientes"
-        >
-          <Icone nome="voltar" size={20} />
-        </button>
-        <h3>Obras de “{cliente.nome}”</h3>
-      </header>
-
-      <div className="campo-busca">
+    <div className="obras-conteudo">
+      <div className="campo-busca campo-busca-sm">
         <span className="campo-busca-icone">
-          <Icone nome="lupa" size={18} />
+          <Icone nome="lupa" size={16} />
         </span>
         <input
           type="search"
@@ -106,32 +128,82 @@ export default function ObrasDoCliente({ cliente, perfil, aoVoltar }) {
       {erro && <p className="erro">{erro}</p>}
 
       {carregando ? (
-        <p>Carregando obras…</p>
+        <p className="vazio">Carregando obras…</p>
       ) : filtradas.length === 0 ? (
         <p className="vazio">Nenhuma obra ainda.</p>
       ) : (
         <ul className="lista-cad">
           {filtradas.map((o) => (
-            <li key={o.id} className="cad-linha">
-              <div className="cad-item cad-item-estatico">
-                <span className="cad-avatar cad-avatar-obra">
-                  <Icone nome="predio" size={20} />
-                </span>
-                <span className="cad-texto">
-                  <strong className="cad-nome">{o.nome}</strong>
-                  {o.endereco && <span className="cad-sub">{o.endereco}</span>}
-                </span>
-              </div>
-              {podeEditar && (
-                <button
-                  type="button"
-                  className="cad-excluir"
-                  title="Excluir obra"
-                  aria-label="Excluir obra"
-                  onClick={() => excluirObra(o)}
-                >
-                  <Icone nome="lixeira" size={16} />
-                </button>
+            <li key={o.id} className="cad-bloco">
+              {editandoId === o.id ? (
+                <form className="form-novo form-cad" onSubmit={salvarEdicao}>
+                  <h4>Editar obra</h4>
+                  <input
+                    type="text"
+                    placeholder="Nome/identificação da obra"
+                    value={editNome}
+                    onChange={(e) => setEditNome(e.target.value)}
+                    required
+                    autoFocus
+                  />
+                  <input
+                    type="text"
+                    placeholder="Endereço (opcional)"
+                    value={editEndereco}
+                    onChange={(e) => setEditEndereco(e.target.value)}
+                  />
+                  {editNomeDuplicado && (
+                    <p className="aviso">
+                      Já existe outra obra com esse nome neste cliente.
+                    </p>
+                  )}
+                  <div className="form-cad-acoes">
+                    <button type="submit" disabled={salvando || !editNome.trim()}>
+                      {salvando ? 'Salvando…' : 'Salvar'}
+                    </button>
+                    <button
+                      type="button"
+                      className="link"
+                      onClick={() => setEditandoId(null)}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="cad-linha">
+                  <div className="cad-item cad-item-estatico">
+                    <span className="cad-avatar cad-avatar-obra">
+                      <Icone nome="predio" size={20} />
+                    </span>
+                    <span className="cad-texto">
+                      <strong className="cad-nome">{o.nome}</strong>
+                      {o.endereco && <span className="cad-sub">{o.endereco}</span>}
+                    </span>
+                  </div>
+                  {podeEditar && (
+                    <button
+                      type="button"
+                      className="cad-editar"
+                      title="Editar obra"
+                      aria-label="Editar obra"
+                      onClick={() => iniciarEdicao(o)}
+                    >
+                      <Icone nome="editar" size={16} />
+                    </button>
+                  )}
+                  {podeEditar && (
+                    <button
+                      type="button"
+                      className="cad-excluir"
+                      title="Excluir obra"
+                      aria-label="Excluir obra"
+                      onClick={() => excluirObra(o)}
+                    >
+                      <Icone nome="lixeira" size={16} />
+                    </button>
+                  )}
+                </div>
               )}
             </li>
           ))}
@@ -169,8 +241,12 @@ export default function ObrasDoCliente({ cliente, perfil, aoVoltar }) {
           </div>
         </form>
       ) : (
-        <button type="button" className="botao-novo-cad" onClick={abrirForm}>
-          <Icone nome="mais" size={18} /> Nova obra
+        <button
+          type="button"
+          className="botao-novo-cad botao-novo-sm"
+          onClick={abrirForm}
+        >
+          <Icone nome="mais" size={16} /> Nova obra
         </button>
       )}
     </div>
