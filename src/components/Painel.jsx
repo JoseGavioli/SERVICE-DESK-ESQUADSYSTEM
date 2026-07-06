@@ -124,11 +124,16 @@ export default function Painel({ sessao }) {
     )
   }
 
+  // Telas com "hero" proprio (titulo grande + acoes) no lugar da barra de topo
+  // enxuta: Inicio, Clientes e Equipe.
+  const telaComHero =
+    secao === 'inicio' || secao === 'clientes' || secao === 'equipe'
+
   return (
     <div className="app">
-      {/* Inicio e Clientes tem "hero" (titulo grande + acoes) dentro do proprio
-          componente; nas demais telas fica esta barra enxuta. */}
-      {secao !== 'inicio' && secao !== 'clientes' && (
+      {/* Inicio, Clientes e Equipe tem "hero" (titulo grande + acoes) dentro do
+          proprio componente; nas demais telas fica esta barra enxuta. */}
+      {!telaComHero && (
         <header className="topo">
           <span className="titulo-tela">{NOME_TELA[secao] ?? ''}</span>
           <button
@@ -171,7 +176,7 @@ export default function Painel({ sessao }) {
 
       <section
         key={secao}
-        className={`conteudo${secao === 'inicio' || secao === 'clientes' ? ' sem-topo' : ''}`}
+        className={`conteudo${telaComHero ? ' sem-topo' : ''}`}
       >
         {secao === 'inicio' && (
           <Demandas
@@ -205,7 +210,13 @@ export default function Painel({ sessao }) {
             aoAbrirNotif={() => setNotifAberto(true)}
           />
         )}
-        {secao === 'equipe' && <Equipe perfil={perfil} />}
+        {secao === 'equipe' && (
+          <Equipe
+            perfil={perfil}
+            naoLidas={naoLidas}
+            aoAbrirNotif={() => setNotifAberto(true)}
+          />
+        )}
         {secao === 'tema' && <Tema />}
       </section>
 
