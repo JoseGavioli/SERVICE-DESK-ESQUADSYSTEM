@@ -13,6 +13,7 @@ export default function BottomNav({
   secao,
   aoNavegar,
   aoMais,
+  menuAberto,
   aoNova,
   mostrarFab,
   novidadesCount,
@@ -26,7 +27,7 @@ export default function BottomNav({
         onClick={() => aoNavegar(a.id)}
       >
         <span className="bottom-nav-icone">
-          <Icone nome={a.icone} size={22} />
+          <Icone nome={a.icone} size={25} />
           {a.id === 'inicio' && novidadesCount > 0 && (
             <span className="bottom-nav-badge">{novidadesCount}</span>
           )}
@@ -44,9 +45,13 @@ export default function BottomNav({
         <span className="bottom-nav-espaco" aria-hidden="true" />
       )}
       {ABAS_DIR.map(item)}
-      <button type="button" className="bottom-nav-item" onClick={aoMais}>
+      <button
+        type="button"
+        className={`bottom-nav-item ${menuAberto ? 'ativo' : ''}`}
+        onClick={aoMais}
+      >
         <span className="bottom-nav-icone">
-          <Icone nome="mais-opcoes" size={22} />
+          <Icone nome="mais-opcoes" size={25} />
         </span>
         <span className="bottom-nav-rotulo">Mais</span>
       </button>
@@ -62,7 +67,7 @@ export default function BottomNav({
           title="Nova demanda"
         >
           <span className="bottom-nav-fab-btn">
-            <Icone nome="mais" size={26} />
+            <Icone nome="mais" size={35} />
           </span>
         </button>
       )}

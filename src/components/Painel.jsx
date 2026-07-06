@@ -226,7 +226,8 @@ export default function Painel({ sessao }) {
             setSecao(s)
             setMenuAberto(false)
           }}
-          aoMais={() => setMenuAberto(true)}
+          aoMais={() => setMenuAberto((v) => !v)}
+          menuAberto={menuAberto}
           aoNova={abrirNovaDemanda}
           mostrarFab={secao === 'inicio' || secao === 'dashboard'}
           novidadesCount={demandasComNovidade.size}
