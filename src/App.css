@@ -1811,6 +1811,12 @@ textarea::placeholder {
   object-fit: cover;
   display: block;
 }
+/* miniatura de PDF (#31): herda o tamanho do img do hero; alinha ao TOPO
+   (mostra o cabecalho do orcamento) sobre fundo branco (pagina). */
+.pdf-thumb {
+  object-position: top;
+  background: #fff;
+}
 .hero-arquivo {
   width: 100%;
   height: 100%;

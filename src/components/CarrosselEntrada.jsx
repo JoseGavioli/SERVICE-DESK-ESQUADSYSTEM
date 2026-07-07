@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { ehImagem, enviarAnexo, validarArquivo } from '../lib/anexos'
 import Lightbox from './Lightbox'
+import MiniaturaPdf from './MiniaturaPdf'
 import Icone from './Icone'
 
 // "Hero" do detalhe: os anexos de ENTRADA (o que o vendedor enviou — o
@@ -98,6 +99,16 @@ export default function CarrosselEntrada({ demanda, perfil }) {
     const url = urls[a.caminho_storage]
     if (ehImagem(a.nome_original) && url) {
       return <img src={url} alt={a.nome_original} loading="lazy" />
+    }
+    // PDF: miniatura da 1a pagina (pdf.js sob demanda); fallback = icone (#31).
+    if (/\.pdf$/i.test(a.nome_original)) {
+      return (
+        <MiniaturaPdf
+          caminho={a.caminho_storage}
+          alt={a.nome_original}
+          grande={grande}
+        />
+      )
     }
     return (
       <span className="hero-arquivo">
