@@ -16,16 +16,58 @@ const STATUS_ORDEM = [
 // Terminais NAO entram no "em aberto" nem em "por vendedor".
 const TERMINAIS = ['enviado', 'cancelada']
 
-// nivel de urgencia -> sufixo do token de cor (--ur-<suf>-bg / -fg)
-const URG_TOKEN = {
-  atrasado: 'atrasado',
-  muito_urgente: 'muito',
-  urgente: 'urgente',
-  pouco_urgente: 'pouco',
-  sem_urgencia: 'sem',
+// Cor FORTE de cada nivel (a cor da TAG de urgencia, nao o tint apagado).
+// 'atrasado' ja tem -bg solido (#c62828/#b71c1c); os demais usam -fg (o -bg
+// deles e so um tint claro, que ficava "lavado" na barra).
+const URG_COR = {
+  atrasado: 'var(--ur-atrasado-bg)',
+  muito_urgente: 'var(--ur-muito-fg)',
+  urgente: 'var(--ur-urgente-fg)',
+  pouco_urgente: 'var(--ur-pouco-fg)',
+  sem_urgencia: 'var(--ur-sem-fg)',
 }
 
-// Tela "Dashboard" (Resumo): hero + widgets ACIONAVEIS em tempo real, cada um
+const ROTULO_PAPEL = { admin: 'Admin', atendente: 'Atendente', vendedor: 'Vendedor' }
+
+// Iniciais (ate 2 letras) para o avatar do perfil no topo.
+function iniciais(nome) {
+  if (!nome) return '?'
+  const p = nome.trim().split(/\s+/)
+  return ((p[0]?.[0] ?? '') + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase()
+}
+
+// Anel (gauge) SVG: arco proporcional (valor/total) na cor do status, com a
+// contagem no centro. Comeca no topo (rotate -90) e cresce no sentido horario.
+function Anel({ valor, total, cor }) {
+  const raio = 30
+  const circ = 2 * Math.PI * raio
+  const arco = (total > 0 ? valor / total : 0) * circ
+  return (
+    <svg className="anel" viewBox="0 0 72 72" aria-hidden="true">
+      <circle className="anel-track" cx="36" cy="36" r={raio} />
+      <circle
+        className="anel-arco"
+        cx="36"
+        cy="36"
+        r={raio}
+        transform="rotate(-90 36 36)"
+        style={{ stroke: cor, strokeDasharray: `${arco} ${circ}` }}
+      />
+      <text
+        className="anel-num"
+        x="36"
+        y="36"
+        textAnchor="middle"
+        dominantBaseline="central"
+        style={{ fill: cor }}
+      >
+        {valor}
+      </text>
+    </svg>
+  )
+}
+
+// Tela "Dashboard" (Resumo): perfil no topo + widgets ACIONAVEIS em tempo real,
 // abrindo a LISTA ja filtrada. Respeita o papel via RLS (o vendedor ve os
 // numeros DELE; admin/atendente veem a fila toda).
 export default function Dashboard({ perfil, aoAbrirComFiltro, naoLidas, aoAbrirNotif }) {
@@ -108,6 +150,8 @@ export default function Dashboard({ perfil, aoAbrirComFiltro, naoLidas, aoAbrirN
   const statusVisiveis = dados
     ? STATUS_ORDEM.filter((s) => dados.porStatus[s] > 0)
     : []
+  // Total (soma dos status visiveis) = base do arco de cada anel.
+  const totalStatus = statusVisiveis.reduce((n, s) => n + dados.porStatus[s], 0)
   const urgVisiveis = dados
     ? URGENCIA_NIVEIS.map((u) => ({
         ...u,
@@ -127,9 +171,9 @@ export default function Dashboard({ perfil, aoAbrirComFiltro, naoLidas, aoAbrirN
 
   return (
     <div className="secao-dashboard">
-      <header className="hero-demandas">
-        <h1 className="hero-titulo">Resumo</h1>
-        <div className="hero-acoes">
+      <header className="dash-topo">
+        <div className="dash-titulo-linha">
+          <h1 className="hero-titulo">Dashboard</h1>
           <button
             type="button"
             className="btn-circular"
@@ -140,6 +184,17 @@ export default function Dashboard({ perfil, aoAbrirComFiltro, naoLidas, aoAbrirN
             <Icone nome="sino" size={20} />
             {naoLidas > 0 && <span className="sino-badge">{naoLidas}</span>}
           </button>
+        </div>
+        <div className="dash-perfil">
+          <span className="dash-avatar">{iniciais(perfil.nome_completo)}</span>
+          <div className="dash-perfil-texto">
+            <strong className="dash-nome">
+              {perfil.nome_completo || 'Usuário'}
+            </strong>
+            <span className="dash-papel">
+              {ROTULO_PAPEL[perfil.papel] ?? perfil.papel}
+            </span>
+          </div>
         </div>
       </header>
 
@@ -178,15 +233,14 @@ export default function Dashboard({ perfil, aoAbrirComFiltro, naoLidas, aoAbrirN
 
           {temDistribuicao && <p className="secao-rotulo">Distribuição</p>}
 
-          {/* 3. POR STATUS — grade compacta na cor de cada status */}
+          {/* 3. POR STATUS — cartoes com anel (fatia no total) na cor do status */}
           {statusVisiveis.length > 0 && (
-            <div className="grade-status">
+            <div className="anel-grade">
               {statusVisiveis.map((s) => (
                 <button
                   key={s}
                   type="button"
-                  className="box-inicio box-status-cor"
-                  style={{ '--c': `var(--st-${s}-fg)` }}
+                  className="anel-card"
                   onClick={() =>
                     aoAbrirComFiltro(
                       s === 'enviado'
@@ -195,8 +249,12 @@ export default function Dashboard({ perfil, aoAbrirComFiltro, naoLidas, aoAbrirN
                     )
                   }
                 >
-                  <span className="box-titulo">{tituloStatus(s)}</span>
-                  <span className="box-numero">{dados.porStatus[s]}</span>
+                  <span className="anel-card-titulo">{tituloStatus(s)}</span>
+                  <Anel
+                    valor={dados.porStatus[s]}
+                    total={totalStatus}
+                    cor={`var(--st-${s}-fg)`}
+                  />
                 </button>
               ))}
             </div>
@@ -214,7 +272,7 @@ export default function Dashboard({ perfil, aoAbrirComFiltro, naoLidas, aoAbrirN
                     className="urg-seg"
                     style={{
                       flexGrow: u.count,
-                      backgroundColor: `var(--ur-${URG_TOKEN[u.nivel]}-bg)`,
+                      backgroundColor: URG_COR[u.nivel],
                     }}
                     onClick={() => aoAbrirComFiltro({ urgencia: u.nivel })}
                     aria-label={`${u.rotulo}: ${u.count}`}
@@ -233,7 +291,7 @@ export default function Dashboard({ perfil, aoAbrirComFiltro, naoLidas, aoAbrirN
                     <span
                       className="urg-ponto"
                       style={{
-                        backgroundColor: `var(--ur-${URG_TOKEN[u.nivel]}-bg)`,
+                        backgroundColor: URG_COR[u.nivel],
                       }}
                     />
                     <span className="urg-rotulo">{u.rotulo}</span>

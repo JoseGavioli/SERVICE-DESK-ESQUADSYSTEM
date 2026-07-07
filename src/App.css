@@ -3173,12 +3173,111 @@ button.cad-item:hover {
   flex-direction: column;
   gap: 1rem;
 }
-/* o gap dita o ritmo: neutraliza margens herdadas do hero e da box-total */
-.secao-dashboard .hero-demandas {
-  margin-bottom: 0;
-}
+/* o gap dita o ritmo: neutraliza a margem herdada da box-total */
 .secao-dashboard .box-total {
   margin: 0;
+}
+
+/* topo: titulo "Dashboard" + sino, e o PERFIL do usuario logo abaixo */
+.dash-topo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+.dash-titulo-linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.dash-perfil {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+.dash-avatar {
+  flex-shrink: 0;
+  width: 3.2rem;
+  height: 3.2rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primaria);
+  color: var(--primaria-texto);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+.dash-perfil-texto {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.dash-nome {
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--texto);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dash-papel {
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+
+/* POR STATUS em cartoes com ANEL (gauge): fatia do total na cor do status.
+   Titulo em cima, anel com a contagem no centro (estrutura da referencia). */
+.anel-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 0.75rem;
+}
+.anel-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 0.75rem;
+  border: 0;
+  border-radius: var(--raio-card);
+  background: var(--surface);
+  box-shadow: var(--sombra-sm);
+  cursor: pointer;
+  font: inherit;
+  color: var(--texto);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.anel-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--sombra);
+}
+.anel-card-titulo {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--texto-suave);
+  text-align: center;
+}
+.anel {
+  width: 100%;
+  max-width: 5.25rem;
+  height: auto;
+}
+.anel-track {
+  fill: none;
+  stroke: var(--borda);
+  stroke-width: 7;
+}
+.anel-arco {
+  fill: none;
+  stroke-width: 7;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.4s ease;
+}
+.anel-num {
+  font-size: 20px;
+  font-weight: 700;
 }
 /* subtitulo discreto: a virada de "acao" para "panorama" */
 .secao-rotulo {
