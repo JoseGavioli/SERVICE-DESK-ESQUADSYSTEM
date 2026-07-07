@@ -29,3 +29,8 @@ dev-dist
 .env
 .env.*
 !.env.example
+
+# Chaves VAPID do Web Push (contem a chave PRIVADA) — NUNCA versionar.
+vapid.json
+vapid-keys.txt
+vapid-public.txt
