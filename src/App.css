@@ -1811,11 +1811,84 @@ textarea::placeholder {
   object-fit: cover;
   display: block;
 }
-/* miniatura de PDF (#31): herda o tamanho do img do hero; alinha ao TOPO
-   (mostra o cabecalho do orcamento) sobre fundo branco (pagina). */
+/* ── Miniatura/card de PDF (#31) ───────────────────────────── */
+/* a img da previa herda o tamanho do img do hero; alinha ao TOPO (cabecalho
+   do orcamento) sobre fundo branco (pagina). */
 .pdf-thumb {
   object-position: top;
   background: #fff;
+}
+/* card no hero grande: previa em cima + rodape (selo PDF, nome, paginas·tam) */
+.pdf-card {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+}
+.pdf-card-previa {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+}
+.pdf-card-previa .hero-arquivo {
+  color: var(--perigo);
+}
+.pdf-card-rodape {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 0.65rem;
+  background: var(--surface-2);
+  border-top: 1px solid var(--borda);
+  text-align: left;
+}
+.pdf-badge {
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: #fff;
+  background: var(--perigo);
+  padding: 0.16rem 0.34rem;
+  border-radius: 4px;
+}
+.pdf-card-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+.pdf-card-nome {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--texto);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pdf-card-meta {
+  font-size: 0.72rem;
+  color: var(--texto-suave);
+}
+/* thumb pequena: previa + selo "PDF" no canto */
+.pdf-mini {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.pdf-mini-badge {
+  position: absolute;
+  left: 2px;
+  bottom: 2px;
+  font-size: 0.52rem;
+  font-weight: 800;
+  color: #fff;
+  background: var(--perigo);
+  padding: 0.06rem 0.22rem;
+  border-radius: 3px;
 }
 .hero-arquivo {
   width: 100%;
