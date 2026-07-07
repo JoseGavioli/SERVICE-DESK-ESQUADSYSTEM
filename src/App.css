@@ -2065,6 +2065,43 @@ textarea::placeholder {
   font-weight: 700;
   color: var(--texto);
 }
+/* ── Dados do orcamento no detalhe: CLUB CASA, RT, arquiteto (#35) ── */
+.det-extras {
+  display: flex;
+  flex-direction: column;
+  margin: 0 0 1.1rem;
+  padding: 0 0.85rem;
+  background: var(--surface-2);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+}
+.det-extra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0;
+}
+.det-extra + .det-extra {
+  border-top: 1px solid var(--borda);
+}
+.det-extra-rot {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--texto-suave);
+}
+.det-extra-val {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--texto);
+  text-align: right;
+}
+.det-extra-val.sim {
+  color: var(--primaria);
+}
+
 .det-prazo {
   display: flex;
   align-items: center;

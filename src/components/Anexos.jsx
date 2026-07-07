@@ -79,11 +79,22 @@ export default function Anexos({ demanda, perfil }) {
 
   async function baixar(anexo) {
     setErro('')
+    // download: <nome> faz o Storage servir com Content-Disposition attachment
+    // usando o NOME ORIGINAL (em vez do caminho uuid-nome do bucket) — #34.
     const { data, error } = await supabase.storage
       .from('anexos')
-      .createSignedUrl(anexo.caminho_storage, 60)
-    if (error) setErro('Não foi possível gerar o link de download.')
-    else window.open(data.signedUrl, '_blank')
+      .createSignedUrl(anexo.caminho_storage, 60, { download: anexo.nome_original })
+    if (error) {
+      setErro('Não foi possível gerar o link de download.')
+      return
+    }
+    // Dispara o download sem abrir aba em branco.
+    const a = document.createElement('a')
+    a.href = data.signedUrl
+    a.download = anexo.nome_original
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
   }
 
   function abrir(anexo) {

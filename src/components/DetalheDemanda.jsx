@@ -46,7 +46,7 @@ export default function DetalheDemanda({
     const { data, error } = await supabase
       .from('demanda')
       .select(
-        'id, descricao, prazo, status, created_at, vendedor_id, obra_id, cancelamento_solicitado, tipo_demanda(nome), obra(nome, endereco, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo)',
+        'id, descricao, prazo, status, created_at, vendedor_id, obra_id, cancelamento_solicitado, club_casa, rt, rt_percentual, arquiteto_engenheiro, tipo_demanda(nome), obra(nome, endereco, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo)',
       )
       .eq('id', demandaId)
       .single()
@@ -179,7 +179,32 @@ export default function DetalheDemanda({
         <p className="det-descricao">{d.descricao}</p>
       </div>
 
-      {/* Prazo (logo apos a descricao) */}
+      {/* Dados do orcamento: CLUB CASA, RT e arquiteto (§issue #35).
+          CLUB CASA e RT sao sempre Sim/Nao; arquiteto so aparece se preenchido. */}
+      <div className="det-extras">
+        <div className="det-extra">
+          <span className="det-extra-rot">CLUB CASA</span>
+          <span className={`det-extra-val ${d.club_casa ? 'sim' : ''}`}>
+            {d.club_casa ? 'Sim' : 'Não'}
+          </span>
+        </div>
+        <div className="det-extra">
+          <span className="det-extra-rot">RT</span>
+          <span className={`det-extra-val ${d.rt ? 'sim' : ''}`}>
+            {d.rt
+              ? `Sim${d.rt_percentual != null ? ` — ${d.rt_percentual}%` : ''}`
+              : 'Não'}
+          </span>
+        </div>
+        {d.arquiteto_engenheiro && (
+          <div className="det-extra">
+            <span className="det-extra-rot">Arquiteto/engenheiro</span>
+            <span className="det-extra-val">{d.arquiteto_engenheiro}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Prazo (logo apos os dados do orcamento) */}
       <p className="det-prazo">
         <Icone nome="relogio" size={15} /> <strong>Prazo:</strong>{' '}
         {d.prazo?.split('-').reverse().join('/')}
