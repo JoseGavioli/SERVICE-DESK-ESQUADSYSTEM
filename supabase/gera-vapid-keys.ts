@@ -1,18 +1,15 @@
-// Gera o par de chaves VAPID para o Web Push (#14), no formato que a Edge
-// Function `enviar-push` espera (@negrel/webpush 0.5.0).
+// Gera UM par de chaves VAPID para o Web Push (#14) no formato do
+// @negrel/webpush 0.5.0 e IMPRIME as duas chaves na tela (sem arquivo, pra
+// evitar pegadinha de redirect/encoding no PowerShell).
 //
-// A versao 0.5.0 NAO expoe mais o subcomando ./cmd/generate-vapid-keys, entao
-// chamamos os helpers do modulo principal aqui.
+// COMO RODAR (precisa do Deno), a partir da RAIZ do projeto:
+//   deno run supabase/gera-vapid-keys.ts
 //
-// COMO RODAR (precisa do Deno):
-//   deno run jsr:... nao; rode este arquivo:
-//   deno run supabase/gera-vapid-keys.ts > vapid.json
+// Depois copie da saida:
+//   - VAPID_KEYS            -> secret do Supabase (Edge Function)
+//   - VITE_VAPID_PUBLIC_KEY -> Env Var da Vercel (e .env.local)
 //
-// Resultado:
-//   - STDOUT  -> vapid.json  = o JSON de JWKs  -> vai no secret VAPID_KEYS
-//   - STDERR  -> a chave publica base64url     -> vai em VITE_VAPID_PUBLIC_KEY
-//
-// Guarde o vapid.json com seguranca e NAO o commite.
+// As DUAS saem do MESMO par — e o que garante que servidor e navegador batem.
 import {
   generateVapidKeys,
   exportVapidKeys,
@@ -25,11 +22,13 @@ const keys = await generateVapidKeys({ extractable: true })
 const jwks = await exportVapidKeys(keys) // { publicKey, privateKey } (JWK)
 const appServerKey = await exportApplicationServerKey(keys) // base64url
 
-// stdout: o JSON que vira o secret VAPID_KEYS.
-console.log(JSON.stringify(jwks, null, 2))
-
-// stderr: a chave publica para o frontend (nao "suja" o vapid.json).
-console.error('\n──────────────────────────────────────────────')
-console.error('VITE_VAPID_PUBLIC_KEY (frontend / Vercel):')
-console.error(appServerKey)
-console.error('──────────────────────────────────────────────')
+console.log('')
+console.log('================  VAPID_KEYS  ================')
+console.log('(secret do Supabase — cole TUDO abaixo, 1 linha)')
+console.log(JSON.stringify(jwks))
+console.log('')
+console.log('==========  VITE_VAPID_PUBLIC_KEY  ===========')
+console.log('(Vercel + .env.local)')
+console.log(appServerKey)
+console.log('==============================================')
+console.log('')
