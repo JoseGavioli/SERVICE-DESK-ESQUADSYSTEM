@@ -116,8 +116,11 @@ export default function DetalheDemanda({
     )
   }
 
-  // So o vendedor dono cria filha, e so de uma demanda ENVIADA (§5/§11).
-  const podeCriarFilha = d.status === 'enviado' && perfil.id === d.vendedor_id
+  // A "demanda-filha" (§11) esta OCULTA por ora — o dono vai confirmar com os
+  // vendedores se e util antes de liberar (nada foi deletado/desativado).
+  // Para REATIVAR, troque `false` pela condicao original:
+  //   d.status === 'enviado' && perfil.id === d.vendedor_id
+  const podeCriarFilha = false
   // Dias uteis em revisao de custo (§issue #13); null se nunca entrou.
   const diasRevisao = diasUteisDesde(dataRevisao)
 
