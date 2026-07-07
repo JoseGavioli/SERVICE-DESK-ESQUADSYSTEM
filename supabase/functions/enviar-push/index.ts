@@ -12,9 +12,12 @@
 //                     x-hook-secret do Database Webhook)
 //   SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY sao injetados automaticamente.
 //
-// O Database Webhook (POST) deve mandar os headers:
-//   Authorization: Bearer <ANON_KEY>   (satisfaz o verify_jwt da plataforma)
-//   x-hook-secret: <PUSH_HOOK_SECRET>  (o nosso portao de verdade)
+// A funcao roda com **Verify JWT DESLIGADO** (a anon key deste projeto e a nova
+// `sb_publishable_...`, que NAO e um JWT — com verify_jwt ligado o Supabase
+// devolveria 401 antes do nosso codigo). Quem protege a funcao e o header
+// x-hook-secret. Logo, tanto o teste (curl) quanto o Database Webhook (fase 4)
+// so precisam mandar:
+//   x-hook-secret: <PUSH_HOOK_SECRET>
 //
 // Versao FIXADA (a API muda entre versoes; 0.5.0 exporta so o modulo principal).
 import * as webpush from 'jsr:@negrel/webpush@0.5.0'
