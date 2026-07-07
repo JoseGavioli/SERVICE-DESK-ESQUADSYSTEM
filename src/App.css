@@ -592,6 +592,71 @@ textarea::placeholder {
   background: var(--surface-2);
 }
 
+/* Toggle de Web Push (opt-in por aparelho) na tela de Notificacoes */
+.push-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--borda);
+  margin-bottom: 0.25rem;
+}
+.push-toggle-texto {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  color: var(--texto);
+}
+.push-toggle-texto .lucide {
+  color: var(--texto-suave);
+  flex-shrink: 0;
+}
+/* interruptor (switch) */
+.switch {
+  flex-shrink: 0;
+  position: relative;
+  width: 2.6rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--raio-pill);
+  background: var(--borda-forte);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.switch.ligado {
+  background: var(--primaria);
+}
+.switch:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.switch-bolinha {
+  position: absolute;
+  top: 0.18rem;
+  left: 0.18rem;
+  width: 1.14rem;
+  height: 1.14rem;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--sombra-sm);
+  transition: transform 0.15s ease;
+}
+.switch.ligado .switch-bolinha {
+  transform: translateX(1.1rem);
+}
+.push-aviso {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--texto-suave);
+}
+.push-erro {
+  color: var(--perigo);
+}
+
 /* ── Tela de Tema ──────────────────────────────────────────── */
 .opcoes-tema {
   display: flex;

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { textoNotificacao } from '../lib/notificacaoTexto'
 import EstadoVazio from './EstadoVazio'
+import TogglePush from './TogglePush'
 import Icone from './Icone'
 
 // Drawer de Notificacoes: desliza da DIREITA (aberto pelo sino do topo), com
@@ -51,6 +52,8 @@ export default function Notificacoes({
             <Icone nome="fechar" size={18} />
           </button>
         </div>
+
+        <TogglePush />
 
         {temAlguma && (
           <div className="acoes-notif">
