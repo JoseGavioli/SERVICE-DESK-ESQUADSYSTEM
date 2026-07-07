@@ -107,26 +107,39 @@ export default function CarrosselEntrada({ demanda, perfil }) {
     )
   }
 
-  // Botao de adicionar (label envolvendo um input file).
+  // Botoes de adicionar: escolher arquivo OU tirar foto (camera no celular).
   const botaoAdicionar = podeGerenciar && (
-    <label className="hero-add">
+    <div className="hero-add-acoes">
       {enviando ? (
-        'Enviando…'
+        <span className="hero-add hero-add-enviando">Enviando…</span>
       ) : (
         <>
-          <Icone nome="mais" size={16} /> Adicionar anexo de entrada
+          <label className="hero-add">
+            <Icone nome="mais" size={16} /> Adicionar
+            <input
+              type="file"
+              accept="image/jpeg,image/png,application/pdf"
+              onChange={(e) => {
+                enviar(e.target.files[0])
+                e.target.value = ''
+              }}
+            />
+          </label>
+          <label className="hero-add">
+            <Icone nome="camera" size={16} /> Tirar foto
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={(e) => {
+                enviar(e.target.files[0])
+                e.target.value = ''
+              }}
+            />
+          </label>
         </>
       )}
-      <input
-        type="file"
-        accept="image/jpeg,image/png,application/pdf"
-        disabled={enviando}
-        onChange={(e) => {
-          enviar(e.target.files[0])
-          e.target.value = ''
-        }}
-      />
-    </label>
+    </div>
   )
 
   if (carregando) {

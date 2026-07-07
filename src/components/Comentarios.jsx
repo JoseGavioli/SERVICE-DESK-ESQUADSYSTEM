@@ -9,6 +9,13 @@ const CONTEXTO_ROTULO = {
   mudanca_status: 'Mudança de status',
 }
 
+// Iniciais (ate 2 letras) para o avatar do autor.
+function iniciais(nome) {
+  if (!nome) return '?'
+  const p = nome.trim().split(/\s+/)
+  return ((p[0]?.[0] ?? '') + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase()
+}
+
 // Lista + caixa de novo comentario de uma demanda. Qualquer um que ve a
 // demanda pode comentar (a RLS garante; o autor e sempre o usuario logado).
 export default function Comentarios({ demandaId }) {
@@ -71,21 +78,30 @@ export default function Comentarios({ demandaId }) {
           {comentarios.map((c) => {
             const t = c.transicao?.[0] // transicao vinculada (se for mudanca de status)
             return (
-              <li key={c.id}>
-                <div className="cab">
-                  <strong>{c.autor?.nome_completo}</strong>
-                  <span className="quando">
-                    {new Date(c.created_at).toLocaleString('pt-BR')}
-                  </span>
+              <li key={c.id} className="coment-item">
+                <span className="coment-avatar">
+                  {iniciais(c.autor?.nome_completo)}
+                </span>
+                <div className="coment-corpo">
+                  <div className="coment-cab">
+                    <strong className="coment-autor">
+                      {c.autor?.nome_completo || 'Alguém'}
+                    </strong>
+                    <span className="coment-quando">
+                      {new Date(c.created_at).toLocaleString('pt-BR')}
+                    </span>
+                  </div>
+                  {t ? (
+                    <span className="chip-coment chip-coment-transicao">
+                      {STATUS_ROTULO[t.de_status]} → {STATUS_ROTULO[t.para_status]}
+                    </span>
+                  ) : c.contexto ? (
+                    <span className="chip-coment chip-coment-cancel">
+                      {CONTEXTO_ROTULO[c.contexto]}
+                    </span>
+                  ) : null}
+                  <p className="coment-texto">{c.texto}</p>
                 </div>
-                {t ? (
-                  <span className="tag-contexto tag-transicao">
-                    {STATUS_ROTULO[t.de_status]} → {STATUS_ROTULO[t.para_status]}
-                  </span>
-                ) : c.contexto ? (
-                  <span className="tag-contexto">{CONTEXTO_ROTULO[c.contexto]}</span>
-                ) : null}
-                <p className="texto">{c.texto}</p>
               </li>
             )
           })}

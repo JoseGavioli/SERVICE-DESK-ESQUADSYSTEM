@@ -366,18 +366,34 @@ export default function NovaDemanda({
               ))}
             </ul>
           )}
-          <label className="enviar-arquivo">
-            <Icone nome="mais" size={16} /> Escolher arquivos (JPG/PNG/PDF, ≤ 2 MB)
-            <input
-              type="file"
-              multiple
-              accept="image/jpeg,image/png,application/pdf"
-              onChange={(e) => {
-                adicionarArquivos(e.target.files)
-                e.target.value = ''
-              }}
-            />
-          </label>
+          <div className="anexo-acoes">
+            <label className="enviar-arquivo">
+              <Icone nome="mais" size={16} /> Escolher arquivo
+              <input
+                type="file"
+                multiple
+                accept="image/jpeg,image/png,application/pdf"
+                onChange={(e) => {
+                  adicionarArquivos(e.target.files)
+                  e.target.value = ''
+                }}
+              />
+            </label>
+            {/* No celular, abre a camera direto (foto da medicao/croqui). */}
+            <label className="enviar-arquivo">
+              <Icone nome="camera" size={16} /> Tirar foto
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={(e) => {
+                  adicionarArquivos(e.target.files)
+                  e.target.value = ''
+                }}
+              />
+            </label>
+          </div>
+          <span className="anexo-fmt">JPG, PNG ou PDF · até 2 MB</span>
         </section>
 
         {erro && <p className="erro">{erro}</p>}

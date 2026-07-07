@@ -2201,61 +2201,77 @@ textarea::placeholder {
 .urgencia-atrasado { background: var(--ur-atrasado-bg); color: var(--ur-atrasado-fg); }
 
 /* ── Comentários ───────────────────────────────────────────── */
-.comentarios {
-  border-top: 1px solid var(--borda);
-  margin-top: 1.25rem;
-  padding-top: 0.85rem;
-}
-.comentarios h3 {
-  font-size: 1rem;
-  margin: 0 0 0.5rem;
-  color: var(--texto-suave);
-}
+/* ── Comentários (thread) — #27 ────────────────────────────
+   .comentarios ja e um .det-card (via grupo de seletores acima); aqui e
+   so o "thread" (avatar + balao) e o form. */
 .lista-comentarios {
   list-style: none;
   padding: 0;
-  margin: 0 0 1rem;
+  margin: 0.25rem 0 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.95rem;
 }
-.lista-comentarios li {
-  background: var(--surface-2);
-  border: 1px solid var(--borda);
-  border-radius: var(--raio-sm);
-  padding: 0.65rem 0.8rem;
-}
-.lista-comentarios .cab {
+.coment-item {
   display: flex;
-  justify-content: space-between;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+.coment-avatar {
+  flex-shrink: 0;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primaria-suave);
+  color: var(--primaria);
+  font-weight: 700;
+  font-size: 0.76rem;
+}
+.coment-corpo {
+  flex: 1;
+  min-width: 0;
+}
+.coment-cab {
+  display: flex;
   align-items: baseline;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
-.lista-comentarios .cab strong {
+.coment-autor {
   color: var(--texto);
+  font-size: 0.92rem;
 }
-.lista-comentarios .quando {
+.coment-quando {
   color: var(--texto-fraco);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
 }
-.lista-comentarios .texto {
-  margin: 0.35rem 0 0;
-  white-space: pre-wrap;
-  color: var(--texto);
-}
-.tag-contexto {
+.chip-coment {
   display: inline-block;
-  margin-top: 0.25rem;
-  font-size: 0.7rem;
-  font-weight: 600;
-  padding: 0.1rem 0.45rem;
+  margin-top: 0.3rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.1rem 0.5rem;
   border-radius: var(--raio-pill);
-  background: var(--st-enviado-bg);
-  color: var(--st-enviado-fg);
-}
-.tag-transicao {
   background: var(--st-em_andamento-bg);
   color: var(--st-em_andamento-fg);
+}
+.chip-coment-cancel {
+  background: var(--st-cancelada-bg);
+  color: var(--st-cancelada-fg);
+}
+/* balao do texto (bico reto no canto do avatar) */
+.coment-texto {
+  margin: 0.35rem 0 0;
+  padding: 0.55rem 0.75rem;
+  background: var(--surface-2);
+  border-radius: var(--raio-sm);
+  border-top-left-radius: 2px;
+  white-space: pre-wrap;
+  line-height: 1.45;
+  color: var(--texto);
 }
 .form-comentario {
   display: flex;
@@ -2264,15 +2280,17 @@ textarea::placeholder {
 }
 .form-comentario textarea {
   font-size: 1rem;
+  resize: vertical;
+  min-height: 4.5rem;
 }
 .form-comentario button {
-  align-self: flex-start;
-  padding: 0.5rem 1rem;
+  align-self: flex-end;
+  padding: 0.6rem 1.3rem;
   border: 0;
-  border-radius: var(--raio-sm);
+  border-radius: var(--raio);
   background: var(--primaria);
   color: var(--primaria-texto);
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: background 0.15s ease;
 }
@@ -2497,6 +2515,42 @@ textarea::placeholder {
 }
 .enviar-arquivo input[type='file'] {
   display: none;
+}
+/* dois botoes de anexo lado a lado: escolher arquivo + tirar foto (#19) */
+.anexo-acoes {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+.anexo-acoes .enviar-arquivo {
+  flex: 1;
+  min-width: 8.5rem;
+  margin: 0;
+  text-align: center;
+}
+.anexo-fmt {
+  display: block;
+  margin-top: 0.45rem;
+  font-size: 0.78rem;
+  color: var(--texto-fraco);
+}
+/* idem no "hero" do detalhe (CarrosselEntrada) */
+.hero-add-acoes {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.7rem;
+}
+.hero-add-acoes .hero-add {
+  flex: 1;
+  min-width: 8rem;
+  width: auto;
+  margin-top: 0;
+}
+.hero-add-enviando {
+  opacity: 0.8;
+  cursor: default;
 }
 .anexos-novos {
   display: flex;
