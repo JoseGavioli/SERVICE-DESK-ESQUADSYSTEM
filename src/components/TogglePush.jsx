@@ -59,7 +59,7 @@ export default function TogglePush() {
     } catch (e) {
       if (e.message === 'permissao_negada') setErro('Permissão negada.')
       else if (e.message === 'sem_chave_vapid')
-        setErro('Push ainda não configurado (falta a chave no servidor).')
+        setErro('Avisos ainda não configurados neste ambiente.')
       else setErro('Não foi possível alterar agora.')
     }
     await atualizar()
