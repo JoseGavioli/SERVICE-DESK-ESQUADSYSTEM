@@ -11,6 +11,7 @@ import Notificacoes from './Notificacoes'
 import ToastNotificacao from './ToastNotificacao'
 import Icone from './Icone'
 import { useNotificacoes } from '../lib/useNotificacoes'
+import { sincronizarPush } from '../lib/webpush'
 
 // Nome exibido no cabecalho para cada secao.
 const NOME_TELA = {
@@ -107,6 +108,13 @@ export default function Painel({ sessao }) {
       abrirDemanda(Number(alvo))
       window.history.replaceState({}, '', window.location.pathname)
     }
+  }, [])
+
+  // Re-sincroniza a assinatura de push no boot (quando a permissao ja e
+  // 'granted'): garante a assinatura salva, cobrindo expiracao/rotacao/troca
+  // de aparelho sem depender do fragil evento pushsubscriptionchange.
+  useEffect(() => {
+    sincronizarPush().catch(() => {})
   }, [])
 
   async function sair() {
