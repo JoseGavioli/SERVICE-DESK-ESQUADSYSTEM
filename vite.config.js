@@ -9,6 +9,11 @@ export default defineConfig({
     VitePWA({
       // Atualiza sozinho quando uma versao nova e publicada (§3).
       registerType: 'autoUpdate',
+      // Pendura nossos handlers de push (public/push-sw.js) no service worker
+      // gerado pelo Workbox, sem migrar para injectManifest (#14 Web Push).
+      workbox: {
+        importScripts: ['push-sw.js'],
+      },
       manifest: {
         name: 'Service Desk - EsquadSystem',
         short_name: 'Service Desk',

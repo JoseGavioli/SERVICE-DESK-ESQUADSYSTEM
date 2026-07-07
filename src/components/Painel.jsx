@@ -99,6 +99,16 @@ export default function Painel({ sessao }) {
     buscarPerfil()
   }, [sessao])
 
+  // Deep-link do Web Push: uma URL "/?demanda=12" (do toque na notificacao)
+  // abre a demanda 12 e limpa a query, para um refresh nao reabrir.
+  useEffect(() => {
+    const alvo = new URLSearchParams(window.location.search).get('demanda')
+    if (alvo) {
+      abrirDemanda(Number(alvo))
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
+
   async function sair() {
     await supabase.auth.signOut()
   }
