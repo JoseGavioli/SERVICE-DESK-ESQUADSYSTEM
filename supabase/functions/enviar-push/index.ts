@@ -16,9 +16,8 @@
 //   Authorization: Bearer <ANON_KEY>   (satisfaz o verify_jwt da plataforma)
 //   x-hook-secret: <PUSH_HOOK_SECRET>  (o nosso portao de verdade)
 //
-// OBS: a versao do @negrel/webpush pode ser FIXADA (ex.: @X.Y.Z) depois de
-// confirmar que funciona — a API muda entre versoes.
-import * as webpush from 'jsr:@negrel/webpush'
+// Versao FIXADA (a API muda entre versoes; 0.5.0 exporta so o modulo principal).
+import * as webpush from 'jsr:@negrel/webpush@0.5.0'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 // Só estes tipos disparam push por enquanto (user-to-user). Os de SISTEMA
