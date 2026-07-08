@@ -2,7 +2,20 @@
 // Este arquivo é "pendurado" no service worker que o vite-plugin-pwa gera, via
 //   workbox: { importScripts: ['push-sw.js'] }   (ver vite.config.js).
 // O payload do push é um JSON montado pelo servidor (Edge Function, fase 3):
-//   { titulo, corpo, url, tag }  — url = deep-link tipo "/?demanda=12".
+//   { titulo, corpo, url, tag, tipo }  — url = deep-link tipo "/?demanda=12".
+
+// Ícone por TIPO de notificação (§issue #39): espelha o TIPO_ICONE do app
+// (ver Notificacoes.jsx). Se o tipo não mapear, cai no ícone padrão do app.
+const ICONES = {
+  nova_demanda: '/push/nova.svg',
+  mudanca_status: '/push/atualizar.svg',
+  cancelamento_efetivado: '/push/cancelado.svg',
+  novo_comentario: '/push/chat.svg',
+  solicitacao_cancelamento: '/push/aviso.svg',
+  prazo_proximo: '/push/relogio.svg',
+  prazo_vencido: '/push/relogio.svg',
+  custo_atrasado: '/push/relogio.svg',
+}
 
 // Chega um push -> mostra a notificação na barra do SO.
 self.addEventListener('push', (event) => {
@@ -15,7 +28,7 @@ self.addEventListener('push', (event) => {
   const titulo = dados.titulo || 'Service Desk'
   const opcoes = {
     body: dados.corpo || '',
-    icon: '/pwa-icon.svg',
+    icon: ICONES[dados.tipo] || '/pwa-icon.svg', // ícone por tipo (§#39)
     badge: '/pwa-icon.svg',
     tag: dados.tag || undefined, // agrupa/atualiza avisos da mesma demanda
     renotify: !!dados.tag,

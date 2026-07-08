@@ -132,6 +132,7 @@ Deno.serve(async (req) => {
     corpo,
     url: `/?demanda=${record.demanda_id}`, // deep-link lido pelo Painel
     tag: `demanda-${record.demanda_id}`,
+    tipo: record.tipo, // o service worker escolhe o icone por tipo (§issue #39)
   })
 
   // 2) Assinaturas do destinatário (vários aparelhos).
