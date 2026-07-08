@@ -18,6 +18,7 @@ const FILTROS_VAZIOS = {
   busca: '',
   status: '',
   urgencia: '',
+  vendedor: '', // vendedor_id; so o staff usa (§issue #37)
   soAtivas: false,
   soAtencao: false, // atalho "precisam de atencao" (§issue #4)
   ordenacao: 'padrao', // padrao | urgencia | recentes | antigas
@@ -81,7 +82,7 @@ export default function Demandas({
       supabase
         .from('demanda')
         .select(
-          'id, descricao, prazo, status, created_at, demanda_pai_id, cancelamento_solicitado, tipo_demanda(nome), obra(nome, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo), comentario(count)',
+          'id, descricao, prazo, status, created_at, demanda_pai_id, cancelamento_solicitado, vendedor_id, tipo_demanda(nome), obra(nome, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo), comentario(count)',
         )
         .order('created_at', { ascending: false }),
       supabase.rpc('datas_primeira_revisao'),
@@ -197,9 +198,29 @@ export default function Demandas({
     f.busca.trim() !== '' ||
     f.status !== '' ||
     f.urgencia !== '' ||
+    f.vendedor !== '' ||
     f.soAtivas ||
     f.soAtencao ||
     f.ordenacao !== 'padrao'
+
+  // Vendedores que aparecem nas demandas visiveis (so staff usa o filtro por
+  // vendedor, §issue #37). Deriva da lista ja carregada — os nomes ja vem no
+  // join, entao nao precisa de outra consulta. Vazio para o vendedor.
+  const vendedores =
+    perfil.papel === 'vendedor'
+      ? []
+      : Array.from(
+          demandas
+            .reduce((mapa, d) => {
+              if (d.vendedor_id && !mapa.has(d.vendedor_id)) {
+                mapa.set(d.vendedor_id, d.vendedor?.nome_completo || '—')
+              }
+              return mapa
+            }, new Map())
+            .entries(),
+        )
+          .map(([id, nome]) => ({ id, nome }))
+          .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
 
   // Quantas demandas visiveis "merecem atencao" (para o atalho, §issue #4).
   const qtdAtencao = demandas.filter(mereceAtencao).length
@@ -209,6 +230,7 @@ export default function Demandas({
     let lista = demandas.filter((d) => {
       if (f.soAtencao && !mereceAtencao(d)) return false
       if (f.status && d.status !== f.status) return false
+      if (f.vendedor && d.vendedor_id !== f.vendedor) return false
       if (f.soAtivas && (d.status === 'enviado' || d.status === 'cancelada'))
         return false
       if (f.urgencia) {
@@ -261,9 +283,10 @@ export default function Demandas({
   function aoAplicarFiltros(rascunho) {
     setF((prev) => ({ ...prev, ...rascunho }))
   }
-  // "Filtrar" avancado cuida so de urgencia + ordenacao (status vive nos chips).
+  // "Filtrar" avancado cuida de urgencia, vendedor e ordenacao (status vive
+  // nos chips). Remover uma tag volta o campo ao padrao.
   function aoRemoverFiltro(campo) {
-    const PADRAO = { urgencia: '', ordenacao: 'padrao' }
+    const PADRAO = { urgencia: '', vendedor: '', ordenacao: 'padrao' }
     setF((prev) => ({ ...prev, [campo]: PADRAO[campo] }))
   }
   function aoLimparFiltros() {
@@ -510,6 +533,7 @@ export default function Demandas({
           />
           <FiltrosDemandas
             f={f}
+            vendedores={vendedores}
             aoAplicar={aoAplicarFiltros}
             aoRemover={aoRemoverFiltro}
             aoLimpar={aoLimparFiltros}

@@ -308,15 +308,24 @@ export default function Dashboard({ perfil, aoAbrirComFiltro, naoLidas, aoAbrirN
               <span className="box-titulo">Por vendedor</span>
               <ul className="vend-lista">
                 {vendedores.map((v) => (
-                  <li key={v.id} className="vend-item">
-                    <span className="vend-nome">{v.nome}</span>
-                    <span className="vend-barra">
-                      <span
-                        className="vend-fill"
-                        style={{ width: `${maxVend ? (v.aberto / maxVend) * 100 : 0}%` }}
-                      />
-                    </span>
-                    <span className="vend-num">{v.aberto}</span>
+                  <li key={v.id}>
+                    <button
+                      type="button"
+                      className="vend-item"
+                      onClick={() =>
+                        aoAbrirComFiltro({ vendedor: v.id, soAtivas: true })
+                      }
+                      title={`Ver as demandas em aberto de ${v.nome}`}
+                    >
+                      <span className="vend-nome">{v.nome}</span>
+                      <span className="vend-barra">
+                        <span
+                          className="vend-fill"
+                          style={{ width: `${maxVend ? (v.aberto / maxVend) * 100 : 0}%` }}
+                        />
+                      </span>
+                      <span className="vend-num">{v.aberto}</span>
+                    </button>
                   </li>
                 ))}
               </ul>

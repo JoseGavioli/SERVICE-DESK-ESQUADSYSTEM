@@ -10,18 +10,29 @@ const ORDENACAO = {
   antigas: 'Mais antigas',
 }
 const URG_ROTULO = Object.fromEntries(URGENCIA_NIVEIS.map((u) => [u.nivel, u.rotulo]))
-const RASCUNHO_VAZIO = { urgencia: '', ordenacao: 'padrao' }
+const RASCUNHO_VAZIO = { urgencia: '', vendedor: '', ordenacao: 'padrao' }
 
-// Filtro AVANCADO (urgencia + ordenacao). O status agora vive nos chips do
+// Filtro AVANCADO (urgencia + vendedor + ordenacao). O status vive nos chips do
 // cabecalho e a busca na lupa; aqui fica so o "Filtrar" que abre uma box e, ao
-// aplicar, vira TAGS removiveis (× em cada) + "limpar tudo".
-export default function FiltrosDemandas({ f, aoAplicar, aoRemover, aoLimpar }) {
+// aplicar, vira TAGS removiveis (× em cada) + "limpar tudo". O filtro por
+// vendedor (§issue #37) so aparece quando ha vendedores (isto e, para o staff).
+export default function FiltrosDemandas({
+  f,
+  vendedores = [],
+  aoAplicar,
+  aoRemover,
+  aoLimpar,
+}) {
   const [aberto, setAberto] = useState(false)
   const [rascunho, setRascunho] = useState(RASCUNHO_VAZIO)
 
   // Ao abrir, o rascunho parte do que ja esta aplicado.
   function abrir() {
-    setRascunho({ urgencia: f.urgencia, ordenacao: f.ordenacao })
+    setRascunho({
+      urgencia: f.urgencia,
+      vendedor: f.vendedor,
+      ordenacao: f.ordenacao,
+    })
     setAberto(true)
   }
 
@@ -34,9 +45,13 @@ export default function FiltrosDemandas({ f, aoAplicar, aoRemover, aoLimpar }) {
     setRascunho((prev) => ({ ...prev, [campo]: valor }))
   }
 
-  // Tags do que esta APLICADO (urgencia, ordem).
+  // Tags do que esta APLICADO (urgencia, vendedor, ordem).
   const tags = []
   if (f.urgencia) tags.push({ campo: 'urgencia', texto: URG_ROTULO[f.urgencia] })
+  if (f.vendedor) {
+    const nome = vendedores.find((v) => v.id === f.vendedor)?.nome || '—'
+    tags.push({ campo: 'vendedor', texto: `Vendedor: ${nome}` })
+  }
   if (f.ordenacao !== 'padrao')
     tags.push({ campo: 'ordenacao', texto: `Ordem: ${ORDENACAO[f.ordenacao]}` })
 
@@ -75,6 +90,23 @@ export default function FiltrosDemandas({ f, aoAplicar, aoRemover, aoLimpar }) {
 
       {aberto && (
         <div className="filtro-box">
+          {vendedores.length > 0 && (
+            <label>
+              Vendedor
+              <select
+                value={rascunho.vendedor}
+                onChange={(e) => setR('vendedor', e.target.value)}
+              >
+                <option value="">Todos os vendedores</option>
+                {vendedores.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.nome}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+
           <label>
             Urgência
             <select
