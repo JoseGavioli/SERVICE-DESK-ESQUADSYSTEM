@@ -67,18 +67,18 @@ export function calcularUrgencia(prazoStr, status) {
 }
 
 // ── CUSTO ATRASADO (em "em revisao de custo") ──────────────────────
-// Uma demanda esta com o CUSTO ATRASADO quando ja passaram >= DIAS_CUSTO_ATRASADO
-// dias UTEIS desde a 1a vez que entrou em 'em_revisao_custo' e ela ainda nao
-// foi enviada nem cancelada. O relogio comeca na 1a entrada em revisao e NAO
-// reseta se voltar para 'em_andamento'; so "zera" ao ser enviada (volta ao
-// normal) ou cancelada (encerra). A data da 1a revisao vem do RPC
-// datas_primeira_revisao (migracao 0019).
+// Uma demanda esta com o CUSTO ATRASADO quando ESTA em 'em_revisao_custo' e ja
+// passaram >= DIAS_CUSTO_ATRASADO dias UTEIS desde a 1a vez que entrou nesse
+// status. O alerta so vale ENQUANTO a demanda esta em revisao de custo (§issue
+// #42): assim que ela sai (volta p/ andamento, conclui, envia ou cancela) o
+// alerta some — antes ele continuava contando fora da revisao. A data da 1a
+// revisao vem do RPC datas_primeira_revisao (migracao 0019).
 // (NAO confundir com a URGENCIA 'Atrasado', que e sobre o prazo do orcamento.)
 const DIAS_CUSTO_ATRASADO = 5
 
 export function estaCustoAtrasado(status, dataPrimeiraRevisaoIso) {
-  if (!dataPrimeiraRevisaoIso) return false // nunca entrou em revisao de custo
-  if (status === 'enviado' || status === 'cancelada') return false
+  if (status !== 'em_revisao_custo') return false // so conta dentro da revisao
+  if (!dataPrimeiraRevisaoIso) return false // sem data de referencia
 
   const de = new Date(dataPrimeiraRevisaoIso)
   de.setHours(0, 0, 0, 0)
