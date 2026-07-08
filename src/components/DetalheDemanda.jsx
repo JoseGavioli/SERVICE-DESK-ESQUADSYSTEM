@@ -11,6 +11,7 @@ import HistoricoStatus from './HistoricoStatus'
 import Comentarios from './Comentarios'
 import Anexos from './Anexos'
 import NovaDemanda from './NovaDemanda'
+import AlterarPrazo from './AlterarPrazo'
 import Icone from './Icone'
 
 // Detalhe da demanda (campos somente leitura) + cancelamento, acoes de
@@ -204,11 +205,14 @@ export default function DetalheDemanda({
         )}
       </div>
 
-      {/* Prazo (logo apos os dados do orcamento) */}
-      <p className="det-prazo">
-        <Icone nome="relogio" size={15} /> <strong>Prazo:</strong>{' '}
-        {d.prazo?.split('-').reverse().join('/')}
-      </p>
+      {/* Prazo (logo apos os dados do orcamento) + ajustar prazo (staff, §#3) */}
+      <div className="det-prazo-linha">
+        <p className="det-prazo">
+          <Icone nome="relogio" size={15} /> <strong>Prazo:</strong>{' '}
+          {d.prazo?.split('-').reverse().join('/')}
+        </p>
+        <AlterarPrazo demanda={d} perfil={perfil} aoMudar={recarregar} />
+      </div>
 
       {/* Anexos (box completa) */}
       <Anexos demanda={d} perfil={perfil} />

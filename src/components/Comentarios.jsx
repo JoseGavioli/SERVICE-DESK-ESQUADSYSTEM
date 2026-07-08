@@ -7,6 +7,7 @@ import { STATUS_ROTULO } from '../lib/status'
 const CONTEXTO_ROTULO = {
   solicitacao_cancelamento: 'Solicitação de cancelamento',
   mudanca_status: 'Mudança de status',
+  mudanca_prazo: 'Prazo alterado',
 }
 
 // Iniciais (ate 2 letras) para o avatar do autor.
@@ -96,7 +97,13 @@ export default function Comentarios({ demandaId }) {
                       {STATUS_ROTULO[t.de_status]} → {STATUS_ROTULO[t.para_status]}
                     </span>
                   ) : c.contexto ? (
-                    <span className="chip-coment chip-coment-cancel">
+                    <span
+                      className={`chip-coment ${
+                        c.contexto === 'mudanca_prazo'
+                          ? 'chip-coment-prazo'
+                          : 'chip-coment-cancel'
+                      }`}
+                    >
                       {CONTEXTO_ROTULO[c.contexto]}
                     </span>
                   ) : null}

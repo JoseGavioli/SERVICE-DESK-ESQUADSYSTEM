@@ -2114,6 +2114,66 @@ textarea::placeholder {
   font-size: 0.95rem;
   color: var(--texto);
 }
+
+/* Prazo + "Ajustar prazo" (staff) na mesma linha; o form (ao editar) quebra
+   para a largura toda logo abaixo (§issue #3). */
+.det-prazo-linha {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin: 0 0 1.1rem;
+}
+.det-prazo-linha .det-prazo {
+  margin: 0; /* a margem inferior agora e do wrapper */
+}
+.btn-ajustar-prazo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--borda-forte);
+  border-radius: var(--raio-pill);
+  background: var(--surface-2);
+  color: var(--texto);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.btn-ajustar-prazo:hover {
+  background: var(--surface);
+}
+.ajustar-prazo {
+  flex-basis: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.85rem;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: var(--surface-2);
+}
+.ajustar-prazo-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--texto);
+}
+.ajustar-prazo-campo .opc {
+  font-weight: 400;
+  color: var(--texto-suave);
+}
+.ajustar-prazo-campo input {
+  width: 100%;
+}
+.ajustar-prazo .acoes {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
 .det-autor {
   display: flex;
   align-items: center;
@@ -2381,6 +2441,11 @@ textarea::placeholder {
 .chip-coment-cancel {
   background: var(--st-cancelada-bg);
   color: var(--st-cancelada-fg);
+}
+/* Prazo alterado (§issue #3): cor da marca, distinta do status e do cancelamento. */
+.chip-coment-prazo {
+  background: var(--primaria-suave);
+  color: var(--primaria);
 }
 /* balao do texto (bico reto no canto do avatar) */
 .coment-texto {
