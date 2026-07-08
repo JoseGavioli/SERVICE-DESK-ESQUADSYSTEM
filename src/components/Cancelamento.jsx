@@ -1,26 +1,59 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import Icone from './Icone'
 
-// Casa unica das acoes de cancelamento (§12 + §issue #36), no mesmo lugar
-// para os dois lados:
-//  - STAFF (admin ou atendente): efetiva o cancelamento com "Cancelar demanda"
-//    (mover_status -> cancelada, com motivo obrigatorio §13). Se ja houver
-//    solicitacao, tambem pode "Descartar solicitacao".
-//  - VENDEDOR dono: "Solicitar cancelamento" (com motivo obrigatorio).
-// O vendedor so SOLICITA (§5); o staff EFETIVA (regra reforcada no banco,
-// migracao 0027 — a UI aqui apenas espelha). Antes o admin efetivava pelo
-// sheet "Alterar status"; agora e aqui, no mesmo lugar do "Solicitar".
+// Casa unica das acoes de cancelamento (§12 + issues #36/#33), no mesmo lugar:
+//  - Ha SOLICITACAO pendente: uma box mostra o MOTIVO do vendedor (texto +
+//    autor + data, §issue #33) e, para o STAFF, os botoes "Aceitar
+//    cancelamento" (aceita direto — o vendedor ja explicou) e "Descartar".
+//  - Sem solicitacao: STAFF (admin/atendente) ve "Cancelar demanda" (com motivo
+//    obrigatorio §13); VENDEDOR dono ve "Solicitar cancelamento".
+// O vendedor so SOLICITA (§5); o staff EFETIVA (regra no banco, migracao 0027).
+
+// Data + hora curtas ('08/07/2026 14:30') para o rodape do motivo.
+function formatarQuando(iso) {
+  const d = new Date(iso)
+  const data = d.toLocaleDateString('pt-BR')
+  const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  return `${data} ${hora}`
+}
+
 export default function Cancelamento({ demanda, perfil, aoMudar }) {
   const [pedindo, setPedindo] = useState(false) // form de motivo aberto?
   const [motivo, setMotivo] = useState('')
   const [processando, setProcessando] = useState(false)
   const [erro, setErro] = useState('')
+  const [solicitacao, setSolicitacao] = useState(null) // {texto, created_at, autor}
 
   const terminal = demanda.status === 'enviado' || demanda.status === 'cancelada'
   const ehStaff = perfil.papel === 'admin' || perfil.papel === 'atendente'
   const souDono = perfil.id === demanda.vendedor_id
   const solicitado = demanda.cancelamento_solicitado
+
+  // Busca o motivo (comentario da solicitacao) para mostrar dentro da box (#33).
+  // Pega o MAIS RECENTE (a demanda pode ter sido solicitada, descartada e
+  // solicitada de novo). So quando ha solicitacao pendente.
+  useEffect(() => {
+    if (!solicitado) {
+      setSolicitacao(null)
+      return
+    }
+    let vivo = true
+    supabase
+      .from('comentario')
+      .select('texto, created_at, autor:perfil(nome_completo)')
+      .eq('demanda_id', demanda.id)
+      .eq('contexto', 'solicitacao_cancelamento')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (vivo) setSolicitacao(data || null)
+      })
+    return () => {
+      vivo = false
+    }
+  }, [demanda.id, solicitado])
 
   // Em terminal (enviado/cancelada) nao ha nada a cancelar.
   if (terminal) return null
@@ -30,12 +63,6 @@ export default function Cancelamento({ demanda, perfil, aoMudar }) {
 
   // Nada a mostrar (ex.: atendente sem solicitacao pendente).
   if (!solicitado && !podeEfetivar && !podeSolicitar) return null
-
-  // O botao principal muda de acordo com o papel: staff efetiva, vendedor pede.
-  const rotuloBotao = ehStaff ? 'Cancelar demanda' : 'Solicitar cancelamento'
-  const rotuloConfirmar = ehStaff
-    ? 'Confirmar cancelamento'
-    : 'Confirmar solicitação'
 
   async function descartar() {
     setProcessando(true)
@@ -48,7 +75,31 @@ export default function Cancelamento({ demanda, perfil, aoMudar }) {
     else aoMudar()
   }
 
-  // Confirma o motivo: staff -> efetiva (mover_status); vendedor -> solicita.
+  // Aceitar a solicitacao: o vendedor ja deu o motivo, entao o staff aceita
+  // direto (com confirmacao), sem redigitar. O comentario automatico satisfaz
+  // a regra §13 (cancelar exige comentario) e deixa claro no historico.
+  async function aceitar() {
+    if (
+      !window.confirm(
+        'Aceitar o cancelamento desta demanda? Esta ação é definitiva.',
+      )
+    ) {
+      return
+    }
+    setProcessando(true)
+    setErro('')
+    const { error } = await supabase.rpc('mover_status', {
+      p_demanda_id: demanda.id,
+      p_novo_status: 'cancelada',
+      p_comentario: 'Cancelamento aceito (solicitado pelo vendedor).',
+    })
+    setProcessando(false)
+    if (error) setErro(error.message || 'Não foi possível cancelar.')
+    else aoMudar()
+  }
+
+  // Sem solicitacao: staff cancela por iniciativa propria (motivo obrigatorio);
+  // vendedor solicita (motivo obrigatorio). Discriminado pelo papel.
   async function confirmar(evento) {
     evento.preventDefault()
     setProcessando(true)
@@ -73,18 +124,64 @@ export default function Cancelamento({ demanda, perfil, aoMudar }) {
     }
   }
 
+  // ── Ha solicitacao pendente: box com o motivo + acoes de staff (#33) ──
+  if (solicitado) {
+    return (
+      <div className="cancelamento">
+        <div className="aviso-cancelamento">
+          <p className="aviso-cancel-cab">
+            <Icone nome="aviso" size={15} />{' '}
+            <strong>Cancelamento solicitado</strong>
+          </p>
+          {solicitacao ? (
+            <blockquote className="aviso-cancel-motivo">
+              “{solicitacao.texto}”
+              <span className="aviso-cancel-autor">
+                — {solicitacao.autor?.nome_completo || 'vendedor'}
+                {solicitacao.created_at
+                  ? `, ${formatarQuando(solicitacao.created_at)}`
+                  : ''}
+              </span>
+            </blockquote>
+          ) : (
+            <p className="aviso-cancel-motivo aviso-cancel-vazio">
+              O motivo está nos comentários.
+            </p>
+          )}
+          {ehStaff && (
+            <div className="aviso-cancel-acoes">
+              <button
+                type="button"
+                className="perigo"
+                onClick={aceitar}
+                disabled={processando}
+              >
+                {processando ? 'Cancelando…' : 'Aceitar cancelamento'}
+              </button>
+              <button
+                type="button"
+                className="btn-descartar"
+                onClick={descartar}
+                disabled={processando}
+              >
+                {processando ? '…' : 'Descartar solicitação'}
+              </button>
+            </div>
+          )}
+          {erro && <p className="erro">{erro}</p>}
+        </div>
+      </div>
+    )
+  }
+
+  // ── Sem solicitacao: staff cancela / vendedor solicita ──
+  const rotuloBotao = ehStaff ? 'Cancelar demanda' : 'Solicitar cancelamento'
+  const rotuloConfirmar = ehStaff
+    ? 'Confirmar cancelamento'
+    : 'Confirmar solicitação'
+
   return (
     <div className="cancelamento">
-      {solicitado && (
-        <div className="aviso-cancelamento">
-          <p>
-            <Icone nome="aviso" size={15} />{' '}
-            <strong>Cancelamento solicitado</strong> — o motivo está nos
-            comentários.
-          </p>
-        </div>
-      )}
-
       {pedindo ? (
         <form className="form-transicao" onSubmit={confirmar}>
           <p>
@@ -115,25 +212,13 @@ export default function Cancelamento({ demanda, perfil, aoMudar }) {
         </form>
       ) : (
         <div className="cancel-acoes">
-          {(podeEfetivar || podeSolicitar) && (
-            <button
-              type="button"
-              className="perigo"
-              onClick={() => setPedindo(true)}
-            >
-              {rotuloBotao}
-            </button>
-          )}
-          {solicitado && ehStaff && (
-            <button
-              type="button"
-              className="btn-descartar"
-              onClick={descartar}
-              disabled={processando}
-            >
-              {processando ? '…' : 'Descartar solicitação'}
-            </button>
-          )}
+          <button
+            type="button"
+            className="perigo"
+            onClick={() => setPedindo(true)}
+          >
+            {rotuloBotao}
+          </button>
           {erro && <p className="erro">{erro}</p>}
         </div>
       )}

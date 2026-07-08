@@ -2619,6 +2619,74 @@ textarea::placeholder {
 .aviso-cancelamento button:disabled {
   opacity: 0.6;
 }
+
+/* Motivo da solicitacao + acoes DENTRO da box (§issue #33). */
+.aviso-cancel-cab {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.55rem;
+  color: var(--texto);
+}
+.aviso-cancel-motivo {
+  margin: 0 0 0.7rem;
+  padding: 0.55rem 0.75rem;
+  border-left: 3px solid var(--perigo);
+  border-radius: var(--raio-sm);
+  background: var(--surface);
+  color: var(--texto);
+  font-style: italic;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+.aviso-cancel-autor {
+  display: block;
+  margin-top: 0.4rem;
+  font-style: normal;
+  font-size: 0.78rem;
+  color: var(--texto-suave);
+}
+.aviso-cancel-vazio {
+  border-left-color: var(--borda-forte);
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+.aviso-cancel-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.aviso-cancel-acoes button {
+  flex: 1 1 auto;
+  min-width: 140px;
+  padding: 0.7rem 0.9rem;
+  border: 0;
+  border-radius: var(--raio-sm);
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.aviso-cancel-acoes button.perigo {
+  background: var(--perigo);
+  color: var(--perigo-texto);
+}
+.aviso-cancel-acoes button.perigo:hover:not(:disabled) {
+  background: var(--perigo-hover);
+}
+.aviso-cancel-acoes button.btn-descartar {
+  background: var(--surface-2);
+  color: var(--texto);
+  border: 1px solid var(--borda-forte);
+}
+.aviso-cancel-acoes button.btn-descartar:hover:not(:disabled) {
+  background: var(--surface);
+}
+.aviso-cancel-acoes button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .marca-cancel {
   font-size: 0.72rem;
   color: var(--perigo);
