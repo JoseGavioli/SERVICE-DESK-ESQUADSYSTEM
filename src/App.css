@@ -2538,6 +2538,49 @@ textarea::placeholder {
 .cancelamento > button.perigo:hover {
   background: var(--perigo-hover);
 }
+
+/* Acoes de cancelamento no mesmo lugar (§issue #36): empilhadas e largura
+   total. O botao principal (efetivar/solicitar) usa a cara vermelha; o
+   "Descartar solicitacao" e neutro (nao cancela a demanda). */
+.cancelamento .aviso-cancelamento {
+  margin-top: 0; /* o espaco superior ja vem do .cancelamento */
+}
+.cancel-acoes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+.cancel-acoes button {
+  width: 100%;
+  padding: 0.9rem;
+  border: 0;
+  border-radius: var(--raio);
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.cancel-acoes button.perigo {
+  background: var(--perigo);
+  color: var(--perigo-texto);
+}
+.cancel-acoes button.perigo:hover:not(:disabled) {
+  background: var(--perigo-hover);
+}
+.cancel-acoes button.btn-descartar {
+  background: var(--surface-2);
+  color: var(--texto);
+  border: 1px solid var(--borda-forte);
+}
+.cancel-acoes button.btn-descartar:hover:not(:disabled) {
+  background: var(--surface);
+}
+.cancel-acoes button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .aviso-cancelamento {
   margin-top: 1.25rem;
   background: var(--aviso-bg);

@@ -70,13 +70,13 @@ Hoje **eu ocupo Admin + Atendente** sozinho. Mesmo assim, modele os três papéi
 
 | Papel | O que pode fazer |
 |---|---|
-| **Admin** | Tudo do Atendente + cadastrar/editar vendedores, resetar senhas, **cancelar demandas** (efetivar o cancelamento) |
-| **Atendente** | Mover demandas pelos status, comentar, anexar saída, criar/selecionar cliente e obra |
+| **Admin** | Tudo do Atendente + cadastrar/editar vendedores, resetar senhas |
+| **Atendente** | Mover demandas pelos status, **efetivar cancelamento**, comentar, anexar saída, criar/selecionar cliente e obra |
 | **Vendedor** | Criar demanda, criar demanda-filha, anexar entrada, comentar, **solicitar** cancelamento. Vê **apenas as próprias demandas**. Não move status. |
 
 **Regras-chave de permissão:**
 - O vendedor **não move status. Nenhum.**
-- Efetivar cancelamento é **exclusivo do Admin**.
+- Efetivar cancelamento é do **staff** (Admin **ou** Atendente). *(Decisão revista na issue #36 — antes era exclusivo do Admin; migração `0027`.)*
 - O vendedor vê só as demandas que ele mesmo criou (RLS por `vendedor_id`).
 - O autor de uma demanda é **sempre** o usuário logado — não é possível forjar (garantido por RLS, não por checagem no frontend).
 
@@ -263,7 +263,7 @@ Benefícios: cada ação tem sua própria data e status (histórico honesto); o 
 1. Dentro da demanda há um botão **"Solicitar cancelamento"** (visível ao vendedor dono da demanda).
 2. Ao clicar → tela de **confirmação** → **caixa de comentário obrigatória** com o motivo.
 3. Isso cria um `comentario` com `contexto = solicitacao_cancelamento` e sinaliza a demanda como "cancelamento solicitado".
-4. A solicitação **aparece para o Admin**, que então **efetiva** (ou não) o cancelamento.
+4. A solicitação **aparece para o staff** (Admin/Atendente), que então **efetiva** (ou não) o cancelamento. O botão de efetivar fica **no mesmo lugar** do "Solicitar cancelamento" do vendedor (issue #36).
 5. O vendedor **nunca** cancela direto — só solicita. Manter simples; não transformar em fluxo de aprovação com múltiplas etapas.
 
 ---

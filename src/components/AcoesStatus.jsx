@@ -18,11 +18,17 @@ export default function AcoesStatus({ demanda, perfil, aoMover }) {
   // Vendedor nunca move status (a UI esconde; o banco tambem barra).
   if (perfil.papel === 'vendedor') return null
 
-  // Opcoes do status atual, filtrando as exclusivas do admin (cancelar).
+  // Opcoes do status atual. O "Cancelar" (efetivar) NAO fica mais aqui: ele
+  // migrou para o componente Cancelamento, junto do "Solicitar cancelamento"
+  // do vendedor (§issue #36). Por isso filtramos 'cancelada' fora do sheet.
   const opcoes = (TRANSICOES[demanda.status] || []).filter(
-    (t) => !t.soAdmin || perfil.papel === 'admin',
+    (t) => t.para !== 'cancelada' && (!t.soAdmin || perfil.papel === 'admin'),
   )
   if (opcoes.length === 0) return null // estado terminal — sem barra (nav aparece)
+
+  // "Nao iniciado" tem uma unica acao (Iniciar). Nesse caso a barra JA e o
+  // botao "Iniciar" e executa direto, sem abrir o sheet (§issue #36).
+  const ehIniciar = demanda.status === 'nao_iniciado'
 
   async function executar(transicao, texto) {
     setProcessando(true)
@@ -35,6 +41,7 @@ export default function AcoesStatus({ demanda, perfil, aoMover }) {
     setProcessando(false)
     if (error) {
       setErro(error.message || 'Não foi possível mover o status.')
+      setAberto(true) // garante que o erro apareca (ex.: no "Iniciar" direto)
     } else {
       fechar()
       aoMover() // pede ao detalhe para recarregar tudo
@@ -76,15 +83,29 @@ export default function AcoesStatus({ demanda, perfil, aoMover }) {
 
   return (
     <>
-      {/* Barra fixa no rodape (cobre o bottom-nav; so staff, so com acoes). */}
+      {/* Barra fixa no rodape (cobre o bottom-nav; so staff, so com acoes).
+          Em "nao iniciado" a barra JA e o botao Iniciar (executa direto);
+          nos demais status ela abre o sheet de "Alterar status" (§36). */}
       <div className="det-barra-acao">
-        <button
-          type="button"
-          className="btn-alterar-status"
-          onClick={() => setAberto(true)}
-        >
-          <Icone nome="atualizar" size={18} /> Alterar status
-        </button>
+        {ehIniciar ? (
+          <button
+            type="button"
+            className="btn-alterar-status"
+            onClick={() => clicar(opcoes[0])}
+            disabled={processando}
+          >
+            <Icone nome="play" size={18} />{' '}
+            {processando ? 'Iniciando…' : 'Iniciar'}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="btn-alterar-status"
+            onClick={() => setAberto(true)}
+          >
+            <Icone nome="atualizar" size={18} /> Alterar status
+          </button>
+        )}
       </div>
 
       {/* Backdrop + bottom-sheet com as opcoes. */}

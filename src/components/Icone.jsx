@@ -35,6 +35,7 @@ import {
   Building2,
   Pencil,
   Camera,
+  Play,
 } from 'lucide-react'
 
 // Fonte UNICA dos icones do app (§issue #9). Uso: <Icone nome="sino" />.
@@ -77,6 +78,7 @@ const MAPA = {
   predio: Building2,
   editar: Pencil,
   camera: Camera,
+  play: Play,
 }
 
 export default function Icone({ nome, size = 18, strokeWidth = 2, className }) {
