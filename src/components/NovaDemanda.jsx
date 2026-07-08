@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { validarArquivo, enviarAnexo, formatarTamanho } from '../lib/anexos'
+import {
+  comprimirImagemSePreciso,
+  validarArquivo,
+  enviarAnexo,
+  formatarTamanho,
+} from '../lib/anexos'
 import SeletorCliente from './SeletorCliente'
 import SeletorObra from './SeletorObra'
 import Icone from './Icone'
@@ -57,13 +62,16 @@ export default function NovaDemanda({
     setObra(null)
   }
 
-  function adicionarArquivos(fileList) {
+  async function adicionarArquivos(fileList) {
     setErro('')
+    // Captura a lista ANTES de qualquer await (o input e limpado no onChange).
+    const arquivos = Array.from(fileList)
     const novos = []
-    for (const f of fileList) {
-      const problema = validarArquivo('entrada', f)
-      if (problema) setErro(`${f.name}: ${problema}`)
-      else novos.push(f)
+    for (const f of arquivos) {
+      const arquivo = await comprimirImagemSePreciso(f) // #41
+      const problema = validarArquivo('entrada', arquivo)
+      if (problema) setErro(`${arquivo.name}: ${problema}`)
+      else novos.push(arquivo)
     }
     if (novos.length) setArquivos((prev) => [...prev, ...novos])
   }

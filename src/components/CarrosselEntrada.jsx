@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { ehImagem, enviarAnexo, validarArquivo } from '../lib/anexos'
+import {
+  comprimirImagemSePreciso,
+  ehImagem,
+  enviarAnexo,
+  validarArquivo,
+} from '../lib/anexos'
 import Lightbox from './Lightbox'
 import MiniaturaPdf from './MiniaturaPdf'
 import Icone from './Icone'
@@ -74,13 +79,15 @@ export default function CarrosselEntrada({ demanda, perfil }) {
   async function enviar(file) {
     if (!file) return
     setErro('')
-    const problema = validarArquivo('entrada', file)
+    setEnviando(true) // cobre a compressao + o upload
+    const arquivo = await comprimirImagemSePreciso(file) // #41
+    const problema = validarArquivo('entrada', arquivo)
     if (problema) {
       setErro(problema)
+      setEnviando(false)
       return
     }
-    setEnviando(true)
-    const { error } = await enviarAnexo(demanda.id, 'entrada', file)
+    const { error } = await enviarAnexo(demanda.id, 'entrada', arquivo)
     if (error) setErro(error)
     else await carregar()
     setEnviando(false)
