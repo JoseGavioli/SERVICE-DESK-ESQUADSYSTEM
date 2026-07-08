@@ -149,7 +149,10 @@ Deno.serve(async (req) => {
           endpoint: a.endpoint,
           keys: { p256dh: a.p256dh, auth: a.auth },
         })
-        await sub.pushTextMessage(payload, {})
+        // urgency 'high' pede entrega IMEDIATA (ajuda a acordar o aparelho em
+        // segundo plano); ttl 24h retem o aviso se o aparelho estiver offline
+        // um tempo. (§entrega em segundo plano — o resto e config do aparelho.)
+        await sub.pushTextMessage(payload, { urgency: 'high', ttl: 60 * 60 * 24 })
       } catch (err) {
         const status =
           (err as { response?: { status?: number }; status?: number })

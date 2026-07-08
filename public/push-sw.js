@@ -29,7 +29,7 @@ self.addEventListener('push', (event) => {
   const opcoes = {
     body: dados.corpo || '',
     icon: ICONES[dados.tipo] || '/pwa-icon.svg', // ícone por tipo (§#39)
-    badge: '/pwa-icon.svg',
+    badge: '/push/badge.svg', // logo do app (silhueta) no ícone pequeno
     tag: dados.tag || undefined, // agrupa/atualiza avisos da mesma demanda
     renotify: !!dados.tag,
     data: { url: dados.url || '/' }, // lido no clique
