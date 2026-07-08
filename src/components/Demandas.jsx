@@ -62,6 +62,8 @@ export default function Demandas({
   aoAbrirNotif,
   aoDetalhe,
   aoCriando,
+  aoBuscando,
+  pedidoVoltar,
 }) {
   const [demandas, setDemandas] = useState([])
   const [carregando, setCarregando] = useState(true)
@@ -159,6 +161,23 @@ export default function Demandas({
     aoCriando?.(criando)
   }, [criando])
   useEffect(() => () => aoCriando?.(false), [])
+
+  // Avisa o Painel quando a busca abre/fecha, para o botao "voltar" saber que
+  // ha uma sobreposicao a fechar (§issue #40). Reseta ao desmontar.
+  useEffect(() => {
+    aoBuscando?.(buscaAberta)
+  }, [buscaAberta])
+  useEffect(() => () => aoBuscando?.(false), [])
+
+  // "Voltar" do celular (§#40): o Painel bumpa pedidoVoltar; fechamos o TOPO
+  // (detalhe -> form de nova demanda -> busca). So age quando o sinal muda.
+  useEffect(() => {
+    if (!pedidoVoltar) return
+    if (detalheId != null) setDetalheId(null)
+    else if (criando) setCriando(false)
+    else if (buscaAberta) setBuscaAberta(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pedidoVoltar])
 
   function alternar(id) {
     setRecolhidos((prev) => {

@@ -11,6 +11,7 @@ import Notificacoes from './Notificacoes'
 import ToastNotificacao from './ToastNotificacao'
 import Icone from './Icone'
 import { useNotificacoes } from '../lib/useNotificacoes'
+import { useBotaoVoltar } from '../lib/useBotaoVoltar'
 import { sincronizarPush } from '../lib/webpush'
 
 // Nome exibido no cabecalho para cada secao.
@@ -36,6 +37,9 @@ export default function Painel({ sessao }) {
   const [criarInicial, setCriarInicial] = useState(false) // abrir o form de nova demanda
   const [detalheAberto, setDetalheAberto] = useState(false) // detalhe de demanda aberto
   const [criandoAberto, setCriandoAberto] = useState(false) // form de nova demanda aberto
+  const [buscaAberta, setBuscaAberta] = useState(false) // barra de busca da lista (§#40)
+  const [pedidoVoltar, setPedidoVoltar] = useState(0) // sinal p/ o Demandas fechar o topo
+  const [avisoSair, setAvisoSair] = useState(false) // "toque de novo para sair" (§#40)
   const {
     notificacoes,
     naoLidas,
@@ -77,6 +81,30 @@ export default function Painel({ sessao }) {
     setCriarInicial(true)
     setSecao('inicio')
   }
+
+  // ── Botao "voltar" do celular (§issue #40) ──────────────────────
+  // O Demandas "sobrepoe" a Inicio quando ha um detalhe, o form de nova
+  // demanda OU a busca aberta — nesses casos o voltar pede a ele que feche o
+  // topo (via pedidoVoltar). A ordem geral de desempilhamento: menu -> sino ->
+  // (detalhe/form/busca do Demandas) -> outra secao -> raiz.
+  const demandasSobrepoe = detalheAberto || criandoAberto || buscaAberta
+  function podeVoltar() {
+    return menuAberto || notifAberto || demandasSobrepoe || secao !== 'inicio'
+  }
+  function voltarUmNivel() {
+    if (menuAberto) setMenuAberto(false)
+    else if (notifAberto) setNotifAberto(false)
+    else if (demandasSobrepoe) setPedidoVoltar((v) => v + 1)
+    else if (secao !== 'inicio') setSecao('inicio')
+  }
+  useBotaoVoltar({
+    podeVoltar,
+    voltar: voltarUmNivel,
+    aoPedirSair: () => {
+      setAvisoSair(true)
+      setTimeout(() => setAvisoSair(false), 2000)
+    },
+  })
 
   useEffect(() => {
     async function buscarPerfil() {
@@ -215,6 +243,8 @@ export default function Painel({ sessao }) {
             aoAbrirNotif={() => setNotifAberto(true)}
             aoDetalhe={setDetalheAberto}
             aoCriando={setCriandoAberto}
+            aoBuscando={setBuscaAberta}
+            pedidoVoltar={pedidoVoltar}
           />
         )}
         {secao === 'dashboard' && (
@@ -241,6 +271,13 @@ export default function Painel({ sessao }) {
         )}
         {secao === 'tema' && <Tema />}
       </section>
+
+      {/* "Toque de novo para sair" — 1o voltar na Inicio (§#40, Android). */}
+      {avisoSair && (
+        <div className="aviso-sair" role="status">
+          Toque em voltar de novo para sair
+        </div>
+      )}
 
       <ToastNotificacao
         notificacao={toast}
