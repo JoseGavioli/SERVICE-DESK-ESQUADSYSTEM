@@ -323,7 +323,8 @@ textarea::placeholder {
 }
 
 /* ── Menu "Mais" (bottom-sheet que sobe de baixo) ──────────── */
-/* fundo escurecido: cobre tudo MENOS a barra inferior (que fica clicavel) */
+/* fundo escurecido: cobre tudo MENOS a barra inferior (que fica clicavel).
+   Fica ABAIXO da barra (z-43 < bottom-nav z-45) para a barra seguir na frente. */
 .menu-backdrop {
   position: fixed;
   top: 0;
@@ -331,7 +332,7 @@ textarea::placeholder {
   right: 0;
   bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px));
   background: rgba(0, 0, 0, 0.45);
-  z-index: 54;
+  z-index: 43;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease;
@@ -340,23 +341,26 @@ textarea::placeholder {
   opacity: 1;
   pointer-events: auto;
 }
-/* Menu "Mais": sobe de baixo e para ACIMA da barra inferior (nao a encobre). */
+/* Menu "Mais": emerge DE TRAS da barra inferior e se esconde atras dela (§issue
+   #38). Ancorado em bottom:0 com z-44 (abaixo da barra z-45, acima do backdrop
+   z-43): a barra fica na frente e cobre a base do menu. O padding-bottom sobe os
+   itens para acima da barra. Ordem: conteudo < backdrop(43) < menu(44) < barra(45). */
 .menu-lateral {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px));
-  z-index: 55;
+  bottom: 0;
+  z-index: 44;
   max-height: 60vh;
   background: var(--surface);
   border-top-left-radius: 22px;
   border-top-right-radius: 22px;
   box-shadow: 0 -10px 34px rgba(15, 23, 42, 0.2);
-  transform: translateY(calc(100% + 5rem));
+  transform: translateY(100%);
   transition: transform 0.25s ease;
   display: flex;
   flex-direction: column;
-  padding: 1.5rem 1rem 1rem;
+  padding: 1.5rem 1rem calc(1rem + 4.25rem + env(safe-area-inset-bottom, 0px));
   overflow-y: auto;
 }
 /* "pegador" (grabber) no topo da folha */
