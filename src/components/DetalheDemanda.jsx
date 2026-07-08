@@ -47,7 +47,7 @@ export default function DetalheDemanda({
     const { data, error } = await supabase
       .from('demanda')
       .select(
-        'id, descricao, prazo, status, created_at, vendedor_id, obra_id, cancelamento_solicitado, club_casa, rt, rt_percentual, arquiteto_engenheiro, tipo_demanda(nome), obra(nome, endereco, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo)',
+        'id, descricao, prazo, status, created_at, vendedor_id, obra_id, cancelamento_solicitado, origem, club_casa, rt, rt_percentual, arquiteto_engenheiro, tipo_demanda(nome), obra(nome, endereco, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo)',
       )
       .eq('id', demandaId)
       .single()
@@ -183,6 +183,12 @@ export default function DetalheDemanda({
       {/* Dados do orcamento: CLUB CASA, RT e arquiteto (§issue #35).
           CLUB CASA e RT sao sempre Sim/Nao; arquiteto so aparece se preenchido. */}
       <div className="det-extras">
+        {d.origem && (
+          <div className="det-extra">
+            <span className="det-extra-rot">Origem</span>
+            <span className="det-extra-val">{d.origem}</span>
+          </div>
+        )}
         <div className="det-extra">
           <span className="det-extra-rot">CLUB CASA</span>
           <span className={`det-extra-val ${d.club_casa ? 'sim' : ''}`}>

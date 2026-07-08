@@ -37,6 +37,7 @@ export default function NovaDemanda({
   const [tipoId, setTipoId] = useState('')
   const [descricao, setDescricao] = useState('')
   const [prazo, setPrazo] = useState('')
+  const [origem, setOrigem] = useState('')
   const [clubCasa, setClubCasa] = useState(false)
   const [rt, setRt] = useState(false)
   const [rtPercentual, setRtPercentual] = useState('')
@@ -126,6 +127,7 @@ export default function NovaDemanda({
       .insert({
         obra_id: obraId,
         tipo_demanda_id: Number(tipoId),
+        origem,
         descricao: descricao.trim(),
         prazo,
         demanda_pai_id: demandaPaiId ?? null,
@@ -258,6 +260,24 @@ export default function NovaDemanda({
                   {t.nome}
                 </option>
               ))}
+            </select>
+          </label>
+
+          <label className="campo-linha">
+            <span className="campo-rot">Origem</span>
+            <select
+              value={origem}
+              onChange={(e) => setOrigem(e.target.value)}
+              required
+            >
+              <option value="">— escolha —</option>
+              {['Marketing', 'Club Casa', 'Indicação', 'Balcão', 'Instagram'].map(
+                (o) => (
+                  <option key={o} value={o}>
+                    {o}
+                  </option>
+                ),
+              )}
             </select>
           </label>
 
