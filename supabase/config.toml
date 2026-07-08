@@ -1,0 +1,17 @@
+# Config do Supabase CLI.
+#
+# O QUE IMPORTA AQUI: manter o "Verify JWT" DESLIGADO na Edge Function
+# enviar-push. Ela é chamada por um Database Webhook, que se autentica pelo
+# header `x-hook-secret` (não por um JWT). Com o Verify JWT LIGADO, o Supabase
+# barra a requisição do webhook com 401 no portão — ANTES de rodar a função —
+# e o push para de ser enviado (nem aparece invocação no log).
+#
+# Sem este arquivo, cada `supabase functions deploy` RELIGA o Verify JWT por
+# padrão (foi o que quebrou o push depois de um redeploy). Fixando aqui, os
+# próximos deploys respeitam verify_jwt = false.
+#
+# OBS: se o CLI reclamar de `project_id`, adicione no topo:
+#   project_id = "<seu-ref>"   # o <ref> está na URL: https://<ref>.supabase.co
+
+[functions.enviar-push]
+verify_jwt = false
