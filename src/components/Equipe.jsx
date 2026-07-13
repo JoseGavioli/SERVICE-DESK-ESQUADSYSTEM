@@ -26,13 +26,9 @@ export default function Equipe({
   naoLidas,
   aoAbrirNotif,
 }) {
-  // Presença (§#46): só admin/gerente veem quem está online; e o gerente NÃO
-  // vê a presença do admin (o dot do admin fica escondido pra ele).
-  const podeVerPresenca = perfil.papel === 'admin' || perfil.papel === 'gerente'
-  const mostrarOnline = (p) =>
-    podeVerPresenca &&
-    online.has(p.id) &&
-    !(perfil.papel === 'gerente' && p.papel === 'admin')
+  // Presença (§#46): a Equipe é do admin, então aqui é ele quem vê o online
+  // (de todos). O gerente vê os vendedores online pelo Dashboard.
+  const mostrarOnline = (p) => perfil.papel === 'admin' && online.has(p.id)
   const [perfis, setPerfis] = useState([])
   const [busca, setBusca] = useState('')
   const [editandoId, setEditandoId] = useState(null)

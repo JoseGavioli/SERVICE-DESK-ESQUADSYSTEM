@@ -253,6 +253,7 @@ export default function Painel({ sessao }) {
         {secao === 'dashboard' && (
           <Dashboard
             perfil={perfil}
+            online={online}
             aoAbrirComFiltro={abrirDemandasComFiltro}
             naoLidas={naoLidas}
             aoAbrirNotif={() => setNotifAberto(true)}

@@ -75,16 +75,26 @@ function Anel({ valor, total, cor }) {
 // Tela "Dashboard" (Resumo): perfil no topo + widgets ACIONAVEIS em tempo real,
 // abrindo a LISTA ja filtrada. Respeita o papel via RLS (o vendedor ve os
 // numeros DELE; admin/atendente veem a fila toda).
-export default function Dashboard({ perfil, aoAbrirComFiltro, naoLidas, aoAbrirNotif }) {
+export default function Dashboard({
+  perfil,
+  online = new Set(),
+  aoAbrirComFiltro,
+  naoLidas,
+  aoAbrirNotif,
+}) {
   const [dados, setDados] = useState(null)
   const ehStaff = perfil.papel !== 'vendedor'
+  // Online por vendedor (§#46): o gerente vê aqui (não pela Equipe). Ele NÃO
+  // vê a presença do admin, caso um admin apareça como dono de demanda.
+  const mostrarOnlineVend = (v) =>
+    online.has(v.id) && !(perfil.papel === 'gerente' && v.papel === 'admin')
 
   const carregar = useCallback(async () => {
     const [{ data: demandas }, { data: revs }] = await Promise.all([
       supabase
         .from('demanda')
         .select(
-          'id, status, prazo, cancelamento_solicitado, vendedor_id, urgencia_manual, vendedor:perfil!vendedor_id(nome_completo)',
+          'id, status, prazo, cancelamento_solicitado, vendedor_id, urgencia_manual, vendedor:perfil!vendedor_id(nome_completo, papel)',
         ),
       supabase.rpc('datas_primeira_revisao'),
     ])
@@ -117,7 +127,11 @@ export default function Dashboard({ perfil, aoAbrirComFiltro, naoLidas, aoAbrirN
       if (!terminal) {
         const vid = d.vendedor_id
         if (!porVendedor[vid]) {
-          porVendedor[vid] = { nome: d.vendedor?.nome_completo || '—', aberto: 0 }
+          porVendedor[vid] = {
+            nome: d.vendedor?.nome_completo || '—',
+            papel: d.vendedor?.papel,
+            aberto: 0,
+          }
         }
         porVendedor[vid].aberto += 1
       }
@@ -166,7 +180,7 @@ export default function Dashboard({ perfil, aoAbrirComFiltro, naoLidas, aoAbrirN
   const vendedores =
     dados && ehStaff
       ? Object.entries(dados.porVendedor)
-          .map(([id, v]) => ({ id, nome: v.nome, aberto: v.aberto }))
+          .map(([id, v]) => ({ id, nome: v.nome, papel: v.papel, aberto: v.aberto }))
           .filter((v) => v.aberto > 0)
           .sort((a, b) => b.aberto - a.aberto)
       : []
@@ -322,7 +336,12 @@ export default function Dashboard({ perfil, aoAbrirComFiltro, naoLidas, aoAbrirN
                       }
                       title={`Ver as demandas em aberto de ${v.nome}`}
                     >
-                      <span className="vend-nome">{v.nome}</span>
+                      <span className="vend-nome">
+                        {mostrarOnlineVend(v) && (
+                          <span className="vend-online" title="Online agora" />
+                        )}
+                        {v.nome}
+                      </span>
                       <span className="vend-barra">
                         <span
                           className="vend-fill"

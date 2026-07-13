@@ -3904,6 +3904,16 @@ button.cad-item:hover {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* dot de online do vendedor no Dashboard (§#46) */
+.vend-online {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: #22c55e;
+  margin-right: 0.4rem;
+  vertical-align: middle;
+}
 .vend-barra {
   height: 0.55rem;
   background: var(--surface-2);

@@ -10,11 +10,9 @@ export default function MenuLateral({
   aoSair,
 }) {
   const itens = []
-  // Admin gerencia a Equipe; o gerente vê (read-only) pra acompanhar quem
-  // está online (§issue #46). Vendedor/atendente não acessam a Equipe.
-  if (perfil.papel === 'admin' || perfil.papel === 'gerente') {
-    itens.push({ id: 'equipe', rotulo: 'Equipe' })
-  }
+  // A Equipe é exclusiva do admin (gerência de usuários). O gerente vê os
+  // vendedores online pelo Dashboard ("Por vendedor"), não por aqui (§#46).
+  if (perfil.papel === 'admin') itens.push({ id: 'equipe', rotulo: 'Equipe' })
   itens.push({ id: 'tema', rotulo: 'Tema' })
 
   return (
