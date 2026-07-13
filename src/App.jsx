@@ -3,6 +3,7 @@ import { supabase } from './lib/supabase'
 import BoasVindas from './components/BoasVindas'
 import Login from './components/Login'
 import Painel from './components/Painel'
+import AvisoAtualizacao from './components/AvisoAtualizacao'
 import './App.css'
 
 // Componente raiz. Sua unica tarefa: saber se ha alguem logado (a
@@ -29,20 +30,29 @@ export default function App() {
     return () => assinatura.subscription.unsubscribe()
   }, [])
 
+  // Escolhe a tela: carregando -> sessao (casca do app) -> boas-vindas (uma
+  // passagem por abertura) -> Login.
+  let conteudo
   if (carregando) {
-    return (
+    conteudo = (
       <main className="tela">
         <div className="cartao">Carregando…</div>
       </main>
     )
+  } else if (sessao) {
+    conteudo = <Painel sessao={sessao} />
+  } else if (mostrarBoasVindas) {
+    conteudo = <BoasVindas aoContinuar={() => setMostrarBoasVindas(false)} />
+  } else {
+    conteudo = <Login />
   }
 
-  // Com sessao -> casca do app. Sem sessao -> boas-vindas (uma passagem por
-  // abertura) e, ao "Continuar", o Login.
-  if (sessao) return <Painel sessao={sessao} />
-  return mostrarBoasVindas ? (
-    <BoasVindas aoContinuar={() => setMostrarBoasVindas(false)} />
-  ) : (
-    <Login />
+  // O AvisoAtualizacao fica SEMPRE montado (fora do if), para o service worker
+  // ser observado em qualquer tela e o aviso poder aparecer a qualquer momento.
+  return (
+    <>
+      <AvisoAtualizacao />
+      {conteudo}
+    </>
   )
 }

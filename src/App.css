@@ -447,6 +447,49 @@ textarea::placeholder {
   }
 }
 
+/* Aviso "Nova versao disponivel" (PWA): pilula navy fixa no topo, com acao. */
+.aviso-atualizar {
+  position: fixed;
+  left: 50%;
+  top: calc(0.75rem + env(safe-area-inset-top, 0px));
+  transform: translateX(-50%);
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: var(--marca-navy);
+  color: #fff;
+  padding: 0.4rem 0.45rem 0.4rem 0.95rem;
+  border-radius: var(--raio-pill);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.28);
+  max-width: calc(100% - 1.5rem);
+  animation: aviso-online-entra 0.2s ease;
+}
+.aviso-atualizar-texto {
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.aviso-atualizar-btn {
+  border: none;
+  background: #fff;
+  color: var(--marca-navy);
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--raio-pill);
+  cursor: pointer;
+}
+.aviso-atualizar-x {
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: 0 0.35rem;
+  cursor: pointer;
+}
+
 .menu-cabecalho {
   display: flex;
   flex-direction: column;

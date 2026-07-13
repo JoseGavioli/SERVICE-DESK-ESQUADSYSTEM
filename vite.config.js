@@ -7,8 +7,11 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      // Atualiza sozinho quando uma versao nova e publicada (§3).
-      registerType: 'autoUpdate',
+      // 'prompt': quando sai uma versao nova, o app AVISA (componente
+      // AvisoAtualizacao) em vez de trocar sozinho e em silencio. Assim voce
+      // ve que ha atualizacao e aplica com um toque (antes, com 'autoUpdate',
+      // a versao velha ficava em cache ate reabrir e parecia "quebrado").
+      registerType: 'prompt',
       // Pendura nossos handlers de push (public/push-sw.js) no service worker
       // gerado pelo Workbox, sem migrar para injectManifest (#14 Web Push).
       workbox: {
