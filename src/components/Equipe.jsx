@@ -20,7 +20,19 @@ const ROTULO_PAPEL = {
 // Tela "Equipe" (so Admin): lista os perfis com busca + edicao in-place.
 // A criacao do LOGIN e feita no painel do Supabase; o gatilho cria o perfil
 // automaticamente, e ele aparece aqui para ajuste de nome/papel/ativo.
-export default function Equipe({ perfil, naoLidas, aoAbrirNotif }) {
+export default function Equipe({
+  perfil,
+  online = new Set(),
+  naoLidas,
+  aoAbrirNotif,
+}) {
+  // Presença (§#46): só admin/gerente veem quem está online; e o gerente NÃO
+  // vê a presença do admin (o dot do admin fica escondido pra ele).
+  const podeVerPresenca = perfil.papel === 'admin' || perfil.papel === 'gerente'
+  const mostrarOnline = (p) =>
+    podeVerPresenca &&
+    online.has(p.id) &&
+    !(perfil.papel === 'gerente' && p.papel === 'admin')
   const [perfis, setPerfis] = useState([])
   const [busca, setBusca] = useState('')
   const [editandoId, setEditandoId] = useState(null)
@@ -102,10 +114,15 @@ export default function Equipe({ perfil, naoLidas, aoAbrirNotif }) {
               ) : (
                 <div className="cad-linha">
                   <div className="cad-item cad-item-estatico">
-                    <span
-                      className={`cad-avatar ${p.ativo ? '' : 'cad-avatar-inativo'}`}
-                    >
-                      {iniciais(p.nome_completo)}
+                    <span className="cad-avatar-wrap">
+                      <span
+                        className={`cad-avatar ${p.ativo ? '' : 'cad-avatar-inativo'}`}
+                      >
+                        {iniciais(p.nome_completo)}
+                      </span>
+                      {mostrarOnline(p) && (
+                        <span className="cad-online" title="Online agora" />
+                      )}
                     </span>
                     <span className="cad-texto">
                       <strong className="cad-nome">

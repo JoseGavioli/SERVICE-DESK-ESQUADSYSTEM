@@ -12,6 +12,7 @@ import ToastNotificacao from './ToastNotificacao'
 import Icone from './Icone'
 import { useNotificacoes } from '../lib/useNotificacoes'
 import { useBotaoVoltar } from '../lib/useBotaoVoltar'
+import { usePresenca } from '../lib/usePresenca'
 import { sincronizarPush } from '../lib/webpush'
 
 // Nome exibido no cabecalho para cada secao.
@@ -50,6 +51,8 @@ export default function Painel({ sessao }) {
     toast,
     descartarToast,
   } = useNotificacoes(perfil)
+  // Presenca (online) em tempo real — usada na Equipe (§issue #46).
+  const online = usePresenca(perfil)
 
   // Demandas com "novidade" = tem QUALQUER notificacao NAO LIDA (status, novo
   // comentario, nova demanda, cancelamento). Deriva do sistema de notificacoes,
@@ -265,6 +268,7 @@ export default function Painel({ sessao }) {
         {secao === 'equipe' && (
           <Equipe
             perfil={perfil}
+            online={online}
             naoLidas={naoLidas}
             aoAbrirNotif={() => setNotifAberto(true)}
           />

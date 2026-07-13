@@ -3404,6 +3404,22 @@ button.cad-item:hover {
   font-weight: 700;
   font-size: 0.9rem;
 }
+/* Indicador de presença online (§issue #46) — dot verde no canto do avatar. */
+.cad-avatar-wrap {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+.cad-online {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 0.72rem;
+  height: 0.72rem;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 2px solid var(--surface);
+}
 .cad-texto {
   flex: 1;
   min-width: 0;
