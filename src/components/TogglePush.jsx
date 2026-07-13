@@ -57,10 +57,13 @@ export default function TogglePush() {
       if (ligado) await desativarPush()
       else await ativarPush()
     } catch (e) {
+      // Log do erro REAL (nome + mensagem) para diagnostico no aparelho —
+      // ex.: no Windows, distinguir permissao negada de falha no subscribe().
+      console.warn('push falhou:', e?.name, e?.message, e)
       if (e.message === 'permissao_negada') setErro('Permissão negada.')
       else if (e.message === 'sem_chave_vapid')
         setErro('Avisos ainda não configurados neste ambiente.')
-      else setErro('Não foi possível alterar agora.')
+      else setErro(`Não foi possível ativar (${e?.name || 'erro'}).`)
     }
     await atualizar()
     setOcupado(false)

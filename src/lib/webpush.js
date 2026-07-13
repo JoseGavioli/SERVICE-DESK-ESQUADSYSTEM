@@ -37,6 +37,23 @@ function base64UrlParaUint8Array(base64) {
   return arr
 }
 
+// A assinatura existente foi criada com a MESMA chave VAPID de agora? Se a
+// chave do servidor mudou (rotacao), a assinatura velha vira "lixo": o
+// subscribe() com a chave nova daria erro ("different applicationServerKey")
+// e o servidor (chave nova) nao consegue mais enviar para ela. Comparamos os
+// bytes da chave guardada na assinatura (sub.options.applicationServerKey) com
+// a atual. Se nao der para conferir (navegador sem options), tratamos como
+// DIFERENTE, por seguranca (re-assina).
+function mesmaChaveVapid(sub, chaveAtual) {
+  const guardada = sub.options && sub.options.applicationServerKey
+  if (!guardada) return false
+  const a = new Uint8Array(guardada)
+  const b = new Uint8Array(chaveAtual)
+  if (a.length !== b.length) return false
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false
+  return true
+}
+
 // Grava (ou atualiza, por endpoint) a assinatura deste aparelho.
 async function salvarAssinatura(sub) {
   const json = sub.toJSON() // { endpoint, keys: { p256dh, auth } }
@@ -81,11 +98,20 @@ export async function ativarPush() {
   if (permissao !== 'granted') throw new Error('permissao_negada')
 
   const reg = await navigator.serviceWorker.ready
+  const chave = base64UrlParaUint8Array(VAPID_PUBLIC)
+
   let sub = await reg.pushManager.getSubscription()
+  // Se ja existe assinatura mas de uma chave VAPID ANTIGA (pos-rotacao),
+  // remove antes de assinar de novo — senao ficaria presa na chave velha
+  // (era isso que travava o Windows/Edge apos a troca de chave).
+  if (sub && !mesmaChaveVapid(sub, chave)) {
+    await sub.unsubscribe()
+    sub = null
+  }
   if (!sub) {
     sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: base64UrlParaUint8Array(VAPID_PUBLIC),
+      applicationServerKey: chave,
     })
   }
   await salvarAssinatura(sub)
@@ -106,7 +132,23 @@ export async function desativarPush() {
 // frágil evento pushsubscriptionchange. (Usado a partir da Fase 5.)
 export async function sincronizarPush() {
   if (!pushSuportado() || Notification.permission !== 'granted') return
+  if (!VAPID_PUBLIC) return
   const reg = await navigator.serviceWorker.getRegistration()
-  const sub = reg ? await reg.pushManager.getSubscription() : null
-  if (sub) await salvarAssinatura(sub)
+  if (!reg) return
+  let sub = await reg.pushManager.getSubscription()
+  if (!sub) return // nao tinha assinatura -> nada a sincronizar (liga no toggle)
+
+  // AUTO-CONSERTO: se a assinatura e de uma chave VAPID antiga, troca pela
+  // atual sem precisar do usuario mexer no toggle. Como a permissao ja e
+  // 'granted', da para assinar de novo aqui mesmo, no boot. Resolve sozinho o
+  // aparelho que ficou preso na chave velha (ex.: o PWA do Windows).
+  const chave = base64UrlParaUint8Array(VAPID_PUBLIC)
+  if (!mesmaChaveVapid(sub, chave)) {
+    await sub.unsubscribe()
+    sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: chave,
+    })
+  }
+  await salvarAssinatura(sub)
 }
