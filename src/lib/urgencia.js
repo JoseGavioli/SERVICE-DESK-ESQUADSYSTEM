@@ -66,6 +66,24 @@ export function calcularUrgencia(prazoStr, status) {
   return { nivel, rotulo: ROTULO[nivel], diasUteis: n }
 }
 
+// Urgencia EFETIVA de uma demanda: usa a urgencia MANUAL (sobreposta pelo
+// gerente/admin, §issue #44) quando houver; senao, a calculada pelo prazo (§8).
+// Terminal (enviado/cancelada) nunca tem urgencia. Recebe a demanda inteira
+// (precisa de urgencia_manual, prazo e status).
+export function urgenciaEfetiva(demanda) {
+  if (!demanda) return null
+  if (demanda.status === 'enviado' || demanda.status === 'cancelada') return null
+  if (demanda.urgencia_manual) {
+    return {
+      nivel: demanda.urgencia_manual,
+      rotulo: ROTULO[demanda.urgencia_manual],
+      diasUteis: null,
+      manual: true,
+    }
+  }
+  return calcularUrgencia(demanda.prazo, demanda.status)
+}
+
 // ── CUSTO ATRASADO (em "em revisao de custo") ──────────────────────
 // Uma demanda esta com o CUSTO ATRASADO quando ESTA em 'em_revisao_custo' e ja
 // passaram >= DIAS_CUSTO_ATRASADO dias UTEIS desde a 1a vez que entrou nesse

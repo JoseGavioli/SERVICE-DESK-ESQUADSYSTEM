@@ -12,6 +12,7 @@ import Comentarios from './Comentarios'
 import Anexos from './Anexos'
 import NovaDemanda from './NovaDemanda'
 import AlterarPrazo from './AlterarPrazo'
+import DefinirUrgencia from './DefinirUrgencia'
 import Icone from './Icone'
 
 // Detalhe da demanda (campos somente leitura) + cancelamento, acoes de
@@ -47,7 +48,7 @@ export default function DetalheDemanda({
     const { data, error } = await supabase
       .from('demanda')
       .select(
-        'id, descricao, prazo, status, created_at, vendedor_id, obra_id, cancelamento_solicitado, origem, club_casa, rt, rt_percentual, arquiteto_engenheiro, tipo_demanda(nome), obra(nome, endereco, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo)',
+        'id, descricao, prazo, status, created_at, vendedor_id, obra_id, cancelamento_solicitado, origem, urgencia_manual, club_casa, rt, rt_percentual, arquiteto_engenheiro, tipo_demanda(nome), obra(nome, endereco, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo)',
       )
       .eq('id', demandaId)
       .single()
@@ -170,7 +171,7 @@ export default function DetalheDemanda({
           <span className={`status status-${d.status}`}>
             {STATUS_ROTULO[d.status]}
           </span>
-          <SeloUrgencia prazo={d.prazo} status={d.status} />
+          <SeloUrgencia demanda={d} />
         </div>
       </div>
 
@@ -219,6 +220,9 @@ export default function DetalheDemanda({
         </p>
         <AlterarPrazo demanda={d} perfil={perfil} aoMudar={recarregar} />
       </div>
+
+      {/* Urgência manual (gerente/admin, §#44) */}
+      <DefinirUrgencia demanda={d} perfil={perfil} aoMudar={recarregar} />
 
       {/* Anexos (box completa) */}
       <Anexos demanda={d} perfil={perfil} />

@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 const PAPEIS = [
   { valor: 'admin', rotulo: 'Admin' },
   { valor: 'atendente', rotulo: 'Atendente' },
+  { valor: 'gerente', rotulo: 'Gerente' },
   { valor: 'vendedor', rotulo: 'Vendedor' },
 ]
 

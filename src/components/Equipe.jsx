@@ -10,7 +10,12 @@ function iniciais(nome) {
   return ((p[0]?.[0] ?? '') + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase()
 }
 
-const ROTULO_PAPEL = { admin: 'Admin', atendente: 'Atendente', vendedor: 'Vendedor' }
+const ROTULO_PAPEL = {
+  admin: 'Admin',
+  atendente: 'Atendente',
+  gerente: 'Gerente',
+  vendedor: 'Vendedor',
+}
 
 // Tela "Equipe" (so Admin): lista os perfis com busca + edicao in-place.
 // A criacao do LOGIN e feita no painel do Supabase; o gatilho cria o perfil

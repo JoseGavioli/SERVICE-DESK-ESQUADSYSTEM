@@ -13,9 +13,10 @@ export default function AlterarPrazo({ demanda, perfil, aoMudar }) {
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
 
-  const ehStaff = perfil.papel === 'admin' || perfil.papel === 'atendente'
+  // Staff OU gerente ajustam o prazo (§issue #44); nunca em demanda encerrada.
+  const podeAjustar = ['admin', 'atendente', 'gerente'].includes(perfil.papel)
   const terminal = demanda.status === 'enviado' || demanda.status === 'cancelada'
-  if (!ehStaff || terminal) return null
+  if (!podeAjustar || terminal) return null
 
   async function salvar(evento) {
     evento.preventDefault()

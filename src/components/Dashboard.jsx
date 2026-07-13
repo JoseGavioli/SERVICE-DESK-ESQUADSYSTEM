@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { STATUS_ROTULO } from '../lib/status'
-import { calcularUrgencia, estaCustoAtrasado, URGENCIA_NIVEIS } from '../lib/urgencia'
+import { urgenciaEfetiva, estaCustoAtrasado, URGENCIA_NIVEIS } from '../lib/urgencia'
 import Icone from './Icone'
 
 // Ordem das boxes de status. "concluido" fica de fora (legado).
@@ -27,7 +27,12 @@ const URG_COR = {
   sem_urgencia: 'var(--ur-sem-fg)',
 }
 
-const ROTULO_PAPEL = { admin: 'Admin', atendente: 'Atendente', vendedor: 'Vendedor' }
+const ROTULO_PAPEL = {
+  admin: 'Admin',
+  atendente: 'Atendente',
+  gerente: 'Gerente',
+  vendedor: 'Vendedor',
+}
 
 // Iniciais (ate 2 letras) para o avatar do perfil no topo.
 function iniciais(nome) {
@@ -79,7 +84,7 @@ export default function Dashboard({ perfil, aoAbrirComFiltro, naoLidas, aoAbrirN
       supabase
         .from('demanda')
         .select(
-          'id, status, prazo, cancelamento_solicitado, vendedor_id, vendedor:perfil!vendedor_id(nome_completo)',
+          'id, status, prazo, cancelamento_solicitado, vendedor_id, urgencia_manual, vendedor:perfil!vendedor_id(nome_completo)',
         ),
       supabase.rpc('datas_primeira_revisao'),
     ])
@@ -100,7 +105,7 @@ export default function Dashboard({ perfil, aoAbrirComFiltro, naoLidas, aoAbrirN
 
       // "Atenção" = 1x por demanda: prazo vencido OU custo atrasado OU
       // cancelamento solicitado (mesma regra do atalho {soAtencao} da lista).
-      const u = calcularUrgencia(d.prazo, d.status) // null se terminal
+      const u = urgenciaEfetiva(d) // manual (gerente) ou calculada; null se terminal
       const prazoVencido = u?.nivel === 'atrasado'
       const custoAtras = estaCustoAtrasado(d.status, rev[d.id])
       if (prazoVencido || custoAtras || d.cancelamento_solicitado) atencao += 1

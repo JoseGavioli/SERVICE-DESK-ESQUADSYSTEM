@@ -1,7 +1,11 @@
 import { Fragment, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { STATUS_ROTULO } from '../lib/status'
-import { calcularUrgencia, URGENCIA_NIVEIS, estaCustoAtrasado } from '../lib/urgencia'
+import {
+  urgenciaEfetiva,
+  URGENCIA_NIVEIS,
+  estaCustoAtrasado,
+} from '../lib/urgencia'
 import NovaDemanda from './NovaDemanda'
 import DetalheDemanda from './DetalheDemanda'
 import SeloUrgencia from './SeloUrgencia'
@@ -84,7 +88,7 @@ export default function Demandas({
       supabase
         .from('demanda')
         .select(
-          'id, descricao, prazo, status, created_at, demanda_pai_id, cancelamento_solicitado, vendedor_id, tipo_demanda(nome), obra(nome, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo), comentario(count)',
+          'id, descricao, prazo, status, created_at, demanda_pai_id, cancelamento_solicitado, vendedor_id, urgencia_manual, tipo_demanda(nome), obra(nome, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo), comentario(count)',
         )
         .order('created_at', { ascending: false }),
       supabase.rpc('datas_primeira_revisao'),
@@ -105,7 +109,7 @@ export default function Demandas({
   }
   // Prazo do orcamento ja venceu (urgencia "Atrasado").
   function prazoVencido(d) {
-    return calcularUrgencia(d.prazo, d.status)?.nivel === 'atrasado'
+    return urgenciaEfetiva(d)?.nivel === 'atrasado'
   }
   // Demanda que "chama a atencao" (fundo vermelho + topo): custo atrasado
   // OU prazo vencido. O que diferencia os dois e a tag/selo exibido.
@@ -253,7 +257,7 @@ export default function Demandas({
       if (f.soAtivas && (d.status === 'enviado' || d.status === 'cancelada'))
         return false
       if (f.urgencia) {
-        const u = calcularUrgencia(d.prazo, d.status)
+        const u = urgenciaEfetiva(d)
         if (!u || u.nivel !== f.urgencia) return false
       }
       if (termo) {
@@ -281,7 +285,7 @@ export default function Demandas({
         .sort((a, b) => (a.created_at > b.created_at ? 1 : -1))
     } else if (f.ordenacao === 'urgencia') {
       const rank = (d) => {
-        const u = calcularUrgencia(d.prazo, d.status)
+        const u = urgenciaEfetiva(d)
         return u ? RANK_URGENCIA[u.nivel] : 99 // terminais por ultimo
       }
       lista = lista.slice().sort((a, b) => rank(a) - rank(b))
@@ -420,7 +424,7 @@ export default function Demandas({
           <span className={`status status-${d.status}`}>
             {STATUS_ROTULO[d.status]}
           </span>
-          <SeloUrgencia prazo={d.prazo} status={d.status} />
+          <SeloUrgencia demanda={d} />
           {d.cancelamento_solicitado && (
             <span className="marca-cancel">
               <Icone nome="aviso" size={12} /> cancelamento

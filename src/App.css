@@ -1004,6 +1004,10 @@ textarea::placeholder {
   background: var(--surface-2);
   color: var(--texto-suave);
 }
+.papel-gerente {
+  background: var(--primaria);
+  color: #fff;
+}
 .chip-inativo {
   background: var(--st-cancelada-bg);
   color: var(--st-cancelada-fg);
@@ -2203,6 +2207,24 @@ textarea::placeholder {
   align-items: center;
   gap: 0.6rem;
 }
+
+/* Urgência manual do gerente/admin (§issue #44) */
+.definir-urgencia {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin: 0 0 1.1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--texto);
+}
+.definir-urgencia-rot {
+  color: var(--texto-suave);
+}
+.definir-urgencia select {
+  max-width: 320px;
+}
+
 .det-autor {
   display: flex;
   align-items: center;

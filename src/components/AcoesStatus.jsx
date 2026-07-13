@@ -15,8 +15,9 @@ export default function AcoesStatus({ demanda, perfil, aoMover }) {
   const [processando, setProcessando] = useState(false)
   const [erro, setErro] = useState('')
 
-  // Vendedor nunca move status (a UI esconde; o banco tambem barra).
-  if (perfil.papel === 'vendedor') return null
+  // So o STAFF (admin/atendente) move status. Vendedor e gerente nunca — a UI
+  // esconde e o banco tambem barra (§issue #44).
+  if (perfil.papel !== 'admin' && perfil.papel !== 'atendente') return null
 
   // Opcoes do status atual. O "Cancelar" (efetivar) NAO fica mais aqui: ele
   // migrou para o componente Cancelamento, junto do "Solicitar cancelamento"
