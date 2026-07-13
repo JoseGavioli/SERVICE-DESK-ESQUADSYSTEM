@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { STATUS_ROTULO } from '../lib/status'
 import { urgenciaEfetiva, estaCustoAtrasado, URGENCIA_NIVEIS } from '../lib/urgencia'
+import { textoOnline, useTique } from '../lib/usePresenca'
 import Icone from './Icone'
 
 // Ordem das boxes de status. "concluido" fica de fora (legado).
@@ -84,20 +85,25 @@ export default function Dashboard({
 }) {
   const [dados, setDados] = useState(null)
   const ehStaff = perfil.papel !== 'vendedor'
-  // Online por vendedor (§#46): o gerente vê aqui (não pela Equipe). Ele NÃO
-  // vê a presença do admin, caso um admin apareça como dono de demanda.
-  const mostrarOnlineVend = (v) =>
-    online.has(v.id) && !(perfil.papel === 'gerente' && v.papel === 'admin')
+  useTique() // faz o "online há X" atualizar sozinho enquanto a tela fica aberta
 
   const carregar = useCallback(async () => {
-    const [{ data: demandas }, { data: revs }] = await Promise.all([
-      supabase
-        .from('demanda')
-        .select(
-          'id, status, prazo, cancelamento_solicitado, vendedor_id, urgencia_manual, vendedor:perfil!vendedor_id(nome_completo, papel)',
-        ),
-      supabase.rpc('datas_primeira_revisao'),
-    ])
+    const [{ data: demandas }, { data: revs }, { data: equipe }] =
+      await Promise.all([
+        supabase
+          .from('demanda')
+          .select(
+            'id, status, prazo, cancelamento_solicitado, vendedor_id, urgencia_manual, vendedor:perfil!vendedor_id(nome_completo, papel)',
+          ),
+        supabase.rpc('datas_primeira_revisao'),
+        // Vendedores ativos — base do widget "Vendedores online" (§#46).
+        supabase
+          .from('perfil')
+          .select('id, nome_completo')
+          .eq('papel', 'vendedor')
+          .eq('ativo', true)
+          .order('nome_completo'),
+      ])
     // Data da 1a revisao de custo por demanda (RPC devolve { demanda_id, data }).
     const rev = {}
     for (const r of revs ?? []) rev[r.demanda_id] = r.data
@@ -137,7 +143,14 @@ export default function Dashboard({
       }
     }
 
-    setDados({ emAberto, atencao, porStatus, porUrgencia, porVendedor })
+    setDados({
+      emAberto,
+      atencao,
+      porStatus,
+      porUrgencia,
+      porVendedor,
+      equipe: equipe ?? [],
+    })
   }, [])
 
   useEffect(() => {
@@ -336,12 +349,7 @@ export default function Dashboard({
                       }
                       title={`Ver as demandas em aberto de ${v.nome}`}
                     >
-                      <span className="vend-nome">
-                        {mostrarOnlineVend(v) && (
-                          <span className="vend-online" title="Online agora" />
-                        )}
-                        {v.nome}
-                      </span>
+                      <span className="vend-nome">{v.nome}</span>
                       <span className="vend-barra">
                         <span
                           className="vend-fill"
@@ -352,6 +360,30 @@ export default function Dashboard({
                     </button>
                   </li>
                 ))}
+              </ul>
+            </div>
+          )}
+
+          {/* 6. VENDEDORES ONLINE — presença em tempo real (§#46, só staff) */}
+          {ehStaff && dados.equipe.length > 0 && (
+            <div className="card-resumo">
+              <span className="box-titulo">Vendedores online</span>
+              <ul className="online-lista">
+                {dados.equipe.map((v) => {
+                  const on = online.get(v.id)
+                  return (
+                    <li
+                      key={v.id}
+                      className={`online-item ${on ? 'esta-online' : ''}`}
+                    >
+                      <span className="online-dot" aria-hidden="true" />
+                      <span className="online-nome">{v.nome_completo}</span>
+                      <span className="online-quando">
+                        {on ? textoOnline(on.em) : 'offline'}
+                      </span>
+                    </li>
+                  )
+                })}
               </ul>
             </div>
           )}

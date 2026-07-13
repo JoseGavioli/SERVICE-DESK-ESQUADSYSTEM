@@ -15,6 +15,9 @@ import { useBotaoVoltar } from '../lib/useBotaoVoltar'
 import { usePresenca } from '../lib/usePresenca'
 import { sincronizarPush } from '../lib/webpush'
 
+// Timer do toast "ficou online" (§#46) — fora do componente para nao virar hook.
+let timerAvisoOnline = null
+
 // Nome exibido no cabecalho para cada secao.
 const NOME_TELA = {
   inicio: 'Início',
@@ -51,8 +54,19 @@ export default function Painel({ sessao }) {
     toast,
     descartarToast,
   } = useNotificacoes(perfil)
-  // Presenca (online) em tempo real — usada na Equipe (§issue #46).
-  const online = usePresenca(perfil)
+  // Presenca (online) em tempo real (§issue #46). Quando alguem fica online, o
+  // ADMIN recebe um aviso in-app (toast). So enquanto o app do admin esta aberto.
+  const [avisoOnline, setAvisoOnline] = useState(null)
+  const online = usePresenca(perfil, {
+    aoEntrar: (novos) => {
+      if (perfil?.papel !== 'admin') return
+      const nome = novos[0]?.nome || 'Alguém'
+      const extra = novos.length > 1 ? ` +${novos.length - 1}` : ''
+      setAvisoOnline(`${nome}${extra} ficou online`)
+      clearTimeout(timerAvisoOnline)
+      timerAvisoOnline = setTimeout(() => setAvisoOnline(null), 4000)
+    },
+  })
 
   // Demandas com "novidade" = tem QUALQUER notificacao NAO LIDA (status, novo
   // comentario, nova demanda, cancelamento). Deriva do sistema de notificacoes,
@@ -281,6 +295,14 @@ export default function Painel({ sessao }) {
       {avisoSair && (
         <div className="aviso-sair" role="status">
           Toque em voltar de novo para sair
+        </div>
+      )}
+
+      {/* Aviso pro admin quando alguem fica online (§#46). */}
+      {avisoOnline && (
+        <div className="aviso-online" role="status">
+          <span className="aviso-online-dot" aria-hidden="true" />
+          {avisoOnline}
         </div>
       )}
 

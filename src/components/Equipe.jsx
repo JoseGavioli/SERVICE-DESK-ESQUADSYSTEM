@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { textoOnline, useTique } from '../lib/usePresenca'
 import LinhaPerfil from './LinhaPerfil'
 import Icone from './Icone'
 
@@ -29,6 +30,7 @@ export default function Equipe({
   // Presença (§#46): a Equipe é do admin, então aqui é ele quem vê o online
   // (de todos). O gerente vê os vendedores online pelo Dashboard.
   const mostrarOnline = (p) => perfil.papel === 'admin' && online.has(p.id)
+  useTique() // atualiza o "online há X" enquanto a tela fica aberta
   const [perfis, setPerfis] = useState([])
   const [busca, setBusca] = useState('')
   const [editandoId, setEditandoId] = useState(null)
@@ -129,6 +131,11 @@ export default function Equipe({
                         <span className={`chip-papel papel-${p.papel}`}>
                           {ROTULO_PAPEL[p.papel] ?? p.papel}
                         </span>
+                        {mostrarOnline(p) && (
+                          <span className="chip-online">
+                            {textoOnline(online.get(p.id)?.em)}
+                          </span>
+                        )}
                         {!p.ativo && <span className="chip-inativo">desativado</span>}
                         {p.celular && (
                           <span className="cad-celular">{p.celular}</span>

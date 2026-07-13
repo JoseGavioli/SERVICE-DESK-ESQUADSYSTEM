@@ -407,6 +407,46 @@ textarea::placeholder {
     transform: translate(-50%, 0);
   }
 }
+
+/* Aviso "Fulano ficou online" pro admin (§#46): pílula no topo. */
+.aviso-online {
+  position: fixed;
+  left: 50%;
+  top: calc(0.75rem + env(safe-area-inset-top, 0px));
+  transform: translateX(-50%);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--surface);
+  color: var(--texto);
+  border: 1px solid var(--borda);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.55rem 0.9rem;
+  border-radius: var(--raio-pill);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.18);
+  max-width: calc(100% - 2rem);
+  animation: aviso-online-entra 0.2s ease;
+}
+.aviso-online-dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: #22c55e;
+  flex: none;
+}
+@keyframes aviso-online-entra {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
 .menu-cabecalho {
   display: flex;
   flex-direction: column;
@@ -3904,15 +3944,59 @@ button.cad-item:hover {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* dot de online do vendedor no Dashboard (§#46) */
-.vend-online {
-  display: inline-block;
-  width: 0.55rem;
-  height: 0.55rem;
+/* Widget "Vendedores online" + chip de presença (§#46) */
+.online-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.online-item {
+  display: grid;
+  grid-template-columns: 0.7rem 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.1rem;
+}
+.online-item + .online-item {
+  border-top: 1px solid var(--borda);
+}
+.online-dot {
+  width: 0.62rem;
+  height: 0.62rem;
   border-radius: 50%;
+  background: var(--borda-forte);
+}
+.online-item.esta-online .online-dot {
   background: #22c55e;
-  margin-right: 0.4rem;
-  vertical-align: middle;
+}
+.online-nome {
+  font-size: 0.9rem;
+  color: var(--texto);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.online-item:not(.esta-online) .online-nome {
+  color: var(--texto-suave);
+}
+.online-quando {
+  font-size: 0.78rem;
+  color: var(--texto-suave);
+  white-space: nowrap;
+}
+.online-item.esta-online .online-quando {
+  color: #1f9d55;
+  font-weight: 600;
+}
+.chip-online {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.1rem 0.5rem;
+  border-radius: var(--raio-pill);
+  background: rgba(34, 197, 94, 0.16);
+  color: #1f9d55;
 }
 .vend-barra {
   height: 0.55rem;
