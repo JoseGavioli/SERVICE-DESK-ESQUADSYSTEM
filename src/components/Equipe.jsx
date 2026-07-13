@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { textoOnline, useTique } from '../lib/usePresenca'
+import { textoPresenca, ultimoVistoMs, useTique } from '../lib/usePresenca'
 import LinhaPerfil from './LinhaPerfil'
 import Icone from './Icone'
 
@@ -23,13 +23,15 @@ const ROTULO_PAPEL = {
 // automaticamente, e ele aparece aqui para ajuste de nome/papel/ativo.
 export default function Equipe({
   perfil,
-  online = new Set(),
+  online = new Map(),
+  vistos = new Map(),
   naoLidas,
   aoAbrirNotif,
 }) {
   // Presença (§#46): a Equipe é do admin, então aqui é ele quem vê o online
   // (de todos). O gerente vê os vendedores online pelo Dashboard.
-  const mostrarOnline = (p) => perfil.papel === 'admin' && online.has(p.id)
+  const ehAdmin = perfil.papel === 'admin'
+  const estaOnline = (p) => online.has(p.id) // online AO VIVO agora
   useTique() // atualiza o "online há X" enquanto a tela fica aberta
   const [perfis, setPerfis] = useState([])
   const [busca, setBusca] = useState('')
@@ -41,7 +43,7 @@ export default function Equipe({
     setCarregando(true)
     const { data, error } = await supabase
       .from('perfil')
-      .select('id, nome_completo, celular, papel, ativo')
+      .select('id, nome_completo, celular, papel, ativo, visto_em')
       .order('nome_completo')
 
     if (error) setErro('Não foi possível carregar a equipe.')
@@ -118,7 +120,7 @@ export default function Equipe({
                       >
                         {iniciais(p.nome_completo)}
                       </span>
-                      {mostrarOnline(p) && (
+                      {ehAdmin && estaOnline(p) && (
                         <span className="cad-online" title="Online agora" />
                       )}
                     </span>
@@ -131,9 +133,14 @@ export default function Equipe({
                         <span className={`chip-papel papel-${p.papel}`}>
                           {ROTULO_PAPEL[p.papel] ?? p.papel}
                         </span>
-                        {mostrarOnline(p) && (
-                          <span className="chip-online">
-                            {textoOnline(online.get(p.id)?.em)}
+                        {ehAdmin && (
+                          <span
+                            className={`chip-online ${estaOnline(p) ? '' : 'chip-online-off'}`}
+                          >
+                            {textoPresenca(
+                              estaOnline(p),
+                              ultimoVistoMs(p.id, vistos, p.visto_em),
+                            )}
                           </span>
                         )}
                         {!p.ativo && <span className="chip-inativo">desativado</span>}

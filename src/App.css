@@ -3998,6 +3998,12 @@ button.cad-item:hover {
   background: rgba(34, 197, 94, 0.16);
   color: #1f9d55;
 }
+/* Variante "offline" do chip (Equipe): apagado, sem o verde de online. Mostra
+   o "online há X min" / "offline" de quem não está online agora (§#46). */
+.chip-online-off {
+  background: var(--surface-2);
+  color: var(--texto-suave);
+}
 .vend-barra {
   height: 0.55rem;
   background: var(--surface-2);

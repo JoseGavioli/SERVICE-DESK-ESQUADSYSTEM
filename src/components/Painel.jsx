@@ -57,7 +57,7 @@ export default function Painel({ sessao }) {
   // Presenca (online) em tempo real (§issue #46). Quando alguem fica online, o
   // ADMIN recebe um aviso in-app (toast). So enquanto o app do admin esta aberto.
   const [avisoOnline, setAvisoOnline] = useState(null)
-  const online = usePresenca(perfil, {
+  const { online, ultimoVisto } = usePresenca(perfil, {
     aoEntrar: (novos) => {
       if (perfil?.papel !== 'admin') return
       const nome = novos[0]?.nome || 'Alguém'
@@ -268,6 +268,7 @@ export default function Painel({ sessao }) {
           <Dashboard
             perfil={perfil}
             online={online}
+            vistos={ultimoVisto}
             aoAbrirComFiltro={abrirDemandasComFiltro}
             naoLidas={naoLidas}
             aoAbrirNotif={() => setNotifAberto(true)}
@@ -284,6 +285,7 @@ export default function Painel({ sessao }) {
           <Equipe
             perfil={perfil}
             online={online}
+            vistos={ultimoVisto}
             naoLidas={naoLidas}
             aoAbrirNotif={() => setNotifAberto(true)}
           />

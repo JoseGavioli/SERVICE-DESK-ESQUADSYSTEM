@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { STATUS_ROTULO } from '../lib/status'
 import { urgenciaEfetiva, estaCustoAtrasado, URGENCIA_NIVEIS } from '../lib/urgencia'
-import { textoOnline, useTique } from '../lib/usePresenca'
+import { textoPresenca, ultimoVistoMs, useTique } from '../lib/usePresenca'
 import Icone from './Icone'
 
 // Ordem das boxes de status. "concluido" fica de fora (legado).
@@ -78,7 +78,8 @@ function Anel({ valor, total, cor }) {
 // numeros DELE; admin/atendente veem a fila toda).
 export default function Dashboard({
   perfil,
-  online = new Set(),
+  online = new Map(),
+  vistos = new Map(),
   aoAbrirComFiltro,
   naoLidas,
   aoAbrirNotif,
@@ -97,9 +98,10 @@ export default function Dashboard({
           ),
         supabase.rpc('datas_primeira_revisao'),
         // Vendedores ativos — base do widget "Vendedores online" (§#46).
+        // `visto_em` = ultimo momento online (p/ "online ha X" de quem saiu).
         supabase
           .from('perfil')
-          .select('id, nome_completo')
+          .select('id, nome_completo, visto_em')
           .eq('papel', 'vendedor')
           .eq('ativo', true)
           .order('nome_completo'),
@@ -370,16 +372,17 @@ export default function Dashboard({
               <span className="box-titulo">Vendedores online</span>
               <ul className="online-lista">
                 {dados.equipe.map((v) => {
-                  const on = online.get(v.id)
+                  const aoVivo = online.has(v.id)
+                  const vistoMs = ultimoVistoMs(v.id, vistos, v.visto_em)
                   return (
                     <li
                       key={v.id}
-                      className={`online-item ${on ? 'esta-online' : ''}`}
+                      className={`online-item ${aoVivo ? 'esta-online' : ''}`}
                     >
                       <span className="online-dot" aria-hidden="true" />
                       <span className="online-nome">{v.nome_completo}</span>
                       <span className="online-quando">
-                        {on ? textoOnline(on.em) : 'offline'}
+                        {textoPresenca(aoVivo, vistoMs)}
                       </span>
                     </li>
                   )
