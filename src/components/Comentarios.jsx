@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { STATUS_ROTULO } from '../lib/status'
+import Avatar from './Avatar'
 
 // Rotulo para comentarios de cancelamento (os de mudanca de status
 // mostram a transicao concreta, vinda do historico_status).
@@ -8,13 +9,6 @@ const CONTEXTO_ROTULO = {
   solicitacao_cancelamento: 'Solicitação de cancelamento',
   mudanca_status: 'Mudança de status',
   mudanca_prazo: 'Prazo alterado',
-}
-
-// Iniciais (ate 2 letras) para o avatar do autor.
-function iniciais(nome) {
-  if (!nome) return '?'
-  const p = nome.trim().split(/\s+/)
-  return ((p[0]?.[0] ?? '') + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase()
 }
 
 // Lista + caixa de novo comentario de uma demanda. Qualquer um que ve a
@@ -33,7 +27,7 @@ export default function Comentarios({ demandaId }) {
     const { data, error } = await supabase
       .from('comentario')
       .select(
-        'id, texto, contexto, created_at, autor:perfil(nome_completo), transicao:historico_status(de_status, para_status)',
+        'id, texto, contexto, created_at, autor:perfil(nome_completo, avatar_path), transicao:historico_status(de_status, para_status)',
       )
       .eq('demanda_id', demandaId)
       .order('created_at')
@@ -80,9 +74,11 @@ export default function Comentarios({ demandaId }) {
             const t = c.transicao?.[0] // transicao vinculada (se for mudanca de status)
             return (
               <li key={c.id} className="coment-item">
-                <span className="coment-avatar">
-                  {iniciais(c.autor?.nome_completo)}
-                </span>
+                <Avatar
+                  nome={c.autor?.nome_completo}
+                  caminho={c.autor?.avatar_path}
+                  className="coment-avatar"
+                />
                 <div className="coment-corpo">
                   <div className="coment-cab">
                     <strong className="coment-autor">

@@ -11,6 +11,7 @@ import DetalheDemanda from './DetalheDemanda'
 import SeloUrgencia from './SeloUrgencia'
 import FiltrosDemandas from './FiltrosDemandas'
 import EstadoVazio from './EstadoVazio'
+import Avatar from './Avatar'
 import Icone from './Icone'
 
 // Rank de urgencia (0 = mais critico) para ordenar a fila.
@@ -39,14 +40,6 @@ const ABAS_STATUS = [
 
 // Status finalizados que ganham destaque (borda colorida) na lista.
 const STATUS_FINAL = ['enviado', 'cancelada']
-
-// Iniciais (ate 2 letras) para o mini-avatar do vendedor.
-function iniciais(nome) {
-  const partes = nome.trim().split(/\s+/)
-  const a = partes[0]?.[0] ?? ''
-  const b = partes.length > 1 ? partes[partes.length - 1][0] : ''
-  return (a + b).toUpperCase()
-}
 
 // Secao "Demandas". Sem filtro: arvore aninhada (pai ↪ filha) com codigo
 // hierarquico e recolher/expandir. Com filtro: lista plana dos resultados.
@@ -88,7 +81,7 @@ export default function Demandas({
       supabase
         .from('demanda')
         .select(
-          'id, descricao, prazo, status, created_at, demanda_pai_id, cancelamento_solicitado, vendedor_id, urgencia_manual, tipo_demanda(nome), obra(nome, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo), comentario(count)',
+          'id, descricao, prazo, status, created_at, demanda_pai_id, cancelamento_solicitado, vendedor_id, urgencia_manual, tipo_demanda(nome), obra(nome, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo, avatar_path), comentario(count)',
         )
         .order('created_at', { ascending: false }),
       supabase.rpc('datas_primeira_revisao'),
@@ -408,9 +401,11 @@ export default function Demandas({
           </div>
           {perfil.papel !== 'vendedor' && d.vendedor?.nome_completo && (
             <div className="vendedor-linha">
-              <span className="avatar-mini">
-                {iniciais(d.vendedor.nome_completo)}
-              </span>
+              <Avatar
+                nome={d.vendedor.nome_completo}
+                caminho={d.vendedor.avatar_path}
+                className="avatar-mini"
+              />
               {d.vendedor.nome_completo}
             </div>
           )}

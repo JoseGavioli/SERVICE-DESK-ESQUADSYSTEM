@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { STATUS_ROTULO } from '../lib/status'
 import { urgenciaEfetiva, estaCustoAtrasado, URGENCIA_NIVEIS } from '../lib/urgencia'
 import { textoPresenca, ultimoVistoMs, useTique } from '../lib/usePresenca'
+import Avatar from './Avatar'
 import Icone from './Icone'
 
 // Ordem das boxes de status. "concluido" fica de fora (legado).
@@ -33,13 +34,6 @@ const ROTULO_PAPEL = {
   atendente: 'Atendente',
   gerente: 'Gerente',
   vendedor: 'Vendedor',
-}
-
-// Iniciais (ate 2 letras) para o avatar do perfil no topo.
-function iniciais(nome) {
-  if (!nome) return '?'
-  const p = nome.trim().split(/\s+/)
-  return ((p[0]?.[0] ?? '') + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase()
 }
 
 // Anel (gauge) SVG: arco proporcional (valor/total) na cor do status, com a
@@ -101,7 +95,7 @@ export default function Dashboard({
         // `visto_em` = ultimo momento online (p/ "online ha X" de quem saiu).
         supabase
           .from('perfil')
-          .select('id, nome_completo, visto_em')
+          .select('id, nome_completo, visto_em, avatar_path')
           .eq('papel', 'vendedor')
           .eq('ativo', true)
           .order('nome_completo'),
@@ -220,7 +214,11 @@ export default function Dashboard({
           </button>
         </div>
         <div className="dash-perfil">
-          <span className="dash-avatar">{iniciais(perfil.nome_completo)}</span>
+          <Avatar
+            nome={perfil.nome_completo}
+            caminho={perfil.avatar_path}
+            className="dash-avatar"
+          />
           <div className="dash-perfil-texto">
             <strong className="dash-nome">
               {perfil.nome_completo || 'Usuário'}
@@ -379,7 +377,14 @@ export default function Dashboard({
                       key={v.id}
                       className={`online-item ${aoVivo ? 'esta-online' : ''}`}
                     >
-                      <span className="online-dot" aria-hidden="true" />
+                      <span className="online-avatar-wrap">
+                        <Avatar
+                          nome={v.nome_completo}
+                          caminho={v.avatar_path}
+                          className="online-avatar"
+                        />
+                        <span className="online-status" aria-hidden="true" />
+                      </span>
                       <span className="online-nome">{v.nome_completo}</span>
                       <span className="online-quando">
                         {textoPresenca(aoVivo, vistoMs)}

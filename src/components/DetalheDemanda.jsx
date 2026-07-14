@@ -13,19 +13,12 @@ import Anexos from './Anexos'
 import NovaDemanda from './NovaDemanda'
 import AlterarPrazo from './AlterarPrazo'
 import DefinirUrgencia from './DefinirUrgencia'
+import Avatar from './Avatar'
 import Icone from './Icone'
 
 // Detalhe da demanda (campos somente leitura) + cancelamento, acoes de
 // status, demanda-filha, historico e comentarios. Recebe o perfil para
 // saber o que mostrar e aoAbrir para navegar a outra demanda (a filha nova).
-// Iniciais (ate 2 letras) para o mini-avatar do autor.
-function iniciais(nome) {
-  if (!nome) return '?'
-  const partes = nome.trim().split(/\s+/)
-  const a = partes[0]?.[0] ?? ''
-  const b = partes.length > 1 ? partes[partes.length - 1][0] : ''
-  return (a + b).toUpperCase()
-}
 
 export default function DetalheDemanda({
   demandaId,
@@ -48,7 +41,7 @@ export default function DetalheDemanda({
     const { data, error } = await supabase
       .from('demanda')
       .select(
-        'id, descricao, prazo, status, created_at, vendedor_id, obra_id, cancelamento_solicitado, origem, urgencia_manual, club_casa, rt, rt_percentual, arquiteto_engenheiro, tipo_demanda(nome), obra(nome, endereco, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo)',
+        'id, descricao, prazo, status, created_at, vendedor_id, obra_id, cancelamento_solicitado, origem, urgencia_manual, club_casa, rt, rt_percentual, arquiteto_engenheiro, tipo_demanda(nome), obra(nome, endereco, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo, avatar_path)',
       )
       .eq('id', demandaId)
       .single()
@@ -229,7 +222,11 @@ export default function DetalheDemanda({
 
       {/* Autor + data de criacao */}
       <div className="det-autor">
-        <span className="det-avatar">{iniciais(d.vendedor?.nome_completo)}</span>
+        <Avatar
+          nome={d.vendedor?.nome_completo}
+          caminho={d.vendedor?.avatar_path}
+          className="det-avatar"
+        />
         <div className="det-autor-info">
           <strong>{d.vendedor?.nome_completo}</strong>
           <span className="det-autor-sub">Autor da demanda</span>

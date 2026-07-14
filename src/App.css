@@ -3997,7 +3997,7 @@ button.cad-item:hover {
 }
 .online-item {
   display: grid;
-  grid-template-columns: 0.7rem 1fr auto;
+  grid-template-columns: 2.1rem 1fr auto;
   align-items: center;
   gap: 0.6rem;
   padding: 0.45rem 0.1rem;
@@ -4032,6 +4032,47 @@ button.cad-item:hover {
 .online-item.esta-online .online-quando {
   color: #1f9d55;
   font-weight: 600;
+}
+/* Foto dentro de qualquer container de avatar (Avatar.jsx): preenche o circulo
+   e herda o arredondamento (o container ja tem tamanho fixo + border-radius). */
+.avatar-foto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  display: block;
+}
+/* Avatar no widget "Vendedores online" (com pontinho de status no canto). */
+.online-avatar-wrap {
+  position: relative;
+  width: 1.9rem;
+  height: 1.9rem;
+}
+.online-avatar {
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--primaria-suave);
+  color: var(--primaria);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+.online-status {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--borda-forte);
+  border: 2px solid var(--surface);
+}
+.online-item.esta-online .online-status {
+  background: #22c55e;
 }
 .chip-online {
   font-size: 0.68rem;

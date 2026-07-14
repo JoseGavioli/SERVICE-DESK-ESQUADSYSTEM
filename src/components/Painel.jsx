@@ -129,7 +129,7 @@ export default function Painel({ sessao }) {
     async function buscarPerfil() {
       const { data, error } = await supabase
         .from('perfil')
-        .select('id, nome_completo, papel, ativo')
+        .select('id, nome_completo, papel, ativo, avatar_path')
         .eq('id', sessao.user.id)
         .single()
 

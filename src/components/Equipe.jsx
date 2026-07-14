@@ -2,14 +2,8 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { textoPresenca, ultimoVistoMs, useTique } from '../lib/usePresenca'
 import LinhaPerfil from './LinhaPerfil'
+import Avatar from './Avatar'
 import Icone from './Icone'
-
-// Iniciais (ate 2 letras) para o avatar do membro.
-function iniciais(nome) {
-  if (!nome) return '?'
-  const p = nome.trim().split(/\s+/)
-  return ((p[0]?.[0] ?? '') + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase()
-}
 
 const ROTULO_PAPEL = {
   admin: 'Admin',
@@ -43,7 +37,7 @@ export default function Equipe({
     setCarregando(true)
     const { data, error } = await supabase
       .from('perfil')
-      .select('id, nome_completo, celular, papel, ativo, visto_em')
+      .select('id, nome_completo, celular, papel, ativo, visto_em, avatar_path')
       .order('nome_completo')
 
     if (error) setErro('Não foi possível carregar a equipe.')
@@ -115,11 +109,11 @@ export default function Equipe({
                 <div className="cad-linha">
                   <div className="cad-item cad-item-estatico">
                     <span className="cad-avatar-wrap">
-                      <span
+                      <Avatar
+                        nome={p.nome_completo}
+                        caminho={p.avatar_path}
                         className={`cad-avatar ${p.ativo ? '' : 'cad-avatar-inativo'}`}
-                      >
-                        {iniciais(p.nome_completo)}
-                      </span>
+                      />
                       {ehAdmin && estaOnline(p) && (
                         <span className="cad-online" title="Online agora" />
                       )}
