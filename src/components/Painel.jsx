@@ -4,6 +4,7 @@ import Dashboard from './Dashboard'
 import Demandas from './Demandas'
 import Clientes from './Clientes'
 import Equipe from './Equipe'
+import MeuPerfil from './MeuPerfil'
 import MenuLateral from './MenuLateral'
 import BottomNav from './BottomNav'
 import Tema from './Tema'
@@ -24,6 +25,7 @@ const NOME_TELA = {
   dashboard: 'Dashboard',
   clientes: 'Clientes',
   equipe: 'Equipe',
+  perfil: 'Meu perfil',
   tema: 'Tema',
 }
 
@@ -193,6 +195,7 @@ export default function Painel({ sessao }) {
     secao === 'inicio' ||
     secao === 'clientes' ||
     secao === 'equipe' ||
+    secao === 'perfil' ||
     secao === 'dashboard'
 
   return (
@@ -286,6 +289,14 @@ export default function Painel({ sessao }) {
             perfil={perfil}
             online={online}
             vistos={ultimoVisto}
+            naoLidas={naoLidas}
+            aoAbrirNotif={() => setNotifAberto(true)}
+          />
+        )}
+        {secao === 'perfil' && (
+          <MeuPerfil
+            perfil={perfil}
+            email={sessao.user.email}
             naoLidas={naoLidas}
             aoAbrirNotif={() => setNotifAberto(true)}
           />

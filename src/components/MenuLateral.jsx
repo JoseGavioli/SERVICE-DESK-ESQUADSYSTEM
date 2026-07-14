@@ -9,7 +9,8 @@ export default function MenuLateral({
   aoNavegar,
   aoSair,
 }) {
-  const itens = []
+  // "Meu perfil" (foto/senha do proprio usuario) — para todos os papeis.
+  const itens = [{ id: 'perfil', rotulo: 'Meu perfil' }]
   // A Equipe é exclusiva do admin (gerência de usuários). O gerente vê os
   // vendedores online pelo Dashboard ("Por vendedor"), não por aqui (§#46).
   if (perfil.papel === 'admin') itens.push({ id: 'equipe', rotulo: 'Equipe' })
