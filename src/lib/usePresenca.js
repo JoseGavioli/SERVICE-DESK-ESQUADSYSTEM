@@ -100,10 +100,7 @@ export function textoPresenca(aoVivo, vistoMs) {
   if (min < 1) return 'online há instantes'
   if (min < 60) return `online há ${min} min`
   const h = Math.floor(min / 60)
-  if (h < 24) {
-    const m = min % 60
-    return `online há ${h}h${m > 0 ? String(m).padStart(2, '0') : ''}`
-  }
+  if (h < 24) return `online há ${h}h`
   const dias = Math.floor(h / 24)
   return `online há ${dias}d`
 }
