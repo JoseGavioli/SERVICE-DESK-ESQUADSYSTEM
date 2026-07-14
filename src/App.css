@@ -490,6 +490,43 @@ textarea::placeholder {
   cursor: pointer;
 }
 
+/* Fallback do ErrorBoundary (§rede de seguranca): no lugar da tela branca. */
+.erro-boundary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.6rem;
+  padding: 2.5rem 1.5rem;
+  min-height: 40vh;
+}
+.erro-boundary .lucide {
+  color: var(--texto-suave);
+}
+.erro-boundary-titulo {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--texto);
+}
+.erro-boundary-texto {
+  margin: 0;
+  max-width: 22rem;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+.erro-boundary-btn {
+  margin-top: 0.4rem;
+  padding: 0.6rem 1.3rem;
+  border: 0;
+  border-radius: var(--raio-pill);
+  background: var(--marca-navy);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .menu-cabecalho {
   display: flex;
   flex-direction: column;

@@ -6,6 +6,7 @@ import Clientes from './Clientes'
 import Equipe from './Equipe'
 import MeuPerfil from './MeuPerfil'
 import MenuLateral from './MenuLateral'
+import ErrorBoundary from './ErrorBoundary'
 import BottomNav from './BottomNav'
 import Tema from './Tema'
 import Notificacoes from './Notificacoes'
@@ -247,6 +248,10 @@ export default function Painel({ sessao }) {
         key={secao}
         className={`conteudo${telaComHero ? ' sem-topo' : ''}`}
       >
+        {/* Se UMA tela quebrar, o boundary mostra o aviso AQUI e o menu/barra
+            continuam. A key={secao} da <section> ja remonta (reseta) ao trocar
+            de tela. */}
+        <ErrorBoundary>
         {secao === 'inicio' && (
           <Demandas
             perfil={perfil}
@@ -302,6 +307,7 @@ export default function Painel({ sessao }) {
           />
         )}
         {secao === 'tema' && <Tema />}
+        </ErrorBoundary>
       </section>
 
       {/* "Toque de novo para sair" — 1o voltar na Inicio (§#40, Android). */}
