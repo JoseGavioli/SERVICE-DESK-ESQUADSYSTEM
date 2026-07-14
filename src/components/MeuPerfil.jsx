@@ -26,6 +26,7 @@ export default function MeuPerfil({ perfil, email, naoLidas, aoAbrirNotif }) {
   const [celular, setCelular] = useState('')
   const [avatarPath, setAvatarPath] = useState(null)
   const [arquivo, setArquivo] = useState(null) // nova foto escolhida (antes de salvar)
+  const [removerFoto, setRemoverFoto] = useState(false) // marcou p/ tirar a foto
   const [novaSenha, setNovaSenha] = useState('')
   const [confirma, setConfirma] = useState('')
   const [salvando, setSalvando] = useState(false)
@@ -51,12 +52,17 @@ export default function MeuPerfil({ perfil, email, naoLidas, aoAbrirNotif }) {
     }
   }, [perfil.id])
 
-  // Previa: se escolheu foto nova, mostra ela; senao a foto salva; senao nada.
-  const previa = arquivo ? URL.createObjectURL(arquivo) : urlAvatar(avatarPath)
+  // Previa: foto nova escolhida > (marcou remover -> iniciais) > foto salva.
+  const previa = arquivo
+    ? URL.createObjectURL(arquivo)
+    : removerFoto
+      ? null
+      : urlAvatar(avatarPath)
 
   function cancelar() {
     setEditando(false)
     setArquivo(null)
+    setRemoverFoto(false)
     setNovaSenha('')
     setConfirma('')
     setErro('')
@@ -88,6 +94,13 @@ export default function MeuPerfil({ perfil, email, naoLidas, aoAbrirNotif }) {
         const { error } = await supabase.rpc('definir_avatar', { p_caminho: caminho })
         if (error) throw new Error('Não foi possível salvar a foto.')
         setAvatarPath(caminho)
+      } else if (removerFoto && avatarPath) {
+        // Remover a foto: apaga o arquivo do Storage e zera o avatar_path
+        // (definir_avatar com null) — a tela volta a mostrar as iniciais.
+        await supabase.storage.from('avatares').remove([avatarPath])
+        const { error } = await supabase.rpc('definir_avatar', { p_caminho: null })
+        if (error) throw new Error('Não foi possível remover a foto.')
+        setAvatarPath(null)
       }
 
       // 2) Senha (se preencheu) — precisa das duas iguais e min. 6 caracteres.
@@ -105,6 +118,7 @@ export default function MeuPerfil({ perfil, email, naoLidas, aoAbrirNotif }) {
       setOk('Alterações salvas.')
       setEditando(false)
       setArquivo(null)
+      setRemoverFoto(false)
       setNovaSenha('')
       setConfirma('')
     } catch (e) {
@@ -143,17 +157,34 @@ export default function MeuPerfil({ perfil, email, naoLidas, aoAbrirNotif }) {
           )}
         </div>
         {editando && (
-          <label className="perfil-trocar-foto">
-            <Icone nome="camera" size={15} /> Trocar foto
-            <input
-              type="file"
-              accept="image/jpeg,image/png"
-              onChange={(e) => {
-                setArquivo(e.target.files[0] || null)
-                e.target.value = ''
-              }}
-            />
-          </label>
+          <div className="perfil-foto-acoes">
+            <label className="perfil-trocar-foto">
+              <Icone nome="camera" size={15} /> Trocar foto
+              <input
+                type="file"
+                accept="image/jpeg,image/png"
+                onChange={(e) => {
+                  setArquivo(e.target.files[0] || null)
+                  setRemoverFoto(false) // escolher foto nova desfaz a remocao
+                  e.target.value = ''
+                }}
+              />
+            </label>
+            {avatarPath && !arquivo && !removerFoto && (
+              <button
+                type="button"
+                className="perfil-remover-foto"
+                onClick={() => setRemoverFoto(true)}
+              >
+                <Icone nome="lixeira" size={14} /> Remover foto
+              </button>
+            )}
+            {removerFoto && (
+              <span className="perfil-remover-nota">
+                A foto será removida ao salvar.
+              </span>
+            )}
+          </div>
         )}
       </div>
 
