@@ -1,5 +1,7 @@
+import Icone from './Icone'
+
 // Menu "Mais" (drawer que desliza da esquerda). As telas principais vivem no
-// bottom-nav; aqui ficam os EXTRAS: Equipe (admin), Tema e Sair.
+// bottom-nav; aqui ficam os EXTRAS: Meu perfil, Equipe (admin), Tema e Sair.
 // Cabecalho com a marca (icone + titulo + subtitulo, como no login).
 export default function MenuLateral({
   aberto,
@@ -10,11 +12,12 @@ export default function MenuLateral({
   aoSair,
 }) {
   // "Meu perfil" (foto/senha do proprio usuario) — para todos os papeis.
-  const itens = [{ id: 'perfil', rotulo: 'Meu perfil' }]
+  const itens = [{ id: 'perfil', rotulo: 'Meu perfil', icone: 'perfil' }]
   // A Equipe é exclusiva do admin (gerência de usuários). O gerente vê os
   // vendedores online pelo Dashboard ("Por vendedor"), não por aqui (§#46).
-  if (perfil.papel === 'admin') itens.push({ id: 'equipe', rotulo: 'Equipe' })
-  itens.push({ id: 'tema', rotulo: 'Tema' })
+  if (perfil.papel === 'admin')
+    itens.push({ id: 'equipe', rotulo: 'Equipe', icone: 'equipe' })
+  itens.push({ id: 'tema', rotulo: 'Tema', icone: 'tema' })
 
   return (
     <>
@@ -38,10 +41,12 @@ export default function MenuLateral({
               className={secao === it.id ? 'ativo' : ''}
               onClick={() => aoNavegar(it.id)}
             >
+              <Icone nome={it.icone} size={18} />
               {it.rotulo}
             </button>
           ))}
           <button type="button" className="menu-sair" onClick={aoSair}>
+            <Icone nome="sair" size={18} />
             Sair
           </button>
         </nav>

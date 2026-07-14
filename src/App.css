@@ -562,7 +562,8 @@ textarea::placeholder {
 .menu-itens button {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 0.7rem;
   text-align: left;
   background: transparent;
   border: 0;

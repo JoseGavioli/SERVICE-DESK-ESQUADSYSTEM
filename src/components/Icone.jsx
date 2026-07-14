@@ -37,6 +37,9 @@ import {
   Camera,
   Play,
   RotateCw,
+  CircleUser,
+  Contrast,
+  LogOut,
 } from 'lucide-react'
 
 // Fonte UNICA dos icones do app (§issue #9). Uso: <Icone nome="sino" />.
@@ -81,6 +84,10 @@ const MAPA = {
   camera: Camera,
   play: Play,
   girar: RotateCw,
+  perfil: CircleUser,
+  equipe: Users,
+  tema: Contrast,
+  sair: LogOut,
 }
 
 export default function Icone({ nome, size = 18, strokeWidth = 2, className }) {
