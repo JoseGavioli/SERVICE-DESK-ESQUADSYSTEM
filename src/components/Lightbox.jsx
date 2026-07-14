@@ -8,14 +8,23 @@ export default function Lightbox({ imagens, indiceInicial, aoFechar }) {
   const [i, setI] = useState(indiceInicial)
   const [zoom, setZoom] = useState(1)
   const [pan, setPan] = useState({ x: 0, y: 0 })
+  const [rotacao, setRotacao] = useState(0) // 0 | 90 | 180 | 270 (graus)
   const arraste = useRef(null) // { x, y, panX, panY } durante o arrasto
 
   const atual = imagens[i]
   const temVarias = imagens.length > 1
+  // Girado "de lado" (90/270): a imagem troca largura<->altura, entao os
+  // limites de tamanho tambem trocam (senao uma foto em pe estouraria a tela).
+  const deLado = rotacao % 180 !== 0
 
   function resetarVista() {
     setZoom(1)
     setPan({ x: 0, y: 0 })
+    setRotacao(0) // cada imagem comeca "em pe" ao navegar
+  }
+  // Gira 90° por toque (so na visualizacao — nao altera o arquivo salvo).
+  function girar() {
+    setRotacao((r) => (r + 90) % 360)
   }
   function anterior() {
     setI((v) => (v - 1 + imagens.length) % imagens.length)
@@ -44,6 +53,7 @@ export default function Lightbox({ imagens, indiceInicial, aoFechar }) {
       else if (e.key === 'ArrowRight' && temVarias) proxima()
       else if (e.key === '+' || e.key === '=') maisZoom()
       else if (e.key === '-') menosZoom()
+      else if (e.key === 'r' || e.key === 'R') girar()
     }
     window.addEventListener('keydown', aoTeclar)
     return () => window.removeEventListener('keydown', aoTeclar)
@@ -89,6 +99,14 @@ export default function Lightbox({ imagens, indiceInicial, aoFechar }) {
         >
           <Icone nome="zoom-mais" size={20} />
         </button>
+        <button
+          type="button"
+          onClick={girar}
+          aria-label="Girar 90°"
+          title="Girar 90° (tecla R)"
+        >
+          <Icone nome="girar" size={20} />
+        </button>
         <button type="button" onClick={aoFechar} aria-label="Fechar">
           <Icone nome="fechar" size={20} />
         </button>
@@ -121,8 +139,12 @@ export default function Lightbox({ imagens, indiceInicial, aoFechar }) {
           alt={atual.nome}
           draggable={false}
           style={{
-            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotate(${rotacao}deg)`,
             cursor: zoom > 1 ? 'grab' : 'default',
+            // Girado de lado: troca os limites (o palco usa 92vw x 82vh) para a
+            // imagem rotacionada continuar cabendo na tela.
+            maxWidth: deLado ? '82vh' : '92vw',
+            maxHeight: deLado ? '92vw' : '82vh',
           }}
         />
       </div>
