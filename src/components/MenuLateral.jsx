@@ -17,6 +17,10 @@ export default function MenuLateral({
   // vendedores online pelo Dashboard ("Por vendedor"), não por aqui (§#46).
   if (perfil.papel === 'admin')
     itens.push({ id: 'equipe', rotulo: 'Equipe', icone: 'equipe' })
+  // "Erros": o que quebrou no aparelho dos usuarios (so admin — a RLS do
+  // erro_log tambem so deixa ele ler).
+  if (perfil.papel === 'admin')
+    itens.push({ id: 'erros', rotulo: 'Erros', icone: 'bug' })
   itens.push({ id: 'tema', rotulo: 'Tema', icone: 'tema' })
 
   return (

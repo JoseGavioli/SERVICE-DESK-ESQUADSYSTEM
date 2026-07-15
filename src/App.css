@@ -490,6 +490,104 @@ textarea::placeholder {
   cursor: pointer;
 }
 
+/* ── Tela "Erros" (admin): o que quebrou no aparelho dos usuarios ── */
+.btn-limpar-erros {
+  border: 1px solid var(--borda-forte);
+  background: var(--surface);
+  color: var(--perigo);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.45rem 0.8rem;
+  border-radius: var(--raio-pill);
+  cursor: pointer;
+}
+.lista-erros {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.erro-item {
+  background: var(--surface);
+  border-radius: var(--raio-card);
+  box-shadow: var(--sombra-sm);
+  overflow: hidden;
+}
+.erro-cab {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.15rem 0.6rem;
+  align-items: center;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  padding: 0.85rem 0.9rem;
+  cursor: pointer;
+}
+.erro-msg {
+  grid-column: 1;
+  font-weight: 600;
+  color: var(--texto);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+.erro-cab .lucide {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  color: var(--texto-suave);
+}
+.erro-meta {
+  grid-column: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  color: var(--texto-suave);
+}
+.chip-origem {
+  background: var(--surface-2);
+  color: var(--texto-suave);
+  font-weight: 700;
+  padding: 0.05rem 0.4rem;
+  border-radius: var(--raio-pill);
+}
+.erro-detalhe {
+  padding: 0 0.9rem 0.9rem;
+  border-top: 1px solid var(--borda);
+}
+.erro-rot {
+  display: block;
+  margin: 0.7rem 0 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--texto-suave);
+}
+.erro-pre {
+  margin: 0;
+  padding: 0.6rem;
+  background: var(--surface-2);
+  border-radius: var(--raio-sm);
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--texto);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 14rem;
+  overflow-y: auto;
+}
+.erro-ua {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--texto-suave);
+  overflow-wrap: anywhere;
+}
+
 /* Fallback do ErrorBoundary (§rede de seguranca): no lugar da tela branca. */
 .erro-boundary {
   display: flex;

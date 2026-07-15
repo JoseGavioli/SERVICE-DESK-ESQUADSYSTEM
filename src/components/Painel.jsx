@@ -5,6 +5,7 @@ import Demandas from './Demandas'
 import Clientes from './Clientes'
 import Equipe from './Equipe'
 import MeuPerfil from './MeuPerfil'
+import Erros from './Erros'
 import MenuLateral from './MenuLateral'
 import ErrorBoundary from './ErrorBoundary'
 import { registrarErro } from '../lib/erros'
@@ -28,6 +29,7 @@ const NOME_TELA = {
   clientes: 'Clientes',
   equipe: 'Equipe',
   perfil: 'Meu perfil',
+  erros: 'Erros',
   tema: 'Tema',
 }
 
@@ -198,6 +200,7 @@ export default function Painel({ sessao }) {
     secao === 'clientes' ||
     secao === 'equipe' ||
     secao === 'perfil' ||
+    secao === 'erros' ||
     secao === 'dashboard'
 
   return (
@@ -307,6 +310,12 @@ export default function Painel({ sessao }) {
           <MeuPerfil
             perfil={perfil}
             email={sessao.user.email}
+            naoLidas={naoLidas}
+            aoAbrirNotif={() => setNotifAberto(true)}
+          />
+        )}
+        {secao === 'erros' && (
+          <Erros
             naoLidas={naoLidas}
             aoAbrirNotif={() => setNotifAberto(true)}
           />
