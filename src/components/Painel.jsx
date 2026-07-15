@@ -11,7 +11,6 @@ import MenuLateral from './MenuLateral'
 import ErrorBoundary from './ErrorBoundary'
 import { registrarErro } from '../lib/erros'
 import BottomNav from './BottomNav'
-import Tema from './Tema'
 import Notificacoes from './Notificacoes'
 import ToastNotificacao from './ToastNotificacao'
 import Icone from './Icone'
@@ -32,7 +31,6 @@ const NOME_TELA = {
   equipe: 'Equipe',
   perfil: 'Meu perfil',
   erros: 'Erros',
-  tema: 'Tema',
 }
 
 // Telas que vivem DENTRO de outra (§#55): o "voltar" delas voa para a mae,
@@ -43,12 +41,12 @@ const SECAO_MAE = {
 }
 
 // Casca do app logado: cabecalho enxuto (menu + nome da tela + sino), menu
-// lateral (drawer) com os atalhos / Tema / Sair, e a "secao" ativa.
+// lateral (drawer) com os atalhos / Sair, e a "secao" ativa.
 export default function Painel({ sessao }) {
   const [perfil, setPerfil] = useState(null)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
-  const [secao, setSecao] = useState('inicio') // inicio(lista)|dashboard|clientes|equipe|tema
+  const [secao, setSecao] = useState('inicio') // inicio(lista)|dashboard|clientes|admin|equipe|erros|perfil
   const [menuAberto, setMenuAberto] = useState(false)
   const [notifAberto, setNotifAberto] = useState(false) // drawer do sino (notificacoes)
   const [demandaInicial, setDemandaInicial] = useState(null) // demanda a abrir ao ir p/ Demandas
@@ -340,7 +338,6 @@ export default function Painel({ sessao }) {
             aoVoltar={() => setSecao('admin')}
           />
         )}
-        {secao === 'tema' && <Tema />}
         </ErrorBoundary>
       </section>
 

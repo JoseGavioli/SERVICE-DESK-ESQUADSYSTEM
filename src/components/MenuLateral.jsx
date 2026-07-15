@@ -11,7 +11,8 @@ export default function MenuLateral({
   aoNavegar,
   aoSair,
 }) {
-  // "Meu perfil" (foto/senha do proprio usuario) — para todos os papeis.
+  // "Meu perfil" (foto, senha e o TEMA) — para todos os papeis. O tema virou um
+  // toggle la dentro: era uma tela inteira para UM ajuste.
   const itens = [{ id: 'perfil', rotulo: 'Meu perfil', icone: 'perfil' }]
   // A Equipe é exclusiva do admin (gerência de usuários). O gerente vê os
   // vendedores online pelo Dashboard ("Por vendedor"), não por aqui (§#46).
@@ -19,7 +20,6 @@ export default function MenuLateral({
   // (§issue #55) — assim o menu nao incha conforme elas crescem.
   if (perfil.papel === 'admin')
     itens.push({ id: 'admin', rotulo: 'Administração', icone: 'admin' })
-  itens.push({ id: 'tema', rotulo: 'Tema', icone: 'tema' })
 
   return (
     <>

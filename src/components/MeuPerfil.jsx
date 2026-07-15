@@ -32,6 +32,20 @@ export default function MeuPerfil({ perfil, email, naoLidas, aoAbrirNotif }) {
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
   const [ok, setOk] = useState('')
+  // Tema: preferencia DESTE aparelho (localStorage), nao um dado do cadastro.
+  // O valor inicial vem do <html>, que o index.html ja definiu ANTES de pintar.
+  const [temaEscuro, setTemaEscuro] = useState(
+    () => document.documentElement.dataset.theme === 'dark',
+  )
+
+  // Aplica NA HORA (nao entra no Editar/Salvar): trocar o tema e um ajuste
+  // instantaneo — esperar "salvar" para ver a cor mudar seria estranho.
+  function alternarTema() {
+    const novo = temaEscuro ? 'light' : 'dark'
+    document.documentElement.dataset.theme = novo
+    localStorage.setItem('tema', novo)
+    setTemaEscuro(!temaEscuro)
+  }
 
   // Busca os dados que nao vem do Painel (telefone e caminho da foto).
   useEffect(() => {
@@ -279,6 +293,27 @@ export default function MeuPerfil({ perfil, email, naoLidas, aoAbrirNotif }) {
           </button>
         </div>
       )}
+
+      {/* Preferencias — fica DEPOIS das acoes de proposito: aplica na hora e
+          NAO faz parte do Editar/Salvar (§tema virou toggle daqui). */}
+      <div className="det-card perfil-prefs">
+        <span className="det-card-titulo">Preferências</span>
+        <div className="perfil-tema">
+          <span className="perfil-tema-texto">
+            <Icone nome={temaEscuro ? 'lua' : 'sol'} size={16} /> Tema escuro
+          </span>
+          <button
+            type="button"
+            className={`switch ${temaEscuro ? 'ligado' : ''}`}
+            onClick={alternarTema}
+            role="switch"
+            aria-checked={temaEscuro}
+            aria-label="Tema escuro"
+          >
+            <span className="switch-bolinha" />
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
