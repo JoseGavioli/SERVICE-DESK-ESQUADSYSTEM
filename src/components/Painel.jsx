@@ -7,6 +7,7 @@ import Equipe from './Equipe'
 import MeuPerfil from './MeuPerfil'
 import MenuLateral from './MenuLateral'
 import ErrorBoundary from './ErrorBoundary'
+import { registrarErro } from '../lib/erros'
 import BottomNav from './BottomNav'
 import Tema from './Tema'
 import Notificacoes from './Notificacoes'
@@ -251,7 +252,11 @@ export default function Painel({ sessao }) {
         {/* Se UMA tela quebrar, o boundary mostra o aviso AQUI e o menu/barra
             continuam. A key={secao} da <section> ja remonta (reseta) ao trocar
             de tela. */}
-        <ErrorBoundary>
+        <ErrorBoundary
+          onError={(erro, info) =>
+            registrarErro('boundary-tela', erro, info?.componentStack)
+          }
+        >
         {secao === 'inicio' && (
           <Demandas
             perfil={perfil}
