@@ -1546,6 +1546,21 @@ textarea::placeholder {
   font-size: 0.85rem;
   margin-top: 0.15rem;
 }
+/* "movida ha X": ultima movimentacao (status/comentario). So aparece quando
+   houve mexida DEPOIS da criacao — demanda intocada nao ganha o selo. */
+.selo-mexida {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: var(--raio-pill);
+  background: var(--surface-2);
+  color: var(--texto-suave);
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
 /* nome do cliente no item da lista: caixa alta + negrito */
 .cliente-nome {
   text-transform: uppercase;

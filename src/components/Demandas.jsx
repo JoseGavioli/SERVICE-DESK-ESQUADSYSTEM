@@ -13,6 +13,7 @@ import FiltrosDemandas from './FiltrosDemandas'
 import EstadoVazio from './EstadoVazio'
 import Avatar from './Avatar'
 import Icone from './Icone'
+import { haQuantoTempo } from '../lib/tempo'
 
 // Rank de urgencia (0 = mais critico) para ordenar a fila.
 const RANK_URGENCIA = Object.fromEntries(
@@ -72,20 +73,23 @@ export default function Demandas({
   const [buscaAberta, setBuscaAberta] = useState(false) // barra de busca (lupa)
   // Mapa demanda_id -> data da 1a entrada em "revisao de custo" (para o atraso).
   const [datasRevisao, setDatasRevisao] = useState({})
+  const [atividade, setAtividade] = useState({}) // demanda_id -> ultima mexida
 
   // silencioso: recarrega sem mostrar o skeleton (ex.: ao voltar do detalhe,
   // para refletir mudancas de status sem "piscar" a lista inteira).
   async function carregar({ silencioso = false } = {}) {
     if (!silencioso) setCarregando(true)
-    const [{ data, error }, { data: datas }] = await Promise.all([
-      supabase
-        .from('demanda')
-        .select(
-          'id, descricao, prazo, status, created_at, demanda_pai_id, cancelamento_solicitado, vendedor_id, urgencia_manual, tipo_demanda(nome), obra(nome, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo, avatar_path), comentario(count)',
-        )
-        .order('created_at', { ascending: false }),
-      supabase.rpc('datas_primeira_revisao'),
-    ])
+    const [{ data, error }, { data: datas }, { data: atividades }] =
+      await Promise.all([
+        supabase
+          .from('demanda')
+          .select(
+            'id, descricao, prazo, status, created_at, demanda_pai_id, cancelamento_solicitado, vendedor_id, urgencia_manual, tipo_demanda(nome), obra(nome, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo, avatar_path), comentario(count)',
+          )
+          .order('created_at', { ascending: false }),
+        supabase.rpc('datas_primeira_revisao'),
+        supabase.rpc('ultima_atividade'), // §"movida ha X" (migracao 0037)
+      ])
     if (error) setErro('Não foi possível carregar as demandas.')
     else setDemandas(data)
     if (datas) {
@@ -93,7 +97,22 @@ export default function Demandas({
       for (const r of datas) mapa[r.demanda_id] = r.data
       setDatasRevisao(mapa)
     }
+    if (atividades) {
+      const mapa = {}
+      for (const r of atividades) mapa[r.demanda_id] = r.em
+      setAtividade(mapa)
+    }
     setCarregando(false)
+  }
+
+  // Quando a demanda foi MEXIDA por ultimo (status/comentario). So devolve algo
+  // se houve mexida DEPOIS da criacao — demanda intocada nao ganha o chip, pra
+  // nao poluir a lista com "movida ha X" == "criada ha X".
+  function mexidaEm(d) {
+    const em = atividade[d.id]
+    if (!em || new Date(em).getTime() <= new Date(d.created_at).getTime() + 1000)
+      return null
+    return em
   }
 
   // Custo atrasado: >= 5 dias uteis em revisao de custo (§alerta).
@@ -276,6 +295,12 @@ export default function Demandas({
       lista = lista
         .slice()
         .sort((a, b) => (a.created_at > b.created_at ? 1 : -1))
+    } else if (f.ordenacao === 'atividade') {
+      // O que MEXEU por ultimo primeiro. Sem atividade registrada, cai na
+      // criacao (toda demanda tem) — assim nenhuma some do fim da lista.
+      const quando = (d) =>
+        new Date(atividade[d.id] ?? d.created_at).getTime()
+      lista = lista.slice().sort((a, b) => quando(b) - quando(a))
     } else if (f.ordenacao === 'urgencia') {
       const rank = (d) => {
         const u = urgenciaEfetiva(d)
@@ -398,6 +423,12 @@ export default function Demandas({
           <div className="sub">
             <strong>{d.tipo_demanda?.nome}</strong> · criada em{' '}
             {new Date(d.created_at).toLocaleDateString('pt-BR')}
+            {/* So aparece se MEXERAM depois de criar (§atividade recente). */}
+            {mexidaEm(d) && (
+              <span className="selo-mexida" title="Última movimentação">
+                <Icone nome="atualizar" size={11} /> movida {haQuantoTempo(mexidaEm(d))}
+              </span>
+            )}
           </div>
           {perfil.papel !== 'vendedor' && d.vendedor?.nome_completo && (
             <div className="vendedor-linha">

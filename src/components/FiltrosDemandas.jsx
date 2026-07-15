@@ -5,6 +5,7 @@ import { URGENCIA_NIVEIS } from '../lib/urgencia'
 // Rotulos de ordenacao (valor -> texto exibido / na tag).
 const ORDENACAO = {
   padrao: 'Padrão',
+  atividade: 'Atividade recente',
   urgencia: 'Urgência',
   recentes: 'Mais recentes',
   antigas: 'Mais antigas',
@@ -129,6 +130,7 @@ export default function FiltrosDemandas({
               onChange={(e) => setR('ordenacao', e.target.value)}
             >
               <option value="padrao">Padrão</option>
+              <option value="atividade">Atividade recente</option>
               <option value="urgencia">Urgência</option>
               <option value="recentes">Mais recentes</option>
               <option value="antigas">Mais antigas</option>
