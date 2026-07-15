@@ -4,6 +4,7 @@ import BoasVindas from './components/BoasVindas'
 import Login from './components/Login'
 import Painel from './components/Painel'
 import AvisoAtualizacao from './components/AvisoAtualizacao'
+import AvisoConexao from './components/AvisoConexao'
 import './App.css'
 
 // Componente raiz. Sua unica tarefa: saber se ha alguem logado (a
@@ -47,10 +48,11 @@ export default function App() {
     conteudo = <Login />
   }
 
-  // O AvisoAtualizacao fica SEMPRE montado (fora do if), para o service worker
-  // ser observado em qualquer tela e o aviso poder aparecer a qualquer momento.
+  // Os avisos ficam SEMPRE montados (fora do if): valem em qualquer tela —
+  // inclusive no login — e podem aparecer a qualquer momento.
   return (
     <>
+      <AvisoConexao />
       <AvisoAtualizacao />
       {conteudo}
     </>

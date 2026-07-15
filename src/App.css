@@ -447,6 +447,26 @@ textarea::placeholder {
   }
 }
 
+/* Faixa "sem conexao" (§#2A): e um ESTADO persistente (nao um toast), entao
+   e uma barra no topo, nao uma pilula que some. */
+.aviso-conexao {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: calc(0.4rem + env(safe-area-inset-top, 0px)) 0.8rem 0.4rem;
+  background: var(--perigo);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+}
+
 /* Aviso "Nova versao disponivel" (PWA): pilula navy fixa no topo, com acao. */
 .aviso-atualizar {
   position: fixed;
