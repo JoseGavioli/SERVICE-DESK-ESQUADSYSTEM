@@ -162,10 +162,14 @@ export default function AcoesStatus({ demanda, perfil, aoMover }) {
                 <button
                   key={t.para}
                   type="button"
-                  className={`status-opcao ${t.para === 'cancelada' ? 'perigo' : ''}`}
+                  className="status-opcao"
+                  // data-para leva a COR do status de destino (ver App.css):
+                  // o botao "Concluir" ja tem a cara do "Concluido".
+                  data-para={t.para}
                   onClick={() => clicar(t)}
                   disabled={processando}
                 >
+                  <Icone nome={t.icone} size={18} />
                   {t.rotulo}
                 </button>
               ))}

@@ -2644,28 +2644,49 @@ textarea::placeholder {
 }
 .status-opcao {
   width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
   padding: 0.85rem 1rem;
   border: 0;
+  border-left: 4px solid var(--op, var(--marca-navy));
   border-radius: var(--raio);
   background: #fff;
-  color: var(--marca-navy);
+  color: var(--op, var(--marca-navy));
   font-size: 1rem;
   font-weight: 600;
   text-align: left;
   cursor: pointer;
   transition: background 0.15s ease;
 }
+/* Cor de cada acao = a cor do status de DESTINO ("Concluir" tem a cara do
+   "Concluído"). Os valores sao FIXOS de proposito: NAO uso os tokens --st-*
+   porque eles mudam com o tema, e este sheet e SEMPRE navy com botao SEMPRE
+   branco — no tema escuro os --st-*-bg ficariam azul-escuros e o botao sumiria
+   contra o navy. Aqui a cor precisa ler sobre BRANCO, nos dois temas. */
+.status-opcao[data-para='em_andamento'] {
+  --op: #1565c0;
+}
+.status-opcao[data-para='congelado'] {
+  --op: #b07d00;
+}
+.status-opcao[data-para='em_revisao_custo'] {
+  --op: #5e35b1;
+}
+.status-opcao[data-para='concluido'] {
+  --op: #00897b;
+}
+.status-opcao[data-para='enviado'] {
+  --op: #2e7d32;
+}
+.status-opcao[data-para='cancelada'] {
+  --op: #c62828;
+}
 .status-opcao:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.88);
 }
-/* cancelar continua vermelho (agora botao cheio, p/ destacar no menu navy) */
-.status-opcao.perigo {
-  background: var(--perigo);
-  color: #fff;
-}
-.status-opcao.perigo:hover:not(:disabled) {
-  background: var(--perigo-hover);
-}
+/* (O "Cancelar" nao vive mais neste sheet — migrou p/ o componente
+   Cancelamento, §issue #36. A cor de cada acao agora vem do data-para acima.) */
 /* caixa de comentario (congelar/cancelar/voltas) dentro do sheet navy */
 .status-sheet .form-transicao p {
   color: #fff;

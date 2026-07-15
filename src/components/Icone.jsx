@@ -42,6 +42,8 @@ import {
   LogOut,
   Bug,
   ShieldCheck,
+  Calculator,
+  Send,
 } from 'lucide-react'
 
 // Fonte UNICA dos icones do app (§issue #9). Uso: <Icone nome="sino" />.
@@ -92,6 +94,8 @@ const MAPA = {
   sair: LogOut,
   bug: Bug,
   admin: ShieldCheck,
+  calculadora: Calculator,
+  enviar: Send,
 }
 
 export default function Icone({ nome, size = 18, strokeWidth = 2, className }) {
