@@ -510,6 +510,59 @@ textarea::placeholder {
   cursor: pointer;
 }
 
+/* ── Tela "Administracao" (§#55): as ferramentas de admin num lugar so ── */
+.lista-admin {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.admin-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  text-align: left;
+  background: var(--surface);
+  border: 0;
+  border-radius: var(--raio-card);
+  box-shadow: var(--sombra-sm);
+  padding: 0.9rem;
+  cursor: pointer;
+}
+.admin-icone {
+  flex: none;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primaria-suave);
+  color: var(--primaria);
+}
+.admin-texto {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+.admin-titulo {
+  font-size: 0.98rem;
+  color: var(--texto);
+}
+.admin-sub {
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+}
+.admin-card > .lucide {
+  flex: none;
+  color: var(--texto-suave);
+}
+
 /* ── Tela "Erros" (admin): o que quebrou no aparelho dos usuarios ── */
 .btn-limpar-erros {
   border: 1px solid var(--borda-forte);

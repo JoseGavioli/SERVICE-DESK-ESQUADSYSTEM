@@ -6,6 +6,7 @@ import Clientes from './Clientes'
 import Equipe from './Equipe'
 import MeuPerfil from './MeuPerfil'
 import Erros from './Erros'
+import Administracao from './Administracao'
 import MenuLateral from './MenuLateral'
 import ErrorBoundary from './ErrorBoundary'
 import { registrarErro } from '../lib/erros'
@@ -27,10 +28,18 @@ const NOME_TELA = {
   inicio: 'Início',
   dashboard: 'Dashboard',
   clientes: 'Clientes',
+  admin: 'Administração',
   equipe: 'Equipe',
   perfil: 'Meu perfil',
   erros: 'Erros',
   tema: 'Tema',
+}
+
+// Telas que vivem DENTRO de outra (§#55): o "voltar" delas voa para a mae,
+// nao para a Inicio. Vale para o botao na tela e para o voltar do Android.
+const SECAO_MAE = {
+  equipe: 'admin',
+  erros: 'admin',
 }
 
 // Casca do app logado: cabecalho enxuto (menu + nome da tela + sino), menu
@@ -118,7 +127,8 @@ export default function Painel({ sessao }) {
     if (menuAberto) setMenuAberto(false)
     else if (notifAberto) setNotifAberto(false)
     else if (demandasSobrepoe) setPedidoVoltar((v) => v + 1)
-    else if (secao !== 'inicio') setSecao('inicio')
+    // Sub-tela (Equipe/Erros) volta para a Administracao; o resto, para a Inicio.
+    else if (secao !== 'inicio') setSecao(SECAO_MAE[secao] ?? 'inicio')
   }
   useBotaoVoltar({
     podeVoltar,
@@ -201,6 +211,7 @@ export default function Painel({ sessao }) {
     secao === 'equipe' ||
     secao === 'perfil' ||
     secao === 'erros' ||
+    secao === 'admin' ||
     secao === 'dashboard'
 
   return (
@@ -297,6 +308,13 @@ export default function Painel({ sessao }) {
             aoAbrirNotif={() => setNotifAberto(true)}
           />
         )}
+        {secao === 'admin' && (
+          <Administracao
+            aoNavegar={setSecao}
+            naoLidas={naoLidas}
+            aoAbrirNotif={() => setNotifAberto(true)}
+          />
+        )}
         {secao === 'equipe' && (
           <Equipe
             perfil={perfil}
@@ -304,6 +322,7 @@ export default function Painel({ sessao }) {
             vistos={ultimoVisto}
             naoLidas={naoLidas}
             aoAbrirNotif={() => setNotifAberto(true)}
+            aoVoltar={() => setSecao('admin')}
           />
         )}
         {secao === 'perfil' && (
@@ -318,6 +337,7 @@ export default function Painel({ sessao }) {
           <Erros
             naoLidas={naoLidas}
             aoAbrirNotif={() => setNotifAberto(true)}
+            aoVoltar={() => setSecao('admin')}
           />
         )}
         {secao === 'tema' && <Tema />}

@@ -41,6 +41,7 @@ import {
   Contrast,
   LogOut,
   Bug,
+  ShieldCheck,
 } from 'lucide-react'
 
 // Fonte UNICA dos icones do app (§issue #9). Uso: <Icone nome="sino" />.
@@ -90,6 +91,7 @@ const MAPA = {
   tema: Contrast,
   sair: LogOut,
   bug: Bug,
+  admin: ShieldCheck,
 }
 
 export default function Icone({ nome, size = 18, strokeWidth = 2, className }) {

@@ -14,7 +14,7 @@ const ROTULO_ORIGEM = {
 // Tela "Erros" (SO admin, §rede de seguranca passo 3): mostra o que quebrou no
 // aparelho dos usuarios (tabela erro_log, migracao 0035). A RLS ja garante que
 // so o admin le — aqui o menu tambem so mostra p/ ele.
-export default function Erros({ naoLidas, aoAbrirNotif }) {
+export default function Erros({ naoLidas, aoAbrirNotif, aoVoltar }) {
   const [erros, setErros] = useState([])
   const [carregando, setCarregando] = useState(true)
   const [aberto, setAberto] = useState(null) // id do erro expandido
@@ -51,6 +51,17 @@ export default function Erros({ naoLidas, aoAbrirNotif }) {
       <header className="hero-demandas">
         <h1 className="hero-titulo">Erros</h1>
         <div className="hero-acoes">
+          {aoVoltar && (
+            <button
+              type="button"
+              className="btn-circular"
+              onClick={aoVoltar}
+              aria-label="Voltar"
+              title="Voltar"
+            >
+              <Icone nome="voltar" size={20} />
+            </button>
+          )}
           {erros.length > 0 && (
             <button type="button" className="btn-limpar-erros" onClick={limpar}>
               Limpar

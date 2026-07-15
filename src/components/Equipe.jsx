@@ -21,6 +21,7 @@ export default function Equipe({
   vistos = new Map(),
   naoLidas,
   aoAbrirNotif,
+  aoVoltar,
 }) {
   // Presença (§#46): a Equipe é do admin, então aqui é ele quem vê o online
   // (de todos). O gerente vê os vendedores online pelo Dashboard.
@@ -61,6 +62,17 @@ export default function Equipe({
       <header className="hero-demandas">
         <h1 className="hero-titulo">Equipe</h1>
         <div className="hero-acoes">
+          {aoVoltar && (
+            <button
+              type="button"
+              className="btn-circular"
+              onClick={aoVoltar}
+              aria-label="Voltar"
+              title="Voltar"
+            >
+              <Icone nome="voltar" size={20} />
+            </button>
+          )}
           <button
             type="button"
             className="btn-circular"

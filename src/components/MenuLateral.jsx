@@ -15,12 +15,10 @@ export default function MenuLateral({
   const itens = [{ id: 'perfil', rotulo: 'Meu perfil', icone: 'perfil' }]
   // A Equipe é exclusiva do admin (gerência de usuários). O gerente vê os
   // vendedores online pelo Dashboard ("Por vendedor"), não por aqui (§#46).
+  // Ferramentas de admin (Equipe, Erros, ...) vivem juntas numa tela so
+  // (§issue #55) — assim o menu nao incha conforme elas crescem.
   if (perfil.papel === 'admin')
-    itens.push({ id: 'equipe', rotulo: 'Equipe', icone: 'equipe' })
-  // "Erros": o que quebrou no aparelho dos usuarios (so admin — a RLS do
-  // erro_log tambem so deixa ele ler).
-  if (perfil.papel === 'admin')
-    itens.push({ id: 'erros', rotulo: 'Erros', icone: 'bug' })
+    itens.push({ id: 'admin', rotulo: 'Administração', icone: 'admin' })
   itens.push({ id: 'tema', rotulo: 'Tema', icone: 'tema' })
 
   return (
