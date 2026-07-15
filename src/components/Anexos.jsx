@@ -17,8 +17,15 @@ export default function Anexos({ demanda, perfil }) {
   const [enviando, setEnviando] = useState(false)
 
   const ehStaff = perfil.papel === 'admin' || perfil.papel === 'atendente'
-  // Saida: so staff, e SO no "concluido" (onde se anexa o orcamento final).
-  const podeSaida = ehStaff && demanda.status === 'concluido'
+  // Saida: so staff. No "concluido" (fluxo normal, onde se anexa o orcamento) e
+  // TAMBEM no "enviado" — se faltou um arquivo, da p/ mandar na MESMA demanda,
+  // sem o vendedor abrir outra (§0038). A regra tambem vive no banco (policy
+  // anexo_saida_criar): aqui e so a interface.
+  const statusAceitaSaida =
+    demanda.status === 'concluido' || demanda.status === 'enviado'
+  const podeSaida = ehStaff && statusAceitaSaida
+  // Ja enviada: anexar agora vira registro no historico + avisa o vendedor.
+  const jaEnviada = demanda.status === 'enviado'
 
   async function carregar() {
     setCarregando(true)
@@ -164,11 +171,11 @@ export default function Anexos({ demanda, perfil }) {
     )
   }
 
-  // A box de saida so aparece em "Concluido" (p/ anexar/ver) ou quando JA ha
-  // saida (ex.: "Enviado", p/ o vendedor ver o orcamento entregue). Mesma
-  // regra p/ staff e vendedor. Antes disso, nem renderiza.
+  // A box de saida aparece de "Concluido" em diante (p/ anexar/ver) ou quando
+  // JA ha saida (p/ o vendedor ver o orcamento entregue). Mesma regra p/ staff
+  // e vendedor. Antes disso, nem renderiza.
   if (carregando) {
-    if (demanda.status !== 'concluido') return null
+    if (!statusAceitaSaida) return null
     return (
       <div className="anexos">
         <h3>Anexos (saída)</h3>
@@ -177,7 +184,7 @@ export default function Anexos({ demanda, perfil }) {
     )
   }
 
-  const mostrar = demanda.status === 'concluido' || anexos.length > 0
+  const mostrar = statusAceitaSaida || anexos.length > 0
   if (!mostrar) return null
 
   return (
@@ -186,21 +193,31 @@ export default function Anexos({ demanda, perfil }) {
       {erro && <p className="erro">{erro}</p>}
       {renderLista(anexos)}
       {podeSaida ? (
-        <label className="enviar-arquivo">
-          {enviando ? 'Enviando…' : (<><Icone nome="mais" size={16} /> Anexar saída (≤ 10 MB)</>)}
-          <input
-            type="file"
-            disabled={enviando}
-            onChange={(e) => {
-              enviar(e.target.files[0])
-              e.target.value = ''
-            }}
-          />
-        </label>
+        <>
+          <label className="enviar-arquivo">
+            {enviando ? 'Enviando…' : (<><Icone nome="mais" size={16} /> Anexar saída (≤ 10 MB)</>)}
+            <input
+              type="file"
+              disabled={enviando}
+              onChange={(e) => {
+                enviar(e.target.files[0])
+                e.target.value = ''
+              }}
+            />
+          </label>
+          {/* Transparencia: na demanda ja enviada, anexar tem efeito colateral
+              (fica no historico e avisa o vendedor). Melhor dizer antes. */}
+          {jaEnviada && (
+            <p className="anexo-dica">
+              <Icone nome="aviso" size={14} /> Esta demanda já foi enviada —
+              anexar aqui fica registrado no histórico e avisa o vendedor.
+            </p>
+          )}
+        </>
       ) : (
         ehStaff && (
           <p className="anexo-dica">
-            A saída (orçamento) é anexada quando a demanda está em “Concluído”.
+            A saída (orçamento) é anexada a partir de “Concluído”.
           </p>
         )
       )}

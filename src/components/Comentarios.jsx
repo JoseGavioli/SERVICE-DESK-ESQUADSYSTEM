@@ -9,6 +9,7 @@ const CONTEXTO_ROTULO = {
   solicitacao_cancelamento: 'Solicitação de cancelamento',
   mudanca_status: 'Mudança de status',
   mudanca_prazo: 'Prazo alterado',
+  anexo_pos_envio: 'Anexo após o envio',
 }
 
 // Lista + caixa de novo comentario de uma demanda. Qualquer um que ve a
