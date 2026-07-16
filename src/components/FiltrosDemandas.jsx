@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Icone from './Icone'
 import { URGENCIA_NIVEIS } from '../lib/urgencia'
+import { STATUS_ROTULO } from '../lib/status'
 
 // Rotulos de ordenacao (valor -> texto exibido / na tag).
 const ORDENACAO = {
@@ -11,12 +12,14 @@ const ORDENACAO = {
   antigas: 'Mais antigas',
 }
 const URG_ROTULO = Object.fromEntries(URGENCIA_NIVEIS.map((u) => [u.nivel, u.rotulo]))
-const RASCUNHO_VAZIO = { urgencia: '', vendedor: '', ordenacao: 'padrao' }
+const RASCUNHO_VAZIO = { status: '', urgencia: '', vendedor: '', ordenacao: 'padrao' }
 
-// Filtro AVANCADO (urgencia + vendedor + ordenacao). O status vive nos chips do
-// cabecalho e a busca na lupa; aqui fica so o "Filtrar" que abre uma box e, ao
-// aplicar, vira TAGS removiveis (× em cada) + "limpar tudo". O filtro por
-// vendedor (§issue #37) so aparece quando ha vendedores (isto e, para o staff).
+// Filtro AVANCADO (status + urgencia + vendedor + ordenacao). Os chips do
+// cabecalho dao os recortes GROSSOS de status (Em aberto/Enviados/Cancelados);
+// aqui da p/ escolher UM status exato (ex.: "Congelado"), que os chips nao
+// cobrem. A busca vive na lupa. Ao aplicar, tudo vira TAGS removiveis (× em
+// cada) + "limpar tudo". O filtro por vendedor (§issue #37) so aparece quando
+// ha vendedores (isto e, para o staff).
 export default function FiltrosDemandas({
   f,
   vendedores = [],
@@ -30,6 +33,7 @@ export default function FiltrosDemandas({
   // Ao abrir, o rascunho parte do que ja esta aplicado.
   function abrir() {
     setRascunho({
+      status: f.status,
       urgencia: f.urgencia,
       vendedor: f.vendedor,
       ordenacao: f.ordenacao,
@@ -46,8 +50,10 @@ export default function FiltrosDemandas({
     setRascunho((prev) => ({ ...prev, [campo]: valor }))
   }
 
-  // Tags do que esta APLICADO (urgencia, vendedor, ordem).
+  // Tags do que esta APLICADO (status, urgencia, vendedor, ordem).
   const tags = []
+  if (f.status)
+    tags.push({ campo: 'status', texto: `Status: ${STATUS_ROTULO[f.status]}` })
   if (f.urgencia) tags.push({ campo: 'urgencia', texto: URG_ROTULO[f.urgencia] })
   if (f.vendedor) {
     const nome = vendedores.find((v) => v.id === f.vendedor)?.nome || '—'
@@ -91,6 +97,21 @@ export default function FiltrosDemandas({
 
       {aberto && (
         <div className="filtro-box">
+          <label>
+            Status
+            <select
+              value={rascunho.status}
+              onChange={(e) => setR('status', e.target.value)}
+            >
+              <option value="">Todos os status</option>
+              {Object.entries(STATUS_ROTULO).map(([valor, rotulo]) => (
+                <option key={valor} value={valor}>
+                  {rotulo}
+                </option>
+              ))}
+            </select>
+          </label>
+
           {vendedores.length > 0 && (
             <label>
               Vendedor

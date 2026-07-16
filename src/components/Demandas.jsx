@@ -324,18 +324,30 @@ export default function Demandas({
   function aoAplicarFiltros(rascunho) {
     setF((prev) => ({ ...prev, ...rascunho }))
   }
-  // "Filtrar" avancado cuida de urgencia, vendedor e ordenacao (status vive
-  // nos chips). Remover uma tag volta o campo ao padrao.
+  // "Filtrar" avancado cuida de status, urgencia, vendedor e ordenacao.
+  // Remover uma tag volta o campo ao padrao.
   function aoRemoverFiltro(campo) {
-    const PADRAO = { urgencia: '', vendedor: '', ordenacao: 'padrao' }
+    const PADRAO = { status: '', urgencia: '', vendedor: '', ordenacao: 'padrao' }
     setF((prev) => ({ ...prev, [campo]: PADRAO[campo] }))
   }
+  // "Limpar tudo" zera TODOS os campos do Filtrar (o vendedor ficava de fora e
+  // a tag dele sobrevivia ao limpar — era um bug).
   function aoLimparFiltros() {
-    setF((prev) => ({ ...prev, urgencia: '', ordenacao: 'padrao' }))
+    setF((prev) => ({
+      ...prev,
+      status: '',
+      urgencia: '',
+      vendedor: '',
+      ordenacao: 'padrao',
+    }))
   }
 
   // ── Chips de status + busca (cabecalho) ─────────────────────────
   // Qual chip esta ativo (deriva de f) e como aplicar cada um.
+  // Se ha um status ESPECIFICO vindo do "Filtrar" (ex.: Congelado), nenhum chip
+  // acende: os chips sao recortes grossos e nao representam esse estado — deixar
+  // "Todas" aceso com a lista filtrada seria o chip MENTINDO. Quem conta a
+  // historia nesse caso e a tag "Status: X" do Filtrar.
   const abaAtiva =
     f.status === 'enviado'
       ? 'enviados'
@@ -343,7 +355,9 @@ export default function Demandas({
         ? 'cancelados'
         : f.soAtivas
           ? 'em_aberto'
-          : 'todas'
+          : f.status
+            ? null
+            : 'todas'
   function selecionarAba(aba) {
     setF((prev) => ({
       ...prev,
