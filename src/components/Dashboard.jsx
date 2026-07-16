@@ -231,6 +231,28 @@ export default function Dashboard({
         </div>
       </header>
 
+      {/* RELATORIO mensal — logo abaixo do perfil, em destaque (pedido do dono).
+          So staff/gerente: o vendedor nao emite. Fica FORA do `dados &&` de
+          proposito: e navegacao, nao depende dos numeros carregarem. */}
+      {ehStaff && (
+        <button
+          type="button"
+          className="admin-card box-relatorio"
+          onClick={aoAbrirRelatorio}
+        >
+          <span className="admin-icone">
+            <Icone nome="arquivo" size={20} />
+          </span>
+          <span className="admin-texto">
+            <strong className="admin-titulo">Relatório mensal</strong>
+            <span className="admin-sub">
+              Demandas por vendedor e origem, mês a mês.
+            </span>
+          </span>
+          <Icone nome="chevron-direita" size={18} />
+        </button>
+      )}
+
       {dados && (
         <>
           {/* 1. ATENÇÃO — o "o que fazer agora" (só aparece se houver) */}
@@ -363,26 +385,6 @@ export default function Dashboard({
                 ))}
               </ul>
             </div>
-          )}
-
-          {/* RELATORIO mensal — so staff/gerente (o vendedor nao emite). */}
-          {ehStaff && (
-            <button
-              type="button"
-              className="admin-card box-relatorio"
-              onClick={aoAbrirRelatorio}
-            >
-              <span className="admin-icone">
-                <Icone nome="arquivo" size={20} />
-              </span>
-              <span className="admin-texto">
-                <strong className="admin-titulo">Relatório mensal</strong>
-                <span className="admin-sub">
-                  Demandas por vendedor e origem, mês a mês.
-                </span>
-              </span>
-              <Icone nome="chevron-direita" size={18} />
-            </button>
           )}
 
           {/* 6. VENDEDORES ONLINE — presença em tempo real (§#46, só staff) */}

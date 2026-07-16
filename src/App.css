@@ -564,8 +564,24 @@ textarea::placeholder {
 }
 
 /* ── Relatorio mensal (staff/gerente) ─────────────────────────── */
+/* Fica logo abaixo do perfil e precisa SALTAR (pedido do dono): card navy da
+   marca, em vez de mais um card branco igual aos widgets. */
 .box-relatorio {
   margin-bottom: 0.85rem;
+  background: var(--marca-navy);
+}
+.box-relatorio .admin-titulo {
+  color: #fff;
+}
+.box-relatorio .admin-sub {
+  color: rgba(255, 255, 255, 0.75);
+}
+.box-relatorio .admin-icone {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+.box-relatorio > .lucide {
+  color: rgba(255, 255, 255, 0.8);
 }
 .rel-barra {
   display: flex;
