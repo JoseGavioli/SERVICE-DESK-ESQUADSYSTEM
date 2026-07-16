@@ -7,25 +7,18 @@ import Icone from './Icone'
 // "Sem origem" em vez de esconder — senao os totais nao fechariam.
 const SEM_ORIGEM = 'Sem origem'
 
-// ⚠️ TEMPORARIO — REVERTER (pedido do dono, so p/ conferir o layout do PDF).
-// A regra REAL: so meses ENCERRADOS (o relatorio de um mes libera no dia 1o do
-// seguinte; o mes corrente NUNCA aparece — §18 do CLAUDE.md). Como o app entrou
-// no ar em julho/2026, todo mes ja fechado esta VAZIO e nao havia como ver o
-// relatorio. Entao, por ora, incluimos o mes corrente — rotulado como parcial,
-// para nao mentir enquanto isso.
-// PARA VOLTAR AO NORMAL: trocar `INCLUI_MES_CORRENTE` para false e apagar isto.
-const INCLUI_MES_CORRENTE = true
-
+// Os N ultimos meses JA ENCERRADOS (§18 do CLAUDE.md). E a regra do dono: o
+// relatorio de um mes so e liberado no dia 1o do mes seguinte — ou seja, o mes
+// CORRENTE nunca aparece (o `for` comeca em i = 1, o mes passado). Assim o
+// gerente nunca emite um mes pela metade.
 function mesesFechados(n = 12) {
   const hoje = new Date()
   const lista = []
-  for (let i = INCLUI_MES_CORRENTE ? 0 : 1; i <= n; i++) {
+  for (let i = 1; i <= n; i++) {
     const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1)
-    const emAndamento = i === 0
-    const nome = d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
     lista.push({
       valor: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
-      rotulo: emAndamento ? `${nome} (em andamento — parcial)` : nome,
+      rotulo: d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }),
     })
   }
   return lista
