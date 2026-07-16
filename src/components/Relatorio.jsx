@@ -57,7 +57,7 @@ export default function Relatorio({ naoLidas, aoAbrirNotif, aoVoltar }) {
       const { data, error } = await supabase
         .from('demanda')
         .select(
-          'id, created_at, origem, status, vendedor_id, vendedor:perfil!vendedor_id(nome_completo), obra(cliente(nome))',
+          'id, created_at, origem, status, vendedor_id, vendedor:perfil!vendedor_id(nome_completo, oculto_relatorio), obra(cliente(nome))',
         )
         .gte('created_at', inicio.toISOString())
         .lt('created_at', fim.toISOString())
@@ -74,9 +74,13 @@ export default function Relatorio({ naoLidas, aoAbrirNotif, aoVoltar }) {
     }
   }, [mes])
 
+  // Perfis marcados com `oculto_relatorio` (hoje: a conta de teste) ficam FORA
+  // — inclusive do total geral, senao os numeros nao fechariam (§0040).
+  const uteis = linhas.filter((d) => !d.vendedor?.oculto_relatorio)
+
   // Agrega: vendedor -> total -> origem -> clientes.
   const porVendedor = {}
-  for (const d of linhas) {
+  for (const d of uteis) {
     const vid = d.vendedor_id
     if (!porVendedor[vid]) {
       porVendedor[vid] = {
@@ -140,7 +144,7 @@ export default function Relatorio({ naoLidas, aoAbrirNotif, aoVoltar }) {
             ))}
           </select>
         </label>
-        {linhas.length > 0 && (
+        {uteis.length > 0 && (
           <button
             type="button"
             className="btn-imprimir"
@@ -161,7 +165,7 @@ export default function Relatorio({ naoLidas, aoAbrirNotif, aoVoltar }) {
 
       {carregando ? (
         <p>Carregando relatório…</p>
-      ) : linhas.length === 0 ? (
+      ) : uteis.length === 0 ? (
         <EstadoVazio
           nome="lista"
           titulo="Nenhuma demanda neste mês"
@@ -170,7 +174,7 @@ export default function Relatorio({ naoLidas, aoAbrirNotif, aoVoltar }) {
       ) : (
         <>
           <p className="rel-total-geral">
-            <strong>{linhas.length}</strong> demanda(s) em {rotuloMes} ·{' '}
+            <strong>{uteis.length}</strong> demanda(s) em {rotuloMes} ·{' '}
             {vendedores.length} vendedor(es)
           </p>
 
