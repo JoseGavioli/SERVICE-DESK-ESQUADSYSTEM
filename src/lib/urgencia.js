@@ -2,7 +2,7 @@
 // entao muda sozinho com o passar do tempo (nao fica guardado no banco).
 //
 // LIMITES (n = dias uteis (seg-sex) de hoje ate o prazo; feriados ignorados, §8):
-//   prazo ja passou -> Atrasado
+//   prazo ja passou -> Atrasado (SO em nao_iniciado/em_andamento; ver abaixo)
 //   n <= 1          -> Muito urgente (inclui "vence hoje", n = 0)
 //   n = 2 ou 3      -> Urgente
 //   n = 4 ou 5      -> Pouco urgente
@@ -22,6 +22,13 @@ export const URGENCIA_NIVEIS = [
   { nivel: 'sem_urgencia', rotulo: 'Sem urgência' },
 ]
 const ROTULO = Object.fromEntries(URGENCIA_NIVEIS.map((u) => [u.nivel, u.rotulo]))
+
+// Status em que o "Atrasado" (prazo vencido) faz sentido: ANTES de a demanda
+// chegar na revisao de custo. Dali em diante o alerta que importa e o CUSTO
+// ATRASADO (ver estaCustoAtrasado) — o atendente ja fez a parte dele, e o que
+// esta demorando e a revisao. Nos demais status o prazo vencido vira MUITO
+// URGENTE: some o rotulo "Atrasado", mas a demanda NAO perde o destaque.
+const STATUS_COM_ATRASADO = ['nao_iniciado', 'em_andamento']
 
 // 'YYYY-MM-DD' -> Date na meia-noite LOCAL. Fazemos manualmente para
 // evitar o desvio de fuso (new Date('2026-06-30') seria interpretado
@@ -53,7 +60,12 @@ export function calcularUrgencia(prazoStr, status) {
   const prazo = dataLocal(prazoStr)
 
   if (prazo < hoje) {
-    return { nivel: 'atrasado', rotulo: ROTULO.atrasado, diasUteis: null }
+    // "Atrasado" so antes da revisao de custo; depois dali, urgencia maxima
+    // sem o rotulo (o alerta de atraso naquele ponto e o "custo atrasado").
+    const nivel = STATUS_COM_ATRASADO.includes(status)
+      ? 'atrasado'
+      : 'muito_urgente'
+    return { nivel, rotulo: ROTULO[nivel], diasUteis: null }
   }
 
   const n = diasUteisEntre(hoje, prazo)
@@ -92,7 +104,11 @@ export function urgenciaEfetiva(demanda) {
 // alerta some — antes ele continuava contando fora da revisao. A data da 1a
 // revisao vem do RPC datas_primeira_revisao (migracao 0019).
 // (NAO confundir com a URGENCIA 'Atrasado', que e sobre o prazo do orcamento.)
-const DIAS_CUSTO_ATRASADO = 5
+//
+// ATENCAO: este numero tambem vive no BANCO, na funcao notificar_pendencias()
+// (que manda a notificacao diaria) — ver migracao 0039. Mudar aqui sem mudar la
+// faria o app alertar num dia e a notificacao chegar em outro.
+const DIAS_CUSTO_ATRASADO = 3
 
 export function estaCustoAtrasado(status, dataPrimeiraRevisaoIso) {
   if (status !== 'em_revisao_custo') return false // so conta dentro da revisao
