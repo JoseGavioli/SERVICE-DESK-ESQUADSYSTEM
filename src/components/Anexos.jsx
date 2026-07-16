@@ -15,6 +15,7 @@ export default function Anexos({ demanda, perfil }) {
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const [progresso, setProgresso] = useState('') // "2 de 5" (so com varios)
 
   const ehStaff = perfil.papel === 'admin' || perfil.papel === 'atendente'
   // Saida: so staff. No "concluido" (fluxo normal, onde se anexa o orcamento) e
@@ -69,18 +70,28 @@ export default function Anexos({ demanda, perfil }) {
     .filter((a) => ehImagem(a.nome_original) && urlsImagens[a.caminho_storage])
     .map((a) => ({ id: a.id, url: urlsImagens[a.caminho_storage], nome: a.nome_original }))
 
-  async function enviar(file) {
-    if (!file) return
+  // Aceita VARIOS de uma vez (ex.: o orcamento em partes). Um por vez, em serie;
+  // um arquivo problematico nao impede os outros — no fim dizemos quais falharam.
+  async function enviar(files) {
+    const lista = [...(files || [])]
+    if (!lista.length) return
     setErro('')
-    const problema = validarArquivo('saida', file)
-    if (problema) {
-      setErro(problema)
-      return
-    }
     setEnviando(true)
-    const { error } = await enviarAnexo(demanda.id, 'saida', file)
-    if (error) setErro(error)
-    else await carregar()
+    const falhas = []
+    for (let i = 0; i < lista.length; i++) {
+      const file = lista[i]
+      setProgresso(lista.length > 1 ? `${i + 1} de ${lista.length}` : '')
+      const problema = validarArquivo('saida', file)
+      if (problema) {
+        falhas.push(`${file.name}: ${problema}`)
+        continue
+      }
+      const { error } = await enviarAnexo(demanda.id, 'saida', file)
+      if (error) falhas.push(`${file.name}: ${error}`)
+    }
+    setProgresso('')
+    if (falhas.length) setErro(falhas.join(' · '))
+    await carregar() // os que passaram ja entraram
     setEnviando(false)
   }
 
@@ -195,12 +206,19 @@ export default function Anexos({ demanda, perfil }) {
       {podeSaida ? (
         <>
           <label className="enviar-arquivo">
-            {enviando ? 'Enviando…' : (<><Icone nome="mais" size={16} /> Anexar saída (≤ 10 MB)</>)}
+            {enviando ? (
+              progresso ? `Enviando ${progresso}…` : 'Enviando…'
+            ) : (
+              <>
+                <Icone nome="mais" size={16} /> Anexar saída (≤ 10 MB)
+              </>
+            )}
             <input
               type="file"
+              multiple
               disabled={enviando}
               onChange={(e) => {
-                enviar(e.target.files[0])
+                enviar(e.target.files)
                 e.target.value = ''
               }}
             />

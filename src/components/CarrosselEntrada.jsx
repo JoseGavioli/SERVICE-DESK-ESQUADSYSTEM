@@ -21,6 +21,7 @@ export default function CarrosselEntrada({ demanda, perfil }) {
   const [lightboxIdx, setLightboxIdx] = useState(null)
   const [carregando, setCarregando] = useState(true)
   const [enviando, setEnviando] = useState(false)
+  const [progresso, setProgresso] = useState('') // "2 de 5" (so com varios)
   const [erro, setErro] = useState('')
 
   // Gerenciar entrada: so o vendedor dono, e SO enquanto "nao iniciado".
@@ -76,20 +77,31 @@ export default function CarrosselEntrada({ demanda, perfil }) {
     }
   }
 
-  async function enviar(file) {
-    if (!file) return
+  // Aceita VARIOS arquivos de uma vez. Manda um por vez (em serie) de proposito:
+  // sao fotos de celular, e disparar N uploads simultaneos travaria a conexao —
+  // em serie ainda da p/ mostrar "2 de 5". Um arquivo problematico NAO impede os
+  // outros: seguimos e, no fim, dizemos quais falharam.
+  async function enviar(files) {
+    const lista = [...(files || [])]
+    if (!lista.length) return
     setErro('')
     setEnviando(true) // cobre a compressao + o upload
-    const arquivo = await comprimirImagemSePreciso(file) // #41
-    const problema = validarArquivo('entrada', arquivo)
-    if (problema) {
-      setErro(problema)
-      setEnviando(false)
-      return
+    const falhas = []
+    for (let i = 0; i < lista.length; i++) {
+      const file = lista[i]
+      setProgresso(lista.length > 1 ? `${i + 1} de ${lista.length}` : '')
+      const arquivo = await comprimirImagemSePreciso(file) // #41
+      const problema = validarArquivo('entrada', arquivo)
+      if (problema) {
+        falhas.push(`${file.name}: ${problema}`)
+        continue
+      }
+      const { error } = await enviarAnexo(demanda.id, 'entrada', arquivo)
+      if (error) falhas.push(`${file.name}: ${error}`)
     }
-    const { error } = await enviarAnexo(demanda.id, 'entrada', arquivo)
-    if (error) setErro(error)
-    else await carregar()
+    setProgresso('')
+    if (falhas.length) setErro(falhas.join(' · '))
+    await carregar() // recarrega mesmo com falhas: os que passaram ja entraram
     setEnviando(false)
   }
 
@@ -129,20 +141,24 @@ export default function CarrosselEntrada({ demanda, perfil }) {
   const botaoAdicionar = podeGerenciar && (
     <div className="hero-add-acoes">
       {enviando ? (
-        <span className="hero-add hero-add-enviando">Enviando…</span>
+        <span className="hero-add hero-add-enviando">
+          {progresso ? `Enviando ${progresso}…` : 'Enviando…'}
+        </span>
       ) : (
         <>
           <label className="hero-add">
             <Icone nome="mais" size={16} /> Adicionar
             <input
               type="file"
+              multiple
               accept="image/jpeg,image/png,application/pdf"
               onChange={(e) => {
-                enviar(e.target.files[0])
+                enviar(e.target.files)
                 e.target.value = ''
               }}
             />
           </label>
+          {/* Sem `multiple`: a camera tira UMA foto por vez. */}
           <label className="hero-add">
             <Icone nome="camera" size={16} /> Tirar foto
             <input
@@ -150,7 +166,7 @@ export default function CarrosselEntrada({ demanda, perfil }) {
               accept="image/*"
               capture="environment"
               onChange={(e) => {
-                enviar(e.target.files[0])
+                enviar(e.target.files)
                 e.target.value = ''
               }}
             />
