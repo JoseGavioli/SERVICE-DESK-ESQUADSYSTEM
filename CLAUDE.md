@@ -37,7 +37,8 @@ O app resolve isso com: **canal único de entrada, histórico permanente, visibi
 Não é Jira/Movidesk. É uma ferramenta interna, enxuta, da EsquadSystem. **Não inclui** (nesta versão):
 - notificação por WhatsApp;
 - notificação por e-mail (fica para fase futura — ver §13);
-- relatórios de métricas de tempo / dashboard de gestão;
+- relatórios de métricas **de tempo** / dashboard de gestão;
+  > **Revisto (jul/2026):** existe agora um **relatório mensal** (demandas por vendedor + origem + cliente), pedido pelo **gerente de vendas** — ver §18. Ele é de **volume**, não de tempo: continua fora do escopo virar painel de métricas de produtividade/SLA.
 - app nativo (é web/PWA);
 - integração com o CEM (sistema de orçamento atual).
 
@@ -341,3 +342,28 @@ Cada fase é pequena o bastante para eu ler, entender e aprovar antes da próxim
 3. ~~Permissão de criar cliente/obra pelo vendedor~~ → **pode**, com **busca-primeiro** (anti-duplicata).
 5. ~~Hosting do frontend~~ → **Vercel** (CD ativo).
 6. ~~**`perfil.ativo` na RLS**~~ → **aplicado** (migração `0025`: helper `sou_ativo()` exigido em **todas** as policies de escrita + nas funções de ação `mover_status`/`solicitar`/`descartar`; + **bloqueio no login** para conta desativada). Issue #21 fechada.
+
+---
+
+## 18. RELATÓRIO MENSAL (pedido do gerente de vendas — jul/2026)
+
+Entra **por exceção** ao §2: aquele item veda relatórios **de tempo**/painel de gestão. Este é de **volume**, pedido pelo gerente de vendas — a decisão de incluir é do dono, e está registrada aqui para spec e realidade não se desencontrarem.
+
+**Quem emite:** admin, atendente e gerente. **O vendedor não** (a tela nem aparece para ele; e a RLS só lhe daria as próprias demandas).
+
+**Onde:** Dashboard → "Relatório mensal".
+
+**O que mostra**, separado **por vendedor**:
+- quantas demandas ele solicitou no mês;
+- agrupadas por **origem** (Marketing, Club Casa, Indicação, Balcão, Instagram), com a contagem de cada;
+- e o **nome do cliente** de cada demanda, dentro da origem.
+
+**Regra de liberação:** só **meses já encerrados**. O relatório de um mês é liberado no **dia 1º do mês seguinte** (ex.: abril só a partir de 1º de maio). O mês corrente **nunca** aparece na lista.
+
+**Decisões tomadas:**
+- **Canceladas contam** (foram solicitadas), mas aparecem **marcadas** — para não inflar o número em silêncio.
+- Demandas anteriores à migração `0029` não têm origem → aparecem como **"Sem origem"** (esconder quebraria os totais).
+- **"Emitir" = imprimir/salvar PDF pelo próprio navegador** (`window.print()` + estilos `@media print`). Escolhido para **não adicionar dependência** (§5) — não há biblioteca de PDF no projeto.
+- **Sem migração:** lê a `demanda` direto (a RLS já libera admin/atendente/gerente) e agrega no app.
+
+> Contagem é por **`created_at`** da demanda (quando foi solicitada), com o recorte do mês no fuso de Brasília.

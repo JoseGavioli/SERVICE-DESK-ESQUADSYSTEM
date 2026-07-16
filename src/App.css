@@ -563,6 +563,173 @@ textarea::placeholder {
   color: var(--texto-suave);
 }
 
+/* ── Relatorio mensal (staff/gerente) ─────────────────────────── */
+.box-relatorio {
+  margin-bottom: 0.85rem;
+}
+.rel-barra {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.9rem;
+}
+.rel-mes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  color: var(--texto-suave);
+}
+.btn-imprimir {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid var(--borda-forte);
+  border-radius: var(--raio-pill);
+  background: var(--surface);
+  color: var(--texto);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.rel-total-geral {
+  margin: 0 0 0.85rem;
+  font-size: 0.9rem;
+  color: var(--texto-suave);
+}
+.rel-vendedor {
+  background: var(--surface);
+  border-radius: var(--raio-card);
+  box-shadow: var(--sombra-sm);
+  padding: 0.9rem;
+  margin-bottom: 0.85rem;
+}
+.rel-vend-cab {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 2px solid var(--borda-forte);
+  margin-bottom: 0.6rem;
+}
+.rel-vend-nome {
+  font-size: 1rem;
+  color: var(--texto);
+}
+.rel-vend-total {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--primaria);
+  white-space: nowrap;
+}
+.rel-origem {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--borda);
+}
+.rel-origem:last-child {
+  border-bottom: 0;
+}
+.rel-origem-cab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.rel-origem-nome {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--texto);
+}
+.rel-origem-qtd {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.05rem 0.5rem;
+  border-radius: var(--raio-pill);
+  background: var(--surface-2);
+  color: var(--texto-suave);
+}
+.rel-clientes {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0 0 0 0.7rem;
+  border-left: 2px solid var(--borda);
+}
+.rel-clientes li {
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+  padding: 0.12rem 0;
+}
+.rel-cancelada {
+  margin-left: 0.4rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.02rem 0.35rem;
+  border-radius: var(--raio-pill);
+  background: var(--st-cancelada-bg);
+  color: var(--st-cancelada-fg);
+}
+/* So no papel (na tela o titulo ja esta no hero). */
+.rel-cabecalho-impressao {
+  display: none;
+}
+
+/* ── IMPRESSAO: e isto que vira o PDF ("Salvar como PDF" do navegador) ──
+   Some com a "casca" do app (nav, botoes, avisos) e forca preto no branco —
+   senao, no tema escuro, sairia um papel preto. */
+@media print {
+  .nao-imprimir,
+  .bottom-nav,
+  .menu-lateral,
+  .menu-backdrop,
+  .aviso-conexao,
+  .aviso-atualizar,
+  .topo {
+    display: none !important;
+  }
+  .rel-cabecalho-impressao {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #000;
+  }
+  body,
+  .app,
+  .conteudo,
+  .secao-relatorio,
+  .rel-vendedor {
+    background: #fff !important;
+    color: #000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+  .rel-vendedor {
+    /* nao parte o bloco de um vendedor no meio de duas paginas */
+    break-inside: avoid;
+    padding: 0.5rem 0 !important;
+    margin-bottom: 0.8rem !important;
+    border-bottom: 1px solid #999;
+  }
+  .rel-vend-nome,
+  .rel-origem-nome,
+  .rel-vend-total,
+  .rel-clientes li,
+  .rel-total-geral {
+    color: #000 !important;
+  }
+  .rel-origem-qtd,
+  .rel-cancelada {
+    background: transparent !important;
+    color: #000 !important;
+    border: 1px solid #999;
+  }
+}
+
 /* ── Tela "Erros" (admin): o que quebrou no aparelho dos usuarios ── */
 .btn-limpar-erros {
   border: 1px solid var(--borda-forte);

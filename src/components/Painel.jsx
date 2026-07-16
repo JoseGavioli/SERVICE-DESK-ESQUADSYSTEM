@@ -6,6 +6,7 @@ import Clientes from './Clientes'
 import Equipe from './Equipe'
 import MeuPerfil from './MeuPerfil'
 import Erros from './Erros'
+import Relatorio from './Relatorio'
 import Administracao from './Administracao'
 import MenuLateral from './MenuLateral'
 import ErrorBoundary from './ErrorBoundary'
@@ -31,6 +32,7 @@ const NOME_TELA = {
   equipe: 'Equipe',
   perfil: 'Meu perfil',
   erros: 'Erros',
+  relatorio: 'Relatório',
 }
 
 // Telas que vivem DENTRO de outra (§#55): o "voltar" delas voa para a mae,
@@ -38,6 +40,7 @@ const NOME_TELA = {
 const SECAO_MAE = {
   equipe: 'admin',
   erros: 'admin',
+  relatorio: 'dashboard',
 }
 
 // Casca do app logado: cabecalho enxuto (menu + nome da tela + sino), menu
@@ -210,6 +213,7 @@ export default function Painel({ sessao }) {
     secao === 'perfil' ||
     secao === 'erros' ||
     secao === 'admin' ||
+    secao === 'relatorio' ||
     secao === 'dashboard'
 
   return (
@@ -295,8 +299,16 @@ export default function Painel({ sessao }) {
             online={online}
             vistos={ultimoVisto}
             aoAbrirComFiltro={abrirDemandasComFiltro}
+            aoAbrirRelatorio={() => setSecao('relatorio')}
             naoLidas={naoLidas}
             aoAbrirNotif={() => setNotifAberto(true)}
+          />
+        )}
+        {secao === 'relatorio' && (
+          <Relatorio
+            naoLidas={naoLidas}
+            aoAbrirNotif={() => setNotifAberto(true)}
+            aoVoltar={() => setSecao('dashboard')}
           />
         )}
         {secao === 'clientes' && (
