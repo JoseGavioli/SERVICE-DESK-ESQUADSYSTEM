@@ -2,32 +2,41 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import Icone from './Icone'
 
-// Selecionar um cliente com busca-primeiro. Se nao existir, cria na hora.
-// Avisa o pai pelo callback aoSelecionar(cliente) — ou aoSelecionar(null)
-// quando o usuario clica em "trocar".
-export default function SeletorCliente({ selecionado, aoSelecionar }) {
+// Lista para escolher um cliente. Renderiza SO o miolo — quem desenha a moldura
+// e o <CardCampo> na Nova demanda (§issue #64).
+//
+// Busca-primeiro (§6, anti-duplicata): sem busca mostramos apenas os 5 ULTIMOS
+// cadastrados, porque a lista inteira empurrava o resto do formulario para
+// longe e, na pratica, o cliente recem-cadastrado e quase sempre o alvo.
+// Digitou -> filtra a lista toda. Nao achou -> cria na hora.
+const QUANTOS_RECENTES = 5
+
+export default function SeletorCliente({ aoSelecionar }) {
   const [clientes, setClientes] = useState([])
   const [busca, setBusca] = useState('')
   const [erro, setErro] = useState('')
   const [criando, setCriando] = useState(false)
 
-  async function carregar() {
-    const { data, error } = await supabase
-      .from('cliente')
-      .select('id, nome')
-      .order('nome')
-    if (error) setErro('Erro ao carregar clientes.')
-    else setClientes(data)
-  }
-
   useEffect(() => {
+    async function carregar() {
+      const { data, error } = await supabase
+        .from('cliente')
+        .select('id, nome, created_at')
+        .order('nome')
+      if (error) setErro('Erro ao carregar clientes.')
+      else setClientes(data)
+    }
     carregar()
   }, [])
 
   const termo = busca.trim().toLowerCase()
-  const filtrados = termo
+  // created_at e texto ISO — comparar como texto ja da a ordem cronologica.
+  const recentes = [...clientes]
+    .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
+    .slice(0, QUANTOS_RECENTES)
+  const mostrados = termo
     ? clientes.filter((c) => c.nome.toLowerCase().includes(termo))
-    : clientes
+    : recentes
   const nomeExato = clientes.some((c) => c.nome.toLowerCase() === termo)
 
   async function criar() {
@@ -38,7 +47,7 @@ export default function SeletorCliente({ selecionado, aoSelecionar }) {
     const { data, error } = await supabase
       .from('cliente')
       .insert({ nome })
-      .select('id, nome')
+      .select('id, nome, created_at')
       .single()
     setCriando(false)
     if (error) {
@@ -46,52 +55,49 @@ export default function SeletorCliente({ selecionado, aoSelecionar }) {
     } else {
       setClientes((prev) => [...prev, data])
       aoSelecionar(data)
-      setBusca('')
     }
   }
 
-  if (selecionado) {
-    return (
-      <div className="seletor selecionado">
-        <span>
-          Cliente: <strong>{selecionado.nome}</strong>
-        </span>
-        <button type="button" className="link" onClick={() => aoSelecionar(null)}>
-          trocar
-        </button>
-      </div>
-    )
-  }
-
   return (
-    <div className="seletor">
-      <label>Cliente</label>
+    <div className="escolher">
       <input
         type="search"
-        placeholder="Buscar ou cadastrar cliente…"
+        placeholder="Buscar cliente…"
         value={busca}
         onChange={(e) => setBusca(e.target.value)}
+        aria-label="Buscar cliente"
+        autoFocus
       />
       {erro && <p className="erro">{erro}</p>}
-      <ul className="lista">
-        {filtrados.map((c) => (
+      <p className="escolher-rot">
+        {termo ? 'Resultados' : `Últimos ${QUANTOS_RECENTES} cadastrados`}
+      </p>
+      <ul className="escolher-lista">
+        {mostrados.map((c) => (
           <li key={c.id}>
-            <button
-              type="button"
-              className="link"
-              onClick={() => aoSelecionar(c)}
-            >
+            <button type="button" onClick={() => aoSelecionar(c)}>
               {c.nome}
             </button>
           </li>
         ))}
-        {filtrados.length === 0 && (
-          <li className="vazio">Nenhum cliente encontrado.</li>
+        {mostrados.length === 0 && (
+          <li className="escolher-vazio">Nenhum cliente encontrado.</li>
         )}
       </ul>
       {termo && !nomeExato && (
-        <button type="button" onClick={criar} disabled={criando}>
-          {criando ? 'Criando…' : (<><Icone nome="mais" size={16} /> Criar cliente "{busca.trim()}"</>)}
+        <button
+          type="button"
+          className="escolher-criar"
+          onClick={criar}
+          disabled={criando}
+        >
+          {criando ? (
+            'Criando…'
+          ) : (
+            <>
+              <Icone nome="mais" size={16} /> Criar cliente “{busca.trim()}”
+            </>
+          )}
         </button>
       )}
     </div>

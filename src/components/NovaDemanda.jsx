@@ -1,18 +1,28 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { enviarAnexo } from '../lib/anexos'
 import {
-  comprimirImagemSePreciso,
-  validarArquivo,
-  enviarAnexo,
-  formatarTamanho,
-} from '../lib/anexos'
-import SeletorCliente from './SeletorCliente'
-import SeletorObra from './SeletorObra'
+  ORIGENS,
+  calcularFaltantes,
+  listaPt,
+  resumir,
+} from '../lib/novaDemanda'
+import CardCampo from './CardCampo'
+import NdCabecalho from './NdCabecalho'
+import NdClienteObra from './NdClienteObra'
+import NdOpcoes from './NdOpcoes'
+import NdPrazo from './NdPrazo'
+import NdCondicoes from './NdCondicoes'
+import NdAnexos from './NdAnexos'
 import Icone from './Icone'
 
-// Formulario de nova demanda. Todos os campos aparecem de uma vez (sem travar
-// tipo/descricao/prazo ate escolher a obra). A obra ainda depende do cliente
-// para listar as obras dele.
+// Formulario de nova demanda (§issue #64). Cada campo e um CARD FECHADO que
+// mostra no subtitulo o que ja foi escolhido — o formulario inteiro cabe numa
+// tela e da p/ conferir tudo sem abrir nada. Um card aberto por vez.
+//
+// Este arquivo so ORQUESTRA: guarda o estado, decide o que abre, e salva. O
+// desenho de cada card vive nos Nd* e a regra do que e obrigatorio vive em
+// lib/novaDemanda.js.
 //
 // Modo DEMANDA-FILHA (§11): se vier obraFixa + demandaPaiId, a obra ja vem
 // travada (herdada da pai) e o vinculo demanda_pai_id e gravado.
@@ -28,8 +38,7 @@ export default function NovaDemanda({
   aoAbrirNotif,
 }) {
   const ehFilha = Boolean(obraFixa)
-  // Hero (titulo + voltar + sino) so no modo TELA CHEIA (via "+"); na filha
-  // inline (dentro do detalhe) mantemos so um titulo simples.
+  // Hero completo so no modo TELA CHEIA (via "+"); na filha e inline.
   const comHero = Boolean(aoAbrirNotif)
   const [cliente, setCliente] = useState(null)
   const [obra, setObra] = useState(obraFixa ?? null)
@@ -38,13 +47,14 @@ export default function NovaDemanda({
   const [descricao, setDescricao] = useState('')
   const [prazo, setPrazo] = useState('')
   const [origem, setOrigem] = useState('')
-  const [clubCasa, setClubCasa] = useState(false)
   const [rt, setRt] = useState(false)
   const [rtPercentual, setRtPercentual] = useState('')
   const [arquiteto, setArquiteto] = useState('')
   const [arquivos, setArquivos] = useState([]) // anexos de entrada (ainda nao enviados)
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
+  const [aberto, setAberto] = useState(null) // id do card aberto (so um por vez)
+  const [tentou, setTentou] = useState(false) // ja tentou criar? (so ai marcamos)
 
   useEffect(() => {
     async function carregarTipos() {
@@ -58,28 +68,41 @@ export default function NovaDemanda({
     carregarTipos()
   }, [])
 
-  function selecionarCliente(c) {
+  function alternar(id) {
+    setAberto((atual) => (atual === id ? null : id))
+  }
+
+  // Enter num campo de busca/numero/texto NAO pode criar a demanda: o envio so
+  // acontece pelo botao "Criar demanda" (fixo no rodape). Como esse botao nao
+  // fica mais desabilitado (era ele que, disabled, barrava o Enter), um Enter
+  // num <input> dispararia o envio IMPLICITO do <form> — o vendedor apertaria
+  // Enter para BUSCAR um cliente e a demanda seria submetida (§#64, achado da
+  // revisao). A textarea fica de fora: la Enter e quebra de linha, como deve ser.
+  function impedirEnvioPorEnter(e) {
+    if (e.key === 'Enter' && e.target.tagName === 'INPUT') e.preventDefault()
+  }
+
+  function escolherCliente(c) {
     setCliente(c)
-    setObra(null)
+    setObra(null) // a obra que estava escolhida era de OUTRO cliente
+    setAberto('obra') // encadeia: quem acabou de escolher o cliente vai na obra
   }
 
-  async function adicionarArquivos(fileList) {
-    setErro('')
-    // Captura a lista ANTES de qualquer await (o input e limpado no onChange).
-    const arquivos = Array.from(fileList)
-    const novos = []
-    for (const f of arquivos) {
-      const arquivo = await comprimirImagemSePreciso(f) // #41
-      const problema = validarArquivo('entrada', arquivo)
-      if (problema) setErro(`${arquivo.name}: ${problema}`)
-      else novos.push(arquivo)
-    }
-    if (novos.length) setArquivos((prev) => [...prev, ...novos])
-  }
+  const faltantes = calcularFaltantes({
+    ehFilha,
+    cliente,
+    tipoId,
+    descricao,
+    prazo,
+    origem,
+    rt,
+    rtPercentual,
+  })
 
-  function removerArquivo(idx) {
-    setArquivos((prev) => prev.filter((_, i) => i !== idx))
-  }
+  // Marcamos so DEPOIS da 1a tentativa: o formulario nao nasce vermelho — punir
+  // alguem por nao ter preenchido o que ele ainda nem viu e hostil. E, como isto
+  // e DERIVADO (nao e estado), o vermelho some sozinho quando o campo e preenchido.
+  const marcado = (id) => tentou && faltantes.some((f) => f.id === id)
 
   // Acha (ou cria) a obra padrao "Obra de {cliente}" quando nenhuma foi
   // escolhida. Roda sob a RLS do vendedor (ele ja pode criar obras). Retorna o
@@ -110,9 +133,20 @@ export default function NovaDemanda({
   async function salvar(evento) {
     evento.preventDefault()
     setErro('')
+
+    if (faltantes.length) {
+      setTentou(true)
+      // Leva o vendedor ate o primeiro pendente: num celular o card que falta
+      // pode estar fora da vista, e a mensagem sozinha nao diria onde ele esta.
+      document
+        .getElementById(`card-${faltantes[0].id}`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
+
     setSalvando(true)
 
-    // Obra: a escolhida, ou "Obra de {cliente}" (acha-ou-cria) se ficou em branco.
+    // Obra: a escolhida, ou "Obra de {cliente}" (achar-ou-criar) se ficou em branco.
     let obraId = obra?.id
     if (!obraId) {
       obraId = await obterOuCriarObraPadrao()
@@ -131,7 +165,10 @@ export default function NovaDemanda({
         descricao: descricao.trim(),
         prazo,
         demanda_pai_id: demandaPaiId ?? null,
-        club_casa: clubCasa,
+        // DERIVADO da origem (§#64): se o lead veio do Club Casa, a demanda E
+        // Club Casa. Era uma pergunta a parte nas condicoes comerciais, e duas
+        // respostas para o mesmo fato so podiam divergir.
+        club_casa: origem === 'Club Casa',
         rt,
         rt_percentual: rt && rtPercentual !== '' ? Number(rtPercentual) : null,
         arquiteto_engenheiro: arquiteto.trim() || null,
@@ -160,12 +197,14 @@ export default function NovaDemanda({
     aoCriar(data.id) // devolve o id para quem chamou abrir a demanda nova
   }
 
-  const pronto =
-    (ehFilha ? obra : cliente) &&
-    tipoId &&
-    descricao.trim() &&
-    prazo &&
-    (!rt || String(rtPercentual).trim() !== '')
+  const nomeTipo = tipos.find((t) => String(t.id) === String(tipoId))?.nome
+
+  function subCondicoes() {
+    const partes = []
+    if (rt) partes.push(rtPercentual !== '' ? `RT ${rtPercentual}%` : 'RT')
+    if (arquiteto.trim()) partes.push(arquiteto.trim())
+    return partes.length ? partes.join(' · ') : 'RT e arquiteto — se houver'
+  }
 
   const textoBotao = salvando
     ? 'Salvando…'
@@ -178,272 +217,196 @@ export default function NovaDemanda({
   // pelo atributo nativo form="form-nova-demanda", sem precisar de estado extra.
   return (
     <>
-      <form id="form-nova-demanda" className="nova-demanda" onSubmit={salvar}>
-        {comHero ? (
-          <header className="hero-demandas">
-            <h1 className="hero-titulo">Nova demanda</h1>
-            <div className="hero-acoes">
-              <button
-                type="button"
-                className="btn-circular"
-                onClick={aoCancelar}
-                aria-label="Voltar"
-                title="Voltar"
-              >
-                <Icone nome="voltar" size={20} />
-              </button>
-              <button
-                type="button"
-                className="btn-circular"
-                onClick={aoAbrirNotif}
-                aria-label="Notificações"
-                title="Notificações"
-              >
-                <Icone nome="sino" size={20} />
-                {naoLidas > 0 && <span className="sino-badge">{naoLidas}</span>}
-              </button>
-            </div>
-          </header>
-        ) : (
-          <h2 className="titulo-filha">
-            {ehFilha ? 'Nova demanda vinculada' : 'Nova demanda'}
-          </h2>
-        )}
+      <form
+        id="form-nova-demanda"
+        className="nova-demanda"
+        onSubmit={salvar}
+        onKeyDown={impedirEnvioPorEnter}
+      >
+        <NdCabecalho
+          comHero={comHero}
+          ehFilha={ehFilha}
+          aoCancelar={aoCancelar}
+          naoLidas={naoLidas}
+          aoAbrirNotif={aoAbrirNotif}
+        />
 
-        {/* Card 1 — Cliente e obra (ou obra herdada, no modo filha) */}
-        <section className="det-card">
-          <h3 className="det-card-titulo">Cliente e obra</h3>
+        <div className="nd-cards">
           {ehFilha ? (
             <p className="campo-obra-fixa">
               Obra: <strong>{obraFixa.nome}</strong>{' '}
               <em>(herdada da demanda-pai)</em>
             </p>
           ) : (
-            <>
-              <SeletorCliente
-                selecionado={cliente}
-                aoSelecionar={selecionarCliente}
-              />
-              {cliente && (
-                <>
-                  <SeletorObra
-                    cliente={cliente}
-                    selecionado={obra}
-                    aoSelecionar={setObra}
-                  />
-                  {!obra && (
-                    <p className="dica-obra">
-                      Sem obra específica? Pode deixar em branco — usaremos{' '}
-                      <strong>Obra de {cliente.nome}</strong>.
-                    </p>
-                  )}
-                </>
-              )}
-            </>
+            <NdClienteObra
+              cliente={cliente}
+              obra={obra}
+              aoEscolherCliente={escolherCliente}
+              aoEscolherObra={(o) => {
+                setObra(o)
+                setAberto(null)
+              }}
+              aberto={aberto}
+              aoAlternar={alternar}
+              faltandoCliente={marcado('cliente')}
+            />
           )}
-        </section>
 
-        {/* Card 2 — Detalhes da demanda */}
-        <section className="det-card nd-card">
-          <h3 className="det-card-titulo">Detalhes da demanda</h3>
+          <CardCampo
+            id="card-tipo"
+            icone="lista"
+            titulo="Tipo"
+            subtitulo={nomeTipo ?? 'O que você está pedindo?'}
+            preenchido={Boolean(nomeTipo)}
+            faltando={marcado('tipo')}
+            aberto={aberto === 'tipo'}
+            aoClicar={() => alternar('tipo')}
+          >
+            <NdOpcoes
+              opcoes={tipos}
+              valor={tipoId}
+              aoEscolher={(id) => {
+                setTipoId(String(id))
+                setAberto(null)
+              }}
+            />
+          </CardCampo>
 
-          <label className="campo-linha">
-            <span className="campo-rot">Tipo</span>
-            <select
-              value={tipoId}
-              onChange={(e) => setTipoId(e.target.value)}
-              required
-            >
-              <option value="">— escolha —</option>
-              {tipos.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.nome}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="campo-linha">
-            <span className="campo-rot">Origem</span>
-            <select
-              value={origem}
-              onChange={(e) => setOrigem(e.target.value)}
-              required
-            >
-              <option value="">— escolha —</option>
-              {['Marketing', 'Club Casa', 'Indicação', 'Balcão', 'Instagram'].map(
-                (o) => (
-                  <option key={o} value={o}>
-                    {o}
-                  </option>
-                ),
-              )}
-            </select>
-          </label>
-
-          <label className="campo-linha campo-descricao">
-            <span className="campo-rot">
-              Descrição{' '}
-              <span className="selo-imutavel">não editável depois</span>
-            </span>
+          <CardCampo
+            id="card-descricao"
+            icone="arquivo"
+            titulo="Descrição"
+            selo="não editável depois"
+            subtitulo={
+              descricao.trim() ? resumir(descricao) : 'O que precisa ser feito?'
+            }
+            preenchido={Boolean(descricao.trim())}
+            faltando={marcado('descricao')}
+            aberto={aberto === 'descricao'}
+            aoClicar={() => alternar('descricao')}
+          >
             <textarea
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
-              rows={4}
-              required
+              rows={5}
+              aria-label="Descrição da demanda"
+              autoFocus
             />
-          </label>
+            {/* §9: a descricao congela na criacao. Avisamos ANTES de escrever —
+                que e quando ainda da para caprichar. */}
+            <p className="nd-dica">
+              Este texto fica <strong>congelado</strong> na criação. Correções
+              depois vão nos comentários da demanda.
+            </p>
+          </CardCampo>
 
-          <label className="campo-linha">
-            <span className="campo-rot">Prazo</span>
-            <input
-              type="date"
-              value={prazo}
-              onChange={(e) => setPrazo(e.target.value)}
-              required
+          <NdPrazo
+            prazo={prazo}
+            aoMudar={setPrazo}
+            faltando={marcado('prazo')}
+            aberto={aberto === 'prazo'}
+            aoAlternar={() => alternar('prazo')}
+            aoFechar={() => setAberto(null)}
+          />
+
+          <CardCampo
+            id="card-origem"
+            icone="origem"
+            titulo="Origem"
+            subtitulo={origem || 'De onde veio este cliente?'}
+            preenchido={Boolean(origem)}
+            faltando={marcado('origem')}
+            aberto={aberto === 'origem'}
+            aoClicar={() => alternar('origem')}
+          >
+            <NdOpcoes
+              opcoes={ORIGENS.map((o) => ({ id: o, nome: o }))}
+              valor={origem}
+              aoEscolher={(o) => {
+                setOrigem(o)
+                setAberto(null)
+              }}
             />
-          </label>
-        </section>
+          </CardCampo>
 
-        {/* Card 3 — Condições comerciais */}
-        <section className="det-card nd-card">
-          <h3 className="det-card-titulo">Condições comerciais</h3>
+          {/* Daqui para baixo da para nao mexer. Marcamos onde acaba o
+              obrigatorio em vez de confiar que o vendedor repare, campo a
+              campo, no subtitulo de cada um. */}
+          <p className="nd-divisor">
+            <span>Opcional daqui pra baixo</span>
+          </p>
 
-          <label className="campo-linha campo-inline">
-            <span className="campo-rot">CLUB CASA</span>
-            <input
-              type="checkbox"
-              className="campo-check"
-              checked={clubCasa}
-              onChange={(e) => setClubCasa(e.target.checked)}
+          <CardCampo
+            id="card-condicoes"
+            icone="percentual"
+            titulo="Condições comerciais"
+            subtitulo={subCondicoes()}
+            preenchido={rt || Boolean(arquiteto.trim())}
+            faltando={marcado('condicoes')}
+            aberto={aberto === 'condicoes'}
+            aoClicar={() => alternar('condicoes')}
+          >
+            <NdCondicoes
+              rt={rt}
+              aoMudarRt={setRt}
+              rtPercentual={rtPercentual}
+              aoMudarPercentual={setRtPercentual}
+              arquiteto={arquiteto}
+              aoMudarArquiteto={setArquiteto}
             />
-          </label>
+          </CardCampo>
 
-          <div className="campo-linha campo-inline">
-            <span className="campo-rot">RT</span>
-            <div className="campo-rt">
-              <label className="pilula-radio">
-                <input
-                  type="radio"
-                  name="rt"
-                  checked={!rt}
-                  onChange={() => setRt(false)}
-                />{' '}
-                Não
-              </label>
-              <label className="pilula-radio">
-                <input
-                  type="radio"
-                  name="rt"
-                  checked={rt}
-                  onChange={() => setRt(true)}
-                />{' '}
-                Sim
-              </label>
-              {rt && (
-                <span className="campo-pct">
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.5"
-                    className="input-pct"
-                    value={rtPercentual}
-                    onChange={(e) => setRtPercentual(e.target.value)}
-                    aria-label="Porcentagem da RT"
-                    required
-                  />
-                  <span>%</span>
-                </span>
-              )}
-            </div>
-          </div>
-
-          <label className="campo-linha">
-            <span className="campo-rot">
-              Arquiteto/engenheiro <em>(se houver)</em>
-            </span>
-            <input
-              type="text"
-              value={arquiteto}
-              onChange={(e) => setArquiteto(e.target.value)}
+          <CardCampo
+            id="card-anexos"
+            icone="clipe"
+            titulo="Anexos"
+            subtitulo={
+              arquivos.length
+                ? `${arquivos.length} ${arquivos.length === 1 ? 'arquivo' : 'arquivos'}`
+                : 'Fotos da medição, croqui ou PDF'
+            }
+            preenchido={arquivos.length > 0}
+            aberto={aberto === 'anexos'}
+            aoClicar={() => alternar('anexos')}
+          >
+            <NdAnexos
+              arquivos={arquivos}
+              aoAdicionar={(novos) => setArquivos((prev) => [...prev, ...novos])}
+              aoRemover={(idx) =>
+                setArquivos((prev) => prev.filter((_, i) => i !== idx))
+              }
             />
-          </label>
-        </section>
+          </CardCampo>
+        </div>
 
-        {/* Card 4 — Anexos de entrada */}
-        <section className="det-card">
-          <h3 className="det-card-titulo">
-            Anexos de entrada <span className="titulo-opc">opcional</span>
-          </h3>
-          {arquivos.length > 0 && (
-            <ul className="arquivos-escolhidos">
-              {arquivos.map((f, i) => (
-                <li key={i}>
-                  <span>
-                    {f.name} ({formatarTamanho(f.size)})
-                  </span>
-                  <button
-                    type="button"
-                    className="remover"
-                    onClick={() => removerArquivo(i)}
-                  >
-                    <Icone nome="fechar" size={14} />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-          <div className="anexo-acoes">
-            <label className="enviar-arquivo">
-              <Icone nome="mais" size={16} /> Escolher arquivo
-              <input
-                type="file"
-                multiple
-                accept="image/jpeg,image/png,application/pdf"
-                onChange={(e) => {
-                  adicionarArquivos(e.target.files)
-                  e.target.value = ''
-                }}
-              />
-            </label>
-            {/* No celular, abre a camera direto (foto da medicao/croqui). */}
-            <label className="enviar-arquivo">
-              <Icone nome="camera" size={16} /> Tirar foto
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={(e) => {
-                  adicionarArquivos(e.target.files)
-                  e.target.value = ''
-                }}
-              />
-            </label>
-          </div>
-          <span className="anexo-fmt">JPG, PNG ou PDF · até 2 MB</span>
-        </section>
-
+        {tentou && faltantes.length > 0 && (
+          <p className="nd-aviso" role="alert">
+            <Icone nome="aviso" size={16} />
+            Faltou preencher: {listaPt(faltantes.map((f) => f.nome))}.
+          </p>
+        )}
         {erro && <p className="erro">{erro}</p>}
       </form>
 
       {/* Barra "Criar demanda". Modo principal: barra FIXA navy no rodape
           (reusa .det-barra-acao; z-46 cobre o bottom-nav z-45). Modo filha:
-          botao inline no fluxo (nao cobre o nav da tela de detalhe). */}
+          botao inline no fluxo (nao cobre o nav da tela de detalhe).
+          O botao NAO fica mais desabilitado: um botao apagado nao conta o que
+          falta — so deixa o vendedor travado sem saber por que. */}
       {comHero ? (
         <div className="det-barra-acao">
           <button
             type="submit"
             form="form-nova-demanda"
             className="btn-alterar-status"
-            disabled={!pronto || salvando}
+            disabled={salvando}
           >
             {textoBotao}
           </button>
         </div>
       ) : (
         <div className="acoes-filha">
-          <button type="submit" form="form-nova-demanda" disabled={!pronto || salvando}>
+          <button type="submit" form="form-nova-demanda" disabled={salvando}>
             {textoBotao}
           </button>
           <button type="button" className="link" onClick={aoCancelar}>

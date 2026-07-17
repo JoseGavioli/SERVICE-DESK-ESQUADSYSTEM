@@ -1773,13 +1773,15 @@ textarea::placeholder {
 .status-cancelada { background: var(--st-cancelada-bg); color: var(--st-cancelada-fg); }
 
 /* ─────────────────────────────────────────────────────────────
-   NOVA DEMANDA — reforma visual (sintese do painel de design).
-   Varios .det-card titulados (mesma linguagem do Detalhe), cada um
-   com "linhas de campo" empilhadas (rotulo em cima, controle embaixo)
-   divididas por hairline. Descricao em destaque. O submit vira a
-   barra FIXA "Criar demanda" no rodape (reusa .det-barra-acao, que
-   por ser z-46 cobre o bottom-nav z-45). Tudo em tokens (claro E
-   escuro), mobile-first.
+   NOVA DEMANDA — cards de campo (§issue #64).
+   Cada campo e um CARD FECHADO na mesma linguagem da tela
+   "Administracao" (icone redondo + titulo + subtitulo), a pedido do
+   dono. O subtitulo mostra o que JA foi escolhido: o formulario
+   inteiro cabe numa tela e da p/ conferir tudo sem abrir nada (antes
+   eram ~24 controles abertos de uma vez). Um card aberto por vez.
+   O submit e a barra FIXA "Criar demanda" no rodape (reusa
+   .det-barra-acao, que por ser z-46 cobre o bottom-nav z-45).
+   Tudo em tokens (claro E escuro), mobile-first.
    ───────────────────────────────────────────────────────────── */
 .nova-demanda {
   display: flex;
@@ -1792,15 +1794,304 @@ textarea::placeholder {
   font-size: 1.2rem;
   font-weight: 800;
 }
-/* "opcional" discreto ao lado do titulo de um card */
-.det-card-titulo .titulo-opc {
-  font-weight: 500;
-  font-size: 0.8rem;
-  color: var(--texto-fraco);
+.nd-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
 }
-/* nos cards de campos, o titulo cola mais na 1a linha */
-.nova-demanda .nd-card .det-card-titulo {
-  margin-bottom: 0.25rem;
+
+/* ── O card de campo (mesma anatomia do .admin-card) ── */
+.card-campo {
+  background: var(--surface);
+  border-radius: var(--raio-card);
+  box-shadow: var(--sombra-sm);
+  overflow: hidden;
+}
+.card-campo-topo {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 0.9rem;
+  cursor: pointer;
+}
+.card-campo-icone {
+  flex: none;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primaria-suave);
+  color: var(--primaria);
+}
+.card-campo-texto {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+.card-campo-titulo {
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--texto);
+}
+.card-campo-sub {
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Preenchido: o subtitulo deixa de ser INSTRUCAO e vira a RESPOSTA. */
+.card-campo-sub.ok {
+  color: var(--texto);
+  font-weight: 600;
+}
+.card-campo-topo > .lucide {
+  flex: none;
+  color: var(--texto-suave);
+}
+.card-campo.aberto .card-campo-icone {
+  background: var(--primaria);
+  color: #fff;
+}
+/* Falta preencher. So aparece DEPOIS da 1a tentativa de criar — o
+   formulario nunca nasce vermelho. */
+.card-campo.falta {
+  box-shadow: 0 0 0 2px var(--perigo);
+}
+.card-campo.falta .card-campo-icone {
+  background: var(--perigo);
+  color: #fff;
+}
+.card-campo.desabilitado .card-campo-topo {
+  cursor: default;
+  opacity: 0.55;
+}
+.card-campo-corpo {
+  padding: 0 0.9rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.card-campo-corpo textarea {
+  width: 100%;
+  min-height: 7rem;
+  resize: vertical;
+  line-height: 1.5;
+  font-size: 1rem;
+  font-family: inherit;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--borda-forte);
+  border-radius: var(--raio-sm);
+  background: var(--surface-2);
+  color: var(--texto);
+}
+
+/* ── Miolo de escolha: busca + lista (cliente, obra, tipo, origem) ── */
+.escolher {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.escolher input[type='search'] {
+  width: 100%;
+  font-size: 1rem;
+  font-family: inherit;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--borda-forte);
+  border-radius: var(--raio-sm);
+  background: var(--surface-2);
+  color: var(--texto);
+}
+.escolher-rot {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--texto-suave);
+}
+.escolher-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.escolher-lista button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  text-align: left;
+  font: inherit;
+  padding: 0.6rem 0.7rem;
+  border: 0;
+  border-radius: var(--raio-sm);
+  background: var(--surface-2);
+  color: var(--texto);
+  cursor: pointer;
+}
+.escolher-lista button:hover {
+  background: var(--primaria-suave);
+}
+.escolher-lista button.sel {
+  background: var(--primaria-suave);
+  color: var(--primaria);
+  font-weight: 600;
+}
+.escolher-vazio {
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+  padding: 0.3rem 0.1rem;
+}
+.escolher-criar {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.85rem;
+  border: 0;
+  border-radius: var(--raio-sm);
+  background: var(--primaria);
+  color: var(--primaria-texto);
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+.escolher-criar:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Prazo: calendario inline DENTRO do card (§#64). Vive no .card-campo-corpo,
+   entao herda o padding do corpo; aqui so desenhamos a grade do mes. */
+.calendario {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.cal-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.cal-mes {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--texto);
+}
+.cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: var(--raio-sm);
+  background: var(--surface-2);
+  color: var(--texto);
+  cursor: pointer;
+}
+.cal-nav:hover {
+  background: var(--primaria-suave);
+  color: var(--primaria);
+}
+/* Grade de 7 colunas (domingo a sabado), reusada pelo cabecalho e pelos dias. */
+.cal-grade {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.2rem;
+}
+.cal-dow {
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--texto-suave);
+  padding: 0.2rem 0;
+}
+/* .cal-vazio: celula sem dia (antes do 1o do mes). Sem regra propria — o <span>
+   vazio ja ocupa a coluna como grid item; a altura da linha vem do .cal-dia. */
+.cal-dia {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--raio-sm);
+  background: var(--surface-2);
+  color: var(--texto);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.cal-dia:hover {
+  background: var(--primaria-suave);
+  color: var(--primaria);
+}
+/* Hoje: so um anel, sem preencher — nao rouba o destaque do dia escolhido. */
+.cal-dia.hoje {
+  box-shadow: inset 0 0 0 1.5px var(--primaria);
+  font-weight: 700;
+}
+/* Dia escolhido: preenchido, igual a opcao marcada dos outros cards. */
+.cal-dia.sel {
+  background: var(--primaria);
+  color: #fff;
+  font-weight: 700;
+}
+.cal-dia.sel:hover {
+  background: var(--primaria);
+  color: #fff;
+}
+
+/* Onde acaba o obrigatorio. */
+.nd-divisor {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.35rem 0;
+  font-size: 0.75rem;
+  color: var(--texto-suave);
+}
+.nd-divisor::before,
+.nd-divisor::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--borda);
+}
+
+.nd-dica {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+}
+.nd-dica strong {
+  color: var(--texto);
+}
+
+/* "Faltou preencher: cliente, tipo e origem." */
+.nd-aviso {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.7rem 0 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--perigo);
+}
+.nd-aviso .lucide {
+  flex: none;
 }
 
 /* Cada campo e uma "linha": rotulo em cima, controle embaixo, dividida
@@ -1828,11 +2119,8 @@ textarea::placeholder {
   color: var(--texto-fraco);
 }
 
-/* Controles (Tipo/Descricao/Prazo/Arquiteto) ocupam a largura toda,
-   com borda/fundo sutis. O anel de foco ja e global. */
-.nova-demanda .campo-linha > select,
-.nova-demanda .campo-linha > textarea,
-.nova-demanda .campo-linha > input[type='date'],
+/* Sobrou o Arquiteto/engenheiro (dentro do card "Condicoes comerciais").
+   O anel de foco ja e global. */
 .nova-demanda .campo-linha > input[type='text'] {
   width: 100%;
   font-size: 1rem;
@@ -1843,18 +2131,8 @@ textarea::placeholder {
   color: var(--texto);
   font-family: inherit;
 }
-.nova-demanda .campo-linha > textarea {
-  resize: vertical;
-  min-height: 6rem;
-  line-height: 1.5;
-}
 
-/* Descricao em destaque: campo primario e IMUTAVEL (faixa de acento +
-   selo tingido no rotulo). */
-.nova-demanda .campo-descricao {
-  border-left: 3px solid var(--primaria);
-  padding-left: 0.85rem;
-}
+/* Selo "nao editavel depois" no titulo do card Descricao (§9). */
 .selo-imutavel {
   display: inline-block;
   margin-left: 0.35rem;
@@ -1887,27 +2165,7 @@ textarea::placeholder {
   flex-shrink: 0;
 }
 
-/* RT: pilulas Nao/Sim + % condicional */
-.campo-rt {
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-.pilula-radio {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  color: var(--texto);
-  font-size: 0.95rem;
-  cursor: pointer;
-}
-.pilula-radio input[type='radio'] {
-  width: auto;
-  margin: 0;
-  accent-color: var(--primaria);
-}
+/* % da RT (so aparece com o toggle "Tem RT?" ligado) */
 .campo-pct {
   display: inline-flex;
   align-items: center;
@@ -1925,24 +2183,13 @@ textarea::placeholder {
   font-family: inherit;
 }
 
-/* Seletores de cliente/obra dentro do card: recuados (--surface-2) para
-   lerem como area de input, com o search input no mesmo estilo dos demais. */
-.nova-demanda .seletor {
-  background: var(--surface-2);
-}
-.nova-demanda .seletor input[type='search'] {
-  width: 100%;
-  font-size: 1rem;
-  padding: 0.55rem 0.65rem;
-  border: 1px solid var(--borda-forte);
-  border-radius: var(--raio-sm);
-  background: var(--surface);
-  color: var(--texto);
-  font-family: inherit;
-}
 /* obra herdada (modo filha) */
 .campo-obra-fixa {
   margin: 0;
+  padding: 0.9rem;
+  background: var(--surface);
+  border-radius: var(--raio-card);
+  box-shadow: var(--sombra-sm);
   color: var(--texto);
   font-size: 0.95rem;
 }
@@ -1950,16 +2197,6 @@ textarea::placeholder {
   font-style: normal;
   color: var(--texto-suave);
   font-size: 0.85rem;
-}
-
-/* dica de "obra opcional" abaixo do seletor de obra (reaproveitada, issue #2) */
-.dica-obra {
-  font-size: 0.85rem;
-  color: var(--texto-suave);
-  margin: 0.5rem 0 0;
-}
-.dica-obra strong {
-  color: var(--texto);
 }
 
 /* Barra fixa "Criar demanda": reusa .det-barra-acao + .btn-alterar-status
@@ -2000,45 +2237,6 @@ textarea::placeholder {
 }
 .acoes-filha .link {
   align-self: center;
-}
-
-.seletor {
-  border: 1px solid var(--borda);
-  border-radius: var(--raio);
-  padding: 0.85rem;
-  background: var(--surface);
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-.seletor > label {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--texto-suave);
-}
-.seletor input[type='search'] {
-  width: 100%;
-}
-.seletor.selecionado {
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--primaria-suave);
-}
-.seletor button:not(.link) {
-  align-self: flex-start;
-  padding: 0.45rem 0.85rem;
-  border: 0;
-  border-radius: var(--raio-sm);
-  background: var(--primaria);
-  color: var(--primaria-texto);
-  font-weight: 600;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: background 0.15s ease;
-}
-.seletor button:not(.link):hover {
-  background: var(--primaria-hover);
 }
 
 /* ── Detalhe da demanda ────────────────────────────────────── */

@@ -16,6 +16,7 @@ import {
   ArrowLeft,
   CornerDownRight,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   ChevronUp,
   ZoomIn,
@@ -44,6 +45,11 @@ import {
   ShieldCheck,
   Calculator,
   Send,
+  User,
+  Calendar,
+  Megaphone,
+  Percent,
+  Paperclip,
 } from 'lucide-react'
 
 // Fonte UNICA dos icones do app (§issue #9). Uso: <Icone nome="sino" />.
@@ -68,6 +74,7 @@ const MAPA = {
   'seta-filha': CornerDownRight,
   'chevron-baixo': ChevronDown,
   'chevron-cima': ChevronUp,
+  'chevron-esquerda': ChevronLeft,
   'chevron-direita': ChevronRight,
   'zoom-mais': ZoomIn,
   'zoom-menos': ZoomOut,
@@ -96,6 +103,11 @@ const MAPA = {
   admin: ShieldCheck,
   calculadora: Calculator,
   enviar: Send,
+  cliente: User,
+  calendario: Calendar,
+  origem: Megaphone,
+  percentual: Percent,
+  clipe: Paperclip,
 }
 
 export default function Icone({ nome, size = 18, strokeWidth = 2, className }) {
