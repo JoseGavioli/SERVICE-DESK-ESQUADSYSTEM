@@ -440,7 +440,7 @@ export default function Demandas({
             {/* So aparece se MEXERAM depois de criar (§atividade recente). */}
             {mexidaEm(d) && (
               <span className="selo-mexida" title="Última movimentação">
-                <Icone nome="atualizar" size={11} /> movida {haQuantoTempo(mexidaEm(d))}
+                <Icone nome="atualizar" size={11} /> Última atualização {haQuantoTempo(mexidaEm(d))}
               </span>
             )}
           </div>
