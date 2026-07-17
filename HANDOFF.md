@@ -2,23 +2,19 @@
 
 **Data:** 16/07/2026 · **Branch:** `main` (sincronizada com `origin`) · **HEAD:** `19228a2`
 
-> Documento de continuidade. Para retomar: leia a **§1** (ação imediata), a **§7** (pendências) e a **§9** (armadilhas).
+> Documento de continuidade. Para retomar: leia a **§7** (pendências) e a **§9** (armadilhas).
 > A fundação é o **`CLAUDE.md`** — leia-o por completo antes de mexer em qualquer coisa.
 > _(Substitui o handoff de 01/07/2026, que ficou muito defasado.)_
 
 ---
 
-## 1. ⚠️ Ação imediata: 2 migrações sem confirmação
+## 1. ✅ Migrações: todas aplicadas (`0001` → `0040`)
 
-O dono **confirmou** ter rodado: `0034`, `0035`, `0037`, `0039`, `0040`.
-Estas foram pedidas mas **ele nunca confirmou** — verifique antes de assumir que funcionam:
+Confirmado com o dono em **16/07** — incluindo a `0036` e a `0038`, que **tinham passado batido** e foram rodadas só depois de este handoff apontá-las.
 
-| Migração | O que faz | Se não rodou |
-|---|---|---|
-| `0036_erro_log_limpar.sql` | Policy de DELETE no `erro_log` (só admin) | O botão **"Limpar"** da tela de Erros falha. O resto da tela funciona. |
-| `0038_anexo_pos_envio.sql` | Policy exige status (concluido, enviado) + **gatilho** que registra anexo pós-envio | Anexar em demanda enviada **funciona, mas não registra no histórico nem avisa o vendedor** — era todo o objetivo. **Falha silenciosa.** |
-
-**Como verificar:** *Administração → Erros → "Limpar"* (testa a `0036`). Para a `0038`, anexe um arquivo numa demanda **já enviada** e veja se aparece o comentário *"Anexo adicionado após o envio: …"* no histórico.
+> **Lição para as próximas.** O dono roda as migrações no SQL Editor, e duas ficaram para trás sem ninguém notar. A `0038` era a pior: sem ela, anexar numa demanda enviada **funcionava, mas não registrava no histórico nem avisava o vendedor** — uma **falha silenciosa**, do tipo que só aparece quando o vendedor reclama que não foi avisado.
+>
+> Então: **peça confirmação explícita** de que a migração rodou (não presuma pelo silêncio), sempre diga **o que quebra se não rodar**, e — quando der — faça a ausência dela degradar **só a tela nova**, não o app (ex.: `MeuPerfil` busca `avatar_path` sozinho, fora do boot, justamente por isso).
 
 ---
 
@@ -36,7 +32,7 @@ App web interno da **EsquadSystem** (esquadrias de alumínio) para gerir **deman
 
 ## 4. Estado atual
 
-- **Fases 0–6 completas** e no ar. Migrações **`0001` → `0040`** (ver §1).
+- **Fases 0–6 completas** e no ar. Migrações **`0001` → `0040`**, todas aplicadas (§1).
 - **Web Push (#14): CONCLUÍDO** — validado nas 3 plataformas (desktop, Android e **iOS** com PWA instalado).
 - **Menu "Mais":** `Meu perfil · Administração (só admin) · Sair`. Para o vendedor, 2 itens.
 - **Todas as telas reformadas.** A única pendente de redesenho é o **Dashboard** (o dono vai mandar os detalhes).
