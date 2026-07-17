@@ -4,16 +4,19 @@ import { STATUS_ROTULO } from '../lib/status'
 import { urgenciaEfetiva, estaCustoAtrasado, URGENCIA_NIVEIS } from '../lib/urgencia'
 import { textoPresenca, ultimoVistoMs, useTique } from '../lib/usePresenca'
 import Avatar from './Avatar'
+import EstadoVazio from './EstadoVazio'
 import Icone from './Icone'
 
-// Ordem das boxes de status. "concluido" fica de fora (legado).
+// Anéis "Por status": só a FILA EM ABERTO. "concluido" entra (foi reativado na
+// migração 0022 e está no fluxo). "enviado" sai dos anéis e vira um contador à
+// parte (§Bloco A): é terminal e permanente — na base do arco iria, com o tempo,
+// encolher as fatias das abertas. "cancelada" não é exibida (decisão do dono).
 const STATUS_ORDEM = [
   'nao_iniciado',
   'em_andamento',
   'congelado',
   'em_revisao_custo',
-  'enviado',
-  'cancelada',
+  'concluido',
 ]
 // Terminais NAO entram no "em aberto" nem em "por vendedor".
 const TERMINAIS = ['enviado', 'cancelada']
@@ -195,8 +198,13 @@ export default function Dashboard({
           .sort((a, b) => b.aberto - a.aberto)
       : []
   const maxVend = vendedores.reduce((m, v) => Math.max(m, v.aberto), 0)
+  // "Enviado" fora dos anéis, como contador (§Bloco A). Entra na "Distribuição".
+  const enviados = dados?.porStatus?.enviado ?? 0
   const temDistribuicao =
-    statusVisiveis.length > 0 || urgVisiveis.length > 0 || vendedores.length > 1
+    statusVisiveis.length > 0 ||
+    urgVisiveis.length > 0 ||
+    vendedores.length > 1 ||
+    enviados > 0
 
   return (
     <div className="secao-dashboard">
@@ -253,42 +261,81 @@ export default function Dashboard({
         </button>
       )}
 
+      {/* Enquanto os números não vêm: placeholder no lugar do bloco em branco
+          (no 3G do celular a tela em branco parecia quebrada). §Bloco A */}
+      {!dados && (
+        <div className="dash-carregando" aria-busy="true" aria-live="polite">
+          <span className="skel-linha" />
+          <span className="skel-linha" />
+          <span className="skel-linha curta" />
+        </div>
+      )}
+
       {dados && (
         <>
-          {/* 1. ATENÇÃO — o "o que fazer agora" (só aparece se houver) */}
-          {dados.atencao > 0 && (
-            <button
-              type="button"
-              className="box-inicio box-atencao"
-              onClick={() => aoAbrirComFiltro({ soAtencao: true })}
-            >
-              <span className="box-atencao-icone">
-                <Icone nome="aviso" size={22} />
-              </span>
-              <span className="box-atencao-texto">
-                <span className="box-titulo">Precisam de atenção</span>
-                <span className="box-hint">
-                  prazo vencido, custo atrasado ou cancelamento pedido
-                </span>
-              </span>
-              <span className="box-numero">{dados.atencao}</span>
-            </button>
-          )}
+          {/* 1. ATENÇÃO / EM ABERTO — a fila do dia. Sem nada em aberto, um
+              único estado vazio acolhedor (não há o que precisar de atenção
+              quando não há fila). Com fila: atenção — ou "tudo em dia" — + a box
+              "em aberto". §Bloco A */}
+          {dados.emAberto === 0 ? (
+            <div className="card-resumo">
+              <EstadoVazio
+                nome="check"
+                titulo="Nenhuma demanda em aberto"
+                dica={
+                  ehStaff
+                    ? 'Tudo em dia por aqui.'
+                    : 'Toque no + para pedir um orçamento.'
+                }
+              />
+            </div>
+          ) : (
+            <>
+              {dados.atencao > 0 ? (
+                <button
+                  type="button"
+                  className="box-inicio box-atencao"
+                  onClick={() => aoAbrirComFiltro({ soAtencao: true })}
+                >
+                  <span className="box-atencao-icone">
+                    <Icone nome="aviso" size={22} />
+                  </span>
+                  <span className="box-atencao-texto">
+                    <span className="box-titulo">Precisam de atenção</span>
+                    <span className="box-hint">
+                      prazo vencido, custo atrasado ou cancelamento pedido
+                    </span>
+                  </span>
+                  <span className="box-numero">{dados.atencao}</span>
+                </button>
+              ) : (
+                <div className="box-inicio box-tudo-ok">
+                  <span className="box-tudo-ok-icone">
+                    <Icone nome="check" size={20} />
+                  </span>
+                  <span className="box-hint">
+                    Tudo em dia — nada precisa de atenção agora.
+                  </span>
+                </div>
+              )}
 
-          {/* 2. EM ABERTO — a base do topo de foco */}
-          <button
-            type="button"
-            className="box-inicio box-total"
-            onClick={() => aoAbrirComFiltro({ soAtivas: true })}
-          >
-            <span className="box-titulo">Demandas em aberto</span>
-            <span className="box-numero">{dados.emAberto}</span>
-            <span className="box-hint">toque para ver</span>
-          </button>
+              {/* EM ABERTO — a base do topo de foco */}
+              <button
+                type="button"
+                className="box-inicio box-total"
+                onClick={() => aoAbrirComFiltro({ soAtivas: true })}
+              >
+                <span className="box-titulo">Demandas em aberto</span>
+                <span className="box-numero">{dados.emAberto}</span>
+                <span className="box-hint">toque para ver</span>
+              </button>
+            </>
+          )}
 
           {temDistribuicao && <p className="secao-rotulo">Distribuição</p>}
 
-          {/* 3. POR STATUS — cartoes com anel (fatia no total) na cor do status */}
+          {/* 3. POR STATUS — cartões com anel (fatia da FILA EM ABERTO) na cor
+              do status. Só status em aberto entram aqui (§Bloco A). */}
           {statusVisiveis.length > 0 && (
             <div className="anel-grade">
               {statusVisiveis.map((s) => (
@@ -297,11 +344,7 @@ export default function Dashboard({
                   type="button"
                   className="anel-card"
                   onClick={() =>
-                    aoAbrirComFiltro(
-                      s === 'enviado'
-                        ? { status: s, ordenacao: 'recentes' }
-                        : { status: s, ordenacao: 'urgencia' },
-                    )
+                    aoAbrirComFiltro({ status: s, ordenacao: 'urgencia' })
                   }
                 >
                   <span className="anel-card-titulo">{tituloStatus(s)}</span>
@@ -315,23 +358,36 @@ export default function Dashboard({
             </div>
           )}
 
-          {/* 4. POR URGÊNCIA — barra segmentada (proporção automática) + legenda */}
+          {/* "Enviado" fora dos anéis (terminal e permanente): contador simples.
+              Para o vendedor aparece como "Recebido". "Cancelada" não é exibida. */}
+          {enviados > 0 && (
+            <button
+              type="button"
+              className="box-inicio status-contador"
+              onClick={() =>
+                aoAbrirComFiltro({ status: 'enviado', ordenacao: 'recentes' })
+              }
+            >
+              <span className="sc-rotulo">{tituloStatus('enviado')}</span>
+              <span className="sc-num">{enviados}</span>
+            </button>
+          )}
+
+          {/* 4. POR URGÊNCIA — barra segmentada (proporção, só visual) + legenda
+              como alvo de toque. A barra deixou de ser clicável: no celular um
+              segmento fino é quase impossível de acertar com o dedo (§Bloco A). */}
           {urgVisiveis.length > 0 && (
             <div className="card-resumo">
               <span className="box-titulo">Por urgência</span>
-              <div className="urg-barra">
+              <div className="urg-barra" aria-hidden="true">
                 {urgVisiveis.map((u) => (
-                  <button
+                  <span
                     key={u.nivel}
-                    type="button"
                     className="urg-seg"
                     style={{
                       flexGrow: u.count,
                       backgroundColor: URG_COR[u.nivel],
                     }}
-                    onClick={() => aoAbrirComFiltro({ urgencia: u.nivel })}
-                    aria-label={`${u.rotulo}: ${u.count}`}
-                    title={`${u.rotulo}: ${u.count}`}
                   />
                 ))}
               </div>

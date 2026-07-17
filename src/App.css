@@ -4515,27 +4515,31 @@ button.cad-item:hover {
   border-radius: var(--raio-pill);
   overflow: hidden;
 }
+/* segmentos: só visuais agora (a legenda é o alvo de toque — §Bloco A) */
 .urg-seg {
-  border: 0;
-  padding: 0;
   min-width: 8px;
-  cursor: pointer;
 }
 .urg-legenda {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.45rem 1rem;
+  gap: 0.5rem;
   margin-top: 0.7rem;
 }
+/* cada item da legenda vira um alvo de toque de verdade (§Bloco A, mobile) */
 .urg-item {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0;
+  gap: 0.4rem;
+  padding: 0.5rem 0.7rem;
   border: 0;
-  background: transparent;
+  border-radius: var(--raio-sm);
+  background: var(--surface-2);
   cursor: pointer;
   font: inherit;
+  transition: background 0.12s ease;
+}
+.urg-item:hover {
+  background: var(--primaria-suave);
 }
 .urg-ponto {
   width: 0.7rem;
@@ -4551,6 +4555,84 @@ button.cad-item:hover {
   font-size: 0.85rem;
   font-weight: 700;
   color: var(--texto);
+}
+
+/* ── Bloco A: contador de "Enviado", "tudo em dia" e carregando ── */
+/* "Enviado" fora dos anéis: card-linha (rótulo | número) */
+.status-contador {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+.status-contador .sc-rotulo {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+.status-contador .sc-num {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--st-enviado-fg);
+}
+/* "tudo em dia" — estado calmo no lugar do card de atenção (não é botão) */
+.box-tudo-ok {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.7rem;
+  cursor: default;
+}
+.box-tudo-ok:hover {
+  transform: none;
+  box-shadow: var(--sombra-sm);
+}
+.box-tudo-ok-icone {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 1.9rem;
+  height: 1.9rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--st-enviado-bg);
+  color: var(--st-enviado-fg);
+}
+/* placeholder enquanto os números carregam */
+.dash-carregando {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.skel-linha {
+  height: 3.5rem;
+  border-radius: var(--raio-card);
+  background: var(--surface-2);
+  position: relative;
+  overflow: hidden;
+}
+.skel-linha.curta {
+  width: 60%;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .skel-linha::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--surface) 55%, transparent),
+      transparent
+    );
+    animation: skel-brilho 1.3s ease-in-out infinite;
+  }
+}
+@keyframes skel-brilho {
+  to {
+    transform: translateX(100%);
+  }
 }
 
 /* 5) POR VENDEDOR: lista nome | barra proporcional | numero */
