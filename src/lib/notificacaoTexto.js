@@ -44,7 +44,9 @@ export function textoNotificacao(n) {
     case 'prazo_vencido':
       return `O prazo da demanda${deCliente} venceu`
     case 'custo_atrasado':
-      return `O custo da demanda${deCliente} está atrasado (5+ dias em revisão)`
+      // Sem número fixo de propósito: o limite (hoje 3 dias úteis) vive no banco
+      // e no lib/urgencia.js; cravar aqui vira um 3º lugar para desencontrar (§8).
+      return `O custo da demanda${deCliente} está atrasado na revisão`
     default:
       return `${autor} atualizou a demanda${deCliente}`
   }

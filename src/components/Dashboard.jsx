@@ -3,6 +3,8 @@ import { supabase } from '../lib/supabase'
 import { STATUS_ROTULO } from '../lib/status'
 import { urgenciaEfetiva, estaCustoAtrasado, URGENCIA_NIVEIS } from '../lib/urgencia'
 import { textoPresenca, ultimoVistoMs, useTique } from '../lib/usePresenca'
+import { textoNotificacao } from '../lib/notificacaoTexto'
+import { haQuantoTempo } from '../lib/tempo'
 import Avatar from './Avatar'
 import EstadoVazio from './EstadoVazio'
 import Icone from './Icone'
@@ -37,6 +39,17 @@ const ROTULO_PAPEL = {
   atendente: 'Atendente',
   gerente: 'Gerente',
   vendedor: 'Vendedor',
+}
+
+// Motivo de cada item de "Precisam de atenção" (§Bloco B): rótulo + cor forte.
+// A ordem (mais grave primeiro) é dada pelo `ordem` calculado no carregar().
+// 'atrasado' usa o rótulo do NÍVEL de urgência (não "prazo vencido"): o nível
+// pode vir de override manual do gerente com prazo futuro, e aí "prazo vencido"
+// seria falso (§revisão Bloco B). "Atrasado" é verdadeiro nos dois casos.
+const MOTIVO = {
+  atrasado: { rotulo: 'atrasado', cor: 'var(--ur-atrasado-bg)' },
+  custo: { rotulo: 'custo atrasado', cor: 'var(--ur-urgente-fg)' },
+  cancelamento: { rotulo: 'cancelamento pedido', cor: 'var(--texto-suave)' },
 }
 
 // Anel (gauge) SVG: arco proporcional (valor/total) na cor do status, com a
@@ -79,11 +92,19 @@ export default function Dashboard({
   vistos = new Map(),
   aoAbrirComFiltro,
   aoAbrirRelatorio,
+  aoAbrirDemanda,
+  notificacoes = [],
+  aoAbrirNotificacao,
   naoLidas,
   aoAbrirNotif,
 }) {
   const [dados, setDados] = useState(null)
   const ehStaff = perfil.papel !== 'vendedor'
+  // Efetivar cancelamento é só do Admin/Atendente (§12) — o gerente NÃO decide.
+  // O chip "Cancelamentos a decidir" usa isto (e não `ehStaff`, que inclui o
+  // gerente): não faz sentido oferecer a ele uma fila em que não pode agir.
+  const podeDecidirCancel =
+    perfil.papel === 'admin' || perfil.papel === 'atendente'
   useTique() // faz o "online há X" atualizar sozinho enquanto a tela fica aberta
 
   const carregar = useCallback(async () => {
@@ -92,7 +113,7 @@ export default function Dashboard({
         supabase
           .from('demanda')
           .select(
-            'id, status, prazo, cancelamento_solicitado, vendedor_id, urgencia_manual, vendedor:perfil!vendedor_id(nome_completo, papel)',
+            'id, status, prazo, cancelamento_solicitado, vendedor_id, urgencia_manual, obra(nome, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo, papel)',
           ),
         supabase.rpc('datas_primeira_revisao'),
         // Vendedores ativos — base do widget "Vendedores online" (§#46).
@@ -111,8 +132,10 @@ export default function Dashboard({
     const porStatus = {}
     const porUrgencia = {}
     const porVendedor = {} // vendedor_id -> { nome, aberto }
+    const itensAtencao = [] // as demandas em atenção (para LISTAR, não só contar)
     let emAberto = 0
     let atencao = 0
+    let cancelamentos = 0 // só cancelamento solicitado (chip do staff, §Bloco B)
 
     for (const d of demandas ?? []) {
       porStatus[d.status] = (porStatus[d.status] ?? 0) + 1
@@ -124,7 +147,23 @@ export default function Dashboard({
       const u = urgenciaEfetiva(d) // manual (gerente) ou calculada; null se terminal
       const prazoVencido = u?.nivel === 'atrasado'
       const custoAtras = estaCustoAtrasado(d.status, rev[d.id])
-      if (prazoVencido || custoAtras || d.cancelamento_solicitado) atencao += 1
+      if (d.cancelamento_solicitado) cancelamentos += 1
+      if (prazoVencido || custoAtras || d.cancelamento_solicitado) {
+        atencao += 1
+        // motivo mais grave manda (prazo vencido > custo atrasado > cancelamento)
+        const motivo = prazoVencido
+          ? 'atrasado'
+          : custoAtras
+            ? 'custo'
+            : 'cancelamento'
+        itensAtencao.push({
+          id: d.id,
+          cliente: d.obra?.cliente?.nome ?? 'Cliente',
+          obra: d.obra?.nome ?? '',
+          motivo,
+          ordem: motivo === 'atrasado' ? 0 : motivo === 'custo' ? 1 : 2,
+        })
+      }
 
       // Urgencia so existe para nao-terminais (u == null nos terminais).
       if (u) porUrgencia[u.nivel] = (porUrgencia[u.nivel] ?? 0) + 1
@@ -143,9 +182,13 @@ export default function Dashboard({
       }
     }
 
+    itensAtencao.sort((a, b) => a.ordem - b.ordem)
+
     setDados({
       emAberto,
       atencao,
+      cancelamentos,
+      itensAtencao,
       porStatus,
       porUrgencia,
       porVendedor,
@@ -291,23 +334,73 @@ export default function Dashboard({
             </div>
           ) : (
             <>
-              {dados.atencao > 0 ? (
+              {/* KPIs lado a lado: os dois números-cabeça (§Bloco B). */}
+              <div className="dash-kpis">
                 <button
                   type="button"
-                  className="box-inicio box-atencao"
+                  className={`dash-kpi${dados.atencao > 0 ? ' perigo' : ''}`}
                   onClick={() => aoAbrirComFiltro({ soAtencao: true })}
                 >
-                  <span className="box-atencao-icone">
-                    <Icone nome="aviso" size={22} />
-                  </span>
-                  <span className="box-atencao-texto">
-                    <span className="box-titulo">Precisam de atenção</span>
-                    <span className="box-hint">
-                      prazo vencido, custo atrasado ou cancelamento pedido
-                    </span>
-                  </span>
-                  <span className="box-numero">{dados.atencao}</span>
+                  <span className="dash-kpi-rot">Precisam de atenção</span>
+                  <span className="dash-kpi-num">{dados.atencao}</span>
                 </button>
+                <button
+                  type="button"
+                  className="dash-kpi"
+                  onClick={() => aoAbrirComFiltro({ soAtivas: true })}
+                >
+                  <span className="dash-kpi-rot">Em aberto</span>
+                  <span className="dash-kpi-num">{dados.emAberto}</span>
+                </button>
+              </div>
+
+              {/* Atenção como ITENS acionáveis: cada linha abre o detalhe da
+                  demanda. Sem nada em atenção, um "tudo em dia" calmo (a ausência
+                  de card seria ambígua). §Bloco B */}
+              {dados.atencao > 0 ? (
+                <div className="card-resumo atencao-lista">
+                  <span className="box-titulo box-titulo-perigo">
+                    Precisam de atenção
+                  </span>
+                  <ul className="atencao-itens">
+                    {dados.itensAtencao.slice(0, 4).map((it) => (
+                      <li key={it.id}>
+                        <button
+                          type="button"
+                          className="atencao-item"
+                          onClick={() => aoAbrirDemanda(it.id)}
+                        >
+                          <span
+                            className="atencao-faixa"
+                            style={{ background: MOTIVO[it.motivo].cor }}
+                          />
+                          <span className="atencao-quem">
+                            <span className="atencao-cliente">{it.cliente}</span>
+                            {it.obra && (
+                              <span className="atencao-obra">{it.obra}</span>
+                            )}
+                          </span>
+                          <span
+                            className="atencao-motivo"
+                            style={{ color: MOTIVO[it.motivo].cor }}
+                          >
+                            {MOTIVO[it.motivo].rotulo}
+                          </span>
+                          <Icone nome="chevron-direita" size={16} />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  {dados.atencao > 4 && (
+                    <button
+                      type="button"
+                      className="atencao-ver-todas"
+                      onClick={() => aoAbrirComFiltro({ soAtencao: true })}
+                    >
+                      ver todas ({dados.atencao})
+                    </button>
+                  )}
+                </div>
               ) : (
                 <div className="box-inicio box-tudo-ok">
                   <span className="box-tudo-ok-icone">
@@ -319,17 +412,53 @@ export default function Dashboard({
                 </div>
               )}
 
-              {/* EM ABERTO — a base do topo de foco */}
-              <button
-                type="button"
-                className="box-inicio box-total"
-                onClick={() => aoAbrirComFiltro({ soAtivas: true })}
-              >
-                <span className="box-titulo">Demandas em aberto</span>
-                <span className="box-numero">{dados.emAberto}</span>
-                <span className="box-hint">toque para ver</span>
-              </button>
+              {/* Cancelamentos a decidir: só Admin/Atendente (quem efetiva,
+                  §12 — o gerente não decide), e só se houver. É a única ação
+                  "decidir sim/não" e trava o vendedor (§Bloco B). */}
+              {podeDecidirCancel && dados.cancelamentos > 0 && (
+                <button
+                  type="button"
+                  className="box-inicio chip-decidir"
+                  onClick={() =>
+                    aoAbrirComFiltro({ soCancelamentoSolicitado: true })
+                  }
+                >
+                  <Icone nome="cancelado" size={18} />
+                  <span className="chip-decidir-txt">
+                    Cancelamentos a decidir
+                  </span>
+                  <span className="chip-decidir-num">{dados.cancelamentos}</span>
+                </button>
+              )}
             </>
+          )}
+
+          {/* Novidades nas suas demandas (só vendedor): o "o que mexeu no que eu
+              pedi", reusando a fonte única de notificações (§Bloco B). Fica fora
+              do ramo "em aberto" para aparecer mesmo sem fila aberta. */}
+          {!ehStaff && notificacoes.length > 0 && (
+            <div className="card-resumo">
+              <span className="box-titulo">Novidades nas suas demandas</span>
+              <ul className="novidades">
+                {notificacoes.slice(0, 5).map((n) => (
+                  <li key={n.id}>
+                    <button
+                      type="button"
+                      className={`novidade${n.lida ? '' : ' nao-lida'}`}
+                      onClick={() => aoAbrirNotificacao(n)}
+                    >
+                      <span className="novidade-ponto" aria-hidden="true" />
+                      <span className="novidade-texto">
+                        {textoNotificacao(n)}
+                        <span className="novidade-quando">
+                          {haQuantoTempo(n.created_at)}
+                        </span>
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
 
           {temDistribuicao && <p className="secao-rotulo">Distribuição</p>}

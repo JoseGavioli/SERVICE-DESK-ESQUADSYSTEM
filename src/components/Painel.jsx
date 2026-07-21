@@ -300,6 +300,12 @@ export default function Painel({ sessao }) {
             vistos={ultimoVisto}
             aoAbrirComFiltro={abrirDemandasComFiltro}
             aoAbrirRelatorio={() => setSecao('relatorio')}
+            aoAbrirDemanda={abrirDemanda}
+            notificacoes={notificacoes}
+            aoAbrirNotificacao={(n) => {
+              marcarLida(n.id)
+              abrirDemanda(n.demanda_id)
+            }}
             naoLidas={naoLidas}
             aoAbrirNotif={() => setNotifAberto(true)}
           />

@@ -27,6 +27,7 @@ const FILTROS_VAZIOS = {
   vendedor: '', // vendedor_id; so o staff usa (§issue #37)
   soAtivas: false,
   soAtencao: false, // atalho "precisam de atencao" (§issue #4)
+  soCancelamentoSolicitado: false, // atalho "cancelamentos a decidir" (§Bloco B)
   ordenacao: 'padrao', // padrao | urgencia | recentes | antigas
 }
 
@@ -236,6 +237,7 @@ export default function Demandas({
     f.vendedor !== '' ||
     f.soAtivas ||
     f.soAtencao ||
+    f.soCancelamentoSolicitado ||
     f.ordenacao !== 'padrao'
 
   // Vendedores que aparecem nas demandas visiveis (so staff usa o filtro por
@@ -259,11 +261,14 @@ export default function Demandas({
 
   // Quantas demandas visiveis "merecem atencao" (para o atalho, §issue #4).
   const qtdAtencao = demandas.filter(mereceAtencao).length
+  // Quantas com cancelamento SOLICITADO (chip "Cancelamentos", §Bloco B).
+  const qtdCancelamentos = demandas.filter((d) => d.cancelamento_solicitado).length
 
   function calcularLista() {
     const termo = f.busca.trim().toLowerCase()
     let lista = demandas.filter((d) => {
       if (f.soAtencao && !mereceAtencao(d)) return false
+      if (f.soCancelamentoSolicitado && !d.cancelamento_solicitado) return false
       if (f.status && d.status !== f.status) return false
       if (f.vendedor && d.vendedor_id !== f.vendedor) return false
       if (f.soAtivas && (d.status === 'enviado' || d.status === 'cancelada'))
@@ -577,6 +582,25 @@ export default function Demandas({
               >
                 <Icone nome="aviso" size={14} /> Atenção
                 <span className="chip-contador">{qtdAtencao}</span>
+              </button>
+            )}
+            {/* "Cancelamentos" (§Bloco B): mesmo padrão da Atenção. O atalho da
+                dashboard ("Cancelamentos a decidir") acende este chip; tocar de
+                novo desliga o filtro — assim ele nunca fica preso. */}
+            {i === 0 && qtdCancelamentos > 0 && (
+              <button
+                type="button"
+                className={`chip-status ${f.soCancelamentoSolicitado ? 'ativo' : ''}`}
+                onClick={() =>
+                  setF((prev) => ({
+                    ...prev,
+                    soCancelamentoSolicitado: !prev.soCancelamentoSolicitado,
+                  }))
+                }
+                aria-pressed={f.soCancelamentoSolicitado}
+              >
+                <Icone nome="cancelado" size={14} /> Cancelamentos
+                <span className="chip-contador">{qtdCancelamentos}</span>
               </button>
             )}
           </Fragment>
