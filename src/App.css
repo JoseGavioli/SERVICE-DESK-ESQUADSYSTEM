@@ -1653,6 +1653,12 @@ textarea::placeholder {
   color: var(--texto);
   transition: background 0.12s ease;
 }
+/* A coluna de texto (1o filho) pode encolher a 0 para os badges caberem; sem
+   isto, um titulo longo empurrava status/urgencia para fora da tela no celular
+   (§bug mobile). Pareado com `.badges { flex-shrink: 0 }`. */
+.item-demanda > div:first-child {
+  min-width: 0;
+}
 .item-demanda:hover {
   background: var(--surface-hover);
 }
@@ -1742,12 +1748,15 @@ textarea::placeholder {
   color: var(--texto-suave);
   font-size: 0.72rem;
   font-weight: 600;
-  white-space: nowrap;
+  /* pode quebrar em 2 linhas num card apertado — antes, sendo nowrap, o texto
+     "Última atualização há X" alargava o card e empurrava os badges (§bug). */
+  white-space: normal;
 }
 /* nome do cliente no item da lista: caixa alta + negrito */
 .cliente-nome {
   text-transform: uppercase;
   font-weight: 700;
+  overflow-wrap: anywhere; /* quebra nome muito longo sem espaço (§bug mobile) */
 }
 /* folga no rodape da lista (o "+" agora vive no centro do bottom-nav) */
 .secao-demandas {
@@ -3086,6 +3095,7 @@ textarea::placeholder {
   flex-direction: column;
   align-items: flex-end;
   gap: 0.25rem;
+  flex-shrink: 0; /* nunca some/encolhe — a coluna de texto e que cede (§bug) */
 }
 .badges-linha {
   display: flex;
