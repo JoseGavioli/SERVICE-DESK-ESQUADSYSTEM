@@ -6,6 +6,7 @@ import {
   enviarAnexo,
   validarArquivo,
 } from '../lib/anexos'
+import { montarZip } from '../lib/zip'
 import Lightbox from './Lightbox'
 import MiniaturaPdf from './MiniaturaPdf'
 import Icone from './Icone'
@@ -22,6 +23,8 @@ export default function CarrosselEntrada({ demanda, perfil }) {
   const [carregando, setCarregando] = useState(true)
   const [enviando, setEnviando] = useState(false)
   const [progresso, setProgresso] = useState('') // "2 de 5" (so com varios)
+  const [baixandoZip, setBaixandoZip] = useState(false)
+  const [progressoZip, setProgressoZip] = useState('') // "2 de 5" no download
   const [erro, setErro] = useState('')
 
   // Gerenciar entrada: so o vendedor dono, e SO enquanto "nao iniciado".
@@ -113,6 +116,81 @@ export default function CarrosselEntrada({ demanda, perfil }) {
     else carregar()
   }
 
+  // Nome unico dentro do zip: dois PDFs com o mesmo nome_original nao podem
+  // colidir. Na colisao, vira "nome (2).pdf", "nome (3).pdf"...
+  function nomeUnicoNoZip(nome, usados) {
+    if (!usados.has(nome)) {
+      usados.add(nome)
+      return nome
+    }
+    const ponto = nome.lastIndexOf('.')
+    const base = ponto > 0 ? nome.slice(0, ponto) : nome
+    const ext = ponto > 0 ? nome.slice(ponto) : ''
+    let n = 2
+    let novo = `${base} (${n})${ext}`
+    while (usados.has(novo)) {
+      n += 1
+      novo = `${base} (${n})${ext}`
+    }
+    usados.add(novo)
+    return novo
+  }
+
+  // Dispara o download de um Blob (sem abrir aba em branco).
+  function baixarBlob(blob, nomeArquivo) {
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = nomeArquivo
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  }
+
+  // Baixa TODOS os PDFs de entrada compactados num .zip (§nova função). Busca
+  // cada um pelo Storage EM SERIE (com contador "2 de 5"); um que falhe nao
+  // impede os outros. Usa .download() do supabase — passa pela RLS (so baixa o
+  // que o usuario ja pode ver). O zip e montado no navegador (lib/zip.js).
+  async function baixarPdfsEmZip() {
+    const lista = anexos.filter((a) => /\.pdf$/i.test(a.nome_original))
+    if (lista.length < 2) return
+    setErro('')
+    setBaixandoZip(true)
+    try {
+      const arquivos = []
+      const usados = new Set()
+      const falhas = []
+      for (let i = 0; i < lista.length; i++) {
+        setProgressoZip(`${i + 1} de ${lista.length}`)
+        const a = lista[i]
+        const { data, error } = await supabase.storage
+          .from('anexos')
+          .download(a.caminho_storage)
+        if (error || !data) {
+          falhas.push(a.nome_original)
+          continue
+        }
+        const bytes = new Uint8Array(await data.arrayBuffer())
+        arquivos.push({
+          nome: nomeUnicoNoZip(a.nome_original, usados),
+          dados: bytes,
+        })
+      }
+      if (!arquivos.length) {
+        setErro('Não foi possível baixar os PDFs.')
+        return
+      }
+      baixarBlob(montarZip(arquivos), `demanda-${demanda.id}-pdfs.zip`)
+      if (falhas.length) {
+        setErro(`Não deu para incluir: ${falhas.join(', ')}.`)
+      }
+    } finally {
+      setBaixandoZip(false)
+      setProgressoZip('')
+    }
+  }
+
   // Miniatura de um anexo: imagem (thumb) ou placeholder de PDF/arquivo.
   function preview(a, grande) {
     const url = urls[a.caminho_storage]
@@ -176,6 +254,27 @@ export default function CarrosselEntrada({ demanda, perfil }) {
     </div>
   )
 
+  // Baixar todos os PDFs de entrada num .zip. So aparece com 2+ PDFs (para 1
+  // so, o proprio anexo ja abre). Qualquer um que ve o detalhe pode baixar.
+  const pdfsEntrada = anexos.filter((a) => /\.pdf$/i.test(a.nome_original))
+  const botaoBaixarPdfs = pdfsEntrada.length >= 2 && (
+    <button
+      type="button"
+      className="hero-baixar-zip"
+      onClick={baixarPdfsEmZip}
+      disabled={baixandoZip}
+    >
+      {baixandoZip ? (
+        progressoZip ? `Baixando ${progressoZip}…` : 'Compactando…'
+      ) : (
+        <>
+          <Icone nome="arquivo" size={16} /> Baixar os {pdfsEntrada.length} PDFs
+          (.zip)
+        </>
+      )}
+    </button>
+  )
+
   if (carregando) {
     return <div className="hero-anexo hero-anexo-vazio">Carregando…</div>
   }
@@ -234,6 +333,7 @@ export default function CarrosselEntrada({ demanda, perfil }) {
         </>
       )}
 
+      {botaoBaixarPdfs}
       {botaoAdicionar}
       {erro && <p className="erro">{erro}</p>}
 

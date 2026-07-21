@@ -3584,6 +3584,31 @@ textarea::placeholder {
   opacity: 0.8;
   cursor: default;
 }
+/* Botao "Baixar os N PDFs (.zip)" (§nova função): ação secundária no hero de
+   entrada, visível a todos que veem o detalhe (não só o dono). */
+.hero-baixar-zip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid var(--borda-forte);
+  border-radius: var(--raio);
+  background: var(--surface);
+  color: var(--texto);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.hero-baixar-zip:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+.hero-baixar-zip:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
 .anexos-novos {
   display: flex;
   flex-direction: column;
