@@ -383,6 +383,7 @@ export default function Demandas({
   if (criando) {
     return (
       <NovaDemanda
+        perfil={perfil}
         aoCriar={(novoId) => {
           setCriando(false)
           carregar()

@@ -30,6 +30,7 @@ import Icone from './Icone'
 // O vendedor_id NAO e enviado: o banco preenche com auth.uid() (autor
 // inforjavel, §5).
 export default function NovaDemanda({
+  perfil,
   aoCriar,
   aoCancelar,
   obraFixa,
@@ -38,6 +39,9 @@ export default function NovaDemanda({
   aoAbrirNotif,
 }) {
   const ehFilha = Boolean(obraFixa)
+  // Só o admin pode escolher OUTRO dono para a demanda (§#29). A RLS (0042) é
+  // quem garante isso de fato — aqui é só a interface.
+  const ehAdmin = perfil?.papel === 'admin'
   // Hero completo so no modo TELA CHEIA (via "+"); na filha e inline.
   const comHero = Boolean(aoAbrirNotif)
   const [cliente, setCliente] = useState(null)
@@ -55,6 +59,8 @@ export default function NovaDemanda({
   const [erro, setErro] = useState('')
   const [aberto, setAberto] = useState(null) // id do card aberto (so um por vez)
   const [tentou, setTentou] = useState(false) // ja tentou criar? (so ai marcamos)
+  const [donos, setDonos] = useState([]) // possiveis donos (so o admin usa)
+  const [proprietario, setProprietario] = useState(null) // dono escolhido; null = eu
 
   useEffect(() => {
     async function carregarTipos() {
@@ -67,6 +73,23 @@ export default function NovaDemanda({
     }
     carregarTipos()
   }, [])
+
+  // Lista de donos possiveis (vendedores + gerentes ativos, exceto o oculto).
+  // So o admin precisa — os outros nem veem o card "Proprietario".
+  useEffect(() => {
+    if (!ehAdmin) return
+    async function carregarDonos() {
+      const { data } = await supabase
+        .from('perfil')
+        .select('id, nome_completo')
+        .in('papel', ['vendedor', 'gerente'])
+        .eq('ativo', true)
+        .eq('oculto', false)
+        .order('nome_completo')
+      if (data) setDonos(data)
+    }
+    carregarDonos()
+  }, [ehAdmin])
 
   function alternar(id) {
     setAberto((atual) => (atual === id ? null : id))
@@ -172,6 +195,10 @@ export default function NovaDemanda({
         rt,
         rt_percentual: rt && rtPercentual !== '' ? Number(rtPercentual) : null,
         arquiteto_engenheiro: arquiteto.trim() || null,
+        // Dono escolhido pelo admin (§#29). Sem isto, o banco usa o default
+        // auth.uid() (o proprio criador). A RLS (0042) so aceita dono != eu
+        // quando sou admin — para os outros, este campo nem existe na tela.
+        ...(proprietario ? { vendedor_id: proprietario.id } : {}),
       })
       .select('id')
       .single()
@@ -377,6 +404,35 @@ export default function NovaDemanda({
               }
             />
           </CardCampo>
+
+          {/* Proprietário — SÓ admin (§#29). No fim do form; opcional (o padrão
+              é o próprio admin). Escolher outro dono só é aceito pela RLS (0042)
+              quando quem cria é admin. */}
+          {ehAdmin && (
+            <CardCampo
+              id="card-proprietario"
+              icone="perfil"
+              titulo="Proprietário"
+              subtitulo={
+                proprietario ? proprietario.nome_completo : 'Você (padrão)'
+              }
+              preenchido={Boolean(proprietario)}
+              aberto={aberto === 'proprietario'}
+              aoClicar={() => alternar('proprietario')}
+            >
+              <NdOpcoes
+                opcoes={[
+                  { id: '', nome: 'Você (fica em seu nome)' },
+                  ...donos.map((d) => ({ id: d.id, nome: d.nome_completo })),
+                ]}
+                valor={proprietario?.id ?? ''}
+                aoEscolher={(id) => {
+                  setProprietario(id ? donos.find((d) => d.id === id) : null)
+                  setAberto(null)
+                }}
+              />
+            </CardCampo>
+          )}
         </div>
 
         {tentou && faltantes.length > 0 && (

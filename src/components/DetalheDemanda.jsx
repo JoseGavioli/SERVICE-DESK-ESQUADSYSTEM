@@ -244,6 +244,7 @@ export default function DetalheDemanda({
         <div className="filha">
           {criandoFilha ? (
             <NovaDemanda
+              perfil={perfil}
               obraFixa={{ id: d.obra_id, nome: d.obra?.nome }}
               demandaPaiId={d.id}
               aoCriar={(novoId) => {
