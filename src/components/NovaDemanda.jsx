@@ -35,6 +35,7 @@ export default function NovaDemanda({
   aoCancelar,
   obraFixa,
   demandaPaiId,
+  demandaPai,
   naoLidas,
   aoAbrirNotif,
 }) {
@@ -50,10 +51,18 @@ export default function NovaDemanda({
   const [tipoId, setTipoId] = useState('')
   const [descricao, setDescricao] = useState('')
   const [prazo, setPrazo] = useState('')
-  const [origem, setOrigem] = useState('')
-  const [rt, setRt] = useState(false)
-  const [rtPercentual, setRtPercentual] = useState('')
-  const [arquiteto, setArquiteto] = useState('')
+  // Na FILHA, origem e condições comerciais herdam do pai (a origem fica
+  // escondida — a filha veio do mesmo lead; §11). No modo normal, tudo vazio.
+  const [origem, setOrigem] = useState(ehFilha ? (demandaPai?.origem ?? '') : '')
+  const [rt, setRt] = useState(ehFilha ? Boolean(demandaPai?.rt) : false)
+  const [rtPercentual, setRtPercentual] = useState(
+    ehFilha && demandaPai?.rt_percentual != null
+      ? String(demandaPai.rt_percentual)
+      : '',
+  )
+  const [arquiteto, setArquiteto] = useState(
+    ehFilha ? (demandaPai?.arquiteto ?? '') : '',
+  )
   const [arquivos, setArquivos] = useState([]) // anexos de entrada (ainda nao enviados)
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
@@ -225,6 +234,11 @@ export default function NovaDemanda({
   }
 
   const nomeTipo = tipos.find((t) => String(t.id) === String(tipoId))?.nome
+  // Na filha, "Orçamento novo" não faz sentido — a filha é continuação de uma
+  // demanda JÁ enviada (revisão, fechamento, adendo...). §11.
+  const tiposDisponiveis = ehFilha
+    ? tipos.filter((t) => t.nome !== 'Orçamento novo')
+    : tipos
 
   function subCondicoes() {
     const partes = []
@@ -260,10 +274,22 @@ export default function NovaDemanda({
 
         <div className="nd-cards">
           {ehFilha ? (
-            <p className="campo-obra-fixa">
-              Obra: <strong>{obraFixa.nome}</strong>{' '}
-              <em>(herdada da demanda-pai)</em>
-            </p>
+            /* Card no TOPO: qual demanda está sendo vinculada (§11). */
+            <div className="nd-vinculada">
+              <span className="nd-vinculada-icone">
+                <Icone nome="seta-filha" size={20} />
+              </span>
+              <span className="nd-vinculada-texto">
+                <span className="nd-vinculada-rot">Revisão vinculada a</span>
+                <strong className="nd-vinculada-dem">
+                  {demandaPai?.codigo ? `#${demandaPai.codigo} — ` : ''}
+                  {demandaPai?.cliente ?? obraFixa.nome}
+                </strong>
+                <span className="nd-vinculada-obra">
+                  {demandaPai?.obra ?? obraFixa.nome}
+                </span>
+              </span>
+            </div>
           ) : (
             <NdClienteObra
               cliente={cliente}
@@ -290,7 +316,7 @@ export default function NovaDemanda({
             aoClicar={() => alternar('tipo')}
           >
             <NdOpcoes
-              opcoes={tipos}
+              opcoes={tiposDisponiveis}
               valor={tipoId}
               aoEscolher={(id) => {
                 setTipoId(String(id))
@@ -336,25 +362,29 @@ export default function NovaDemanda({
             aoFechar={() => setAberto(null)}
           />
 
-          <CardCampo
-            id="card-origem"
-            icone="origem"
-            titulo="Origem"
-            subtitulo={origem || 'De onde veio este cliente?'}
-            preenchido={Boolean(origem)}
-            faltando={marcado('origem')}
-            aberto={aberto === 'origem'}
-            aoClicar={() => alternar('origem')}
-          >
-            <NdOpcoes
-              opcoes={ORIGENS.map((o) => ({ id: o, nome: o }))}
-              valor={origem}
-              aoEscolher={(o) => {
-                setOrigem(o)
-                setAberto(null)
-              }}
-            />
-          </CardCampo>
+          {/* Origem: só na demanda normal. Na filha ela é herdada do pai
+              (escondida — a revisão veio do mesmo lead). §11 */}
+          {!ehFilha && (
+            <CardCampo
+              id="card-origem"
+              icone="origem"
+              titulo="Origem"
+              subtitulo={origem || 'De onde veio este cliente?'}
+              preenchido={Boolean(origem)}
+              faltando={marcado('origem')}
+              aberto={aberto === 'origem'}
+              aoClicar={() => alternar('origem')}
+            >
+              <NdOpcoes
+                opcoes={ORIGENS.map((o) => ({ id: o, nome: o }))}
+                valor={origem}
+                aoEscolher={(o) => {
+                  setOrigem(o)
+                  setAberto(null)
+                }}
+              />
+            </CardCampo>
+          )}
 
           {/* Daqui para baixo da para nao mexer. Marcamos onde acaba o
               obrigatorio em vez de confiar que o vendedor repare, campo a

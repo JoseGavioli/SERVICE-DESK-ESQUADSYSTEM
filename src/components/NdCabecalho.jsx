@@ -22,7 +22,9 @@ export default function NdCabecalho({
 
   return (
     <header className="hero-demandas">
-      <h1 className="hero-titulo">Nova demanda</h1>
+      <h1 className="hero-titulo">
+        {ehFilha ? 'Revisão de demanda' : 'Nova demanda'}
+      </h1>
       <div className="hero-acoes">
         <button
           type="button"

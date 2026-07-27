@@ -59,7 +59,8 @@ export function calcularFaltantes({
   if (!tipoId) faltantes.push({ id: 'tipo', nome: 'tipo' })
   if (!descricao.trim()) faltantes.push({ id: 'descricao', nome: 'descrição' })
   if (!prazo) faltantes.push({ id: 'prazo', nome: 'prazo' })
-  if (!origem) faltantes.push({ id: 'origem', nome: 'origem' })
+  // Na filha a origem é herdada do pai (escondida) — não é obrigatória aqui.
+  if (!ehFilha && !origem) faltantes.push({ id: 'origem', nome: 'origem' })
   if (rt && String(rtPercentual).trim() === '')
     faltantes.push({ id: 'condicoes', nome: '% da RT' })
   return faltantes

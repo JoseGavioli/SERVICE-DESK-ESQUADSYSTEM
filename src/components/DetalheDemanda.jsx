@@ -111,13 +111,40 @@ export default function DetalheDemanda({
     )
   }
 
-  // A "demanda-filha" (§11) esta OCULTA por ora — o dono vai confirmar com os
-  // vendedores se e util antes de liberar (nada foi deletado/desativado).
-  // Para REATIVAR, troque `false` pela condicao original:
-  //   d.status === 'enviado' && perfil.id === d.vendedor_id
-  const podeCriarFilha = false
+  // "Revisão de demanda" (demanda-filha, §11): toda continuação de uma demanda
+  // JÁ ENVIADA é uma demanda NOVA vinculada à pai (nunca reabertura). Só o
+  // vendedor DONO vê o botão, e só quando a demanda está "enviado".
+  const podeCriarFilha = d.status === 'enviado' && perfil.id === d.vendedor_id
   // Dias uteis em revisao de custo (§issue #13); null se nunca entrou.
   const diasRevisao = diasUteisDesde(dataRevisao)
+
+  // Criando a "Revisão de demanda" (filha): tela CHEIA própria, com hero
+  // (voltar + sino), como a Nova demanda pelo "+". §11
+  if (criandoFilha) {
+    return (
+      <NovaDemanda
+        perfil={perfil}
+        obraFixa={{ id: d.obra_id, nome: d.obra?.nome }}
+        demandaPaiId={d.id}
+        demandaPai={{
+          codigo,
+          cliente: d.obra?.cliente?.nome,
+          obra: d.obra?.nome,
+          origem: d.origem,
+          rt: d.rt,
+          rt_percentual: d.rt_percentual,
+          arquiteto: d.arquiteto_engenheiro,
+        }}
+        naoLidas={naoLidas}
+        aoAbrirNotif={aoAbrirNotif}
+        aoCriar={(novoId) => {
+          setCriandoFilha(false)
+          aoAbrir(novoId) // abre a filha recém-criada
+        }}
+        aoCancelar={() => setCriandoFilha(false)}
+      />
+    )
+  }
 
   const criadaEm = new Date(d.created_at).toLocaleDateString('pt-BR')
 
@@ -220,6 +247,20 @@ export default function DetalheDemanda({
       {/* Anexos (box completa) */}
       <Anexos demanda={d} perfil={perfil} />
 
+      {/* "Revisão de demanda" (§11): só o dono, só quando enviado. Fica logo
+          abaixo dos anexos de saída; abre a tela cheia de criação da filha. */}
+      {podeCriarFilha && (
+        <div className="revisao-acao">
+          <button
+            type="button"
+            className="botao-filha"
+            onClick={() => setCriandoFilha(true)}
+          >
+            <Icone nome="mais" size={16} /> Revisão de demanda
+          </button>
+        </div>
+      )}
+
       {/* Autor + data de criacao */}
       <div className="det-autor">
         <Avatar
@@ -239,31 +280,6 @@ export default function DetalheDemanda({
         <h3 className="det-card-titulo">Andamento</h3>
         <LinhaTempoStatus status={d.status} diasRevisao={diasRevisao} />
       </section>
-
-      {podeCriarFilha && (
-        <div className="filha">
-          {criandoFilha ? (
-            <NovaDemanda
-              perfil={perfil}
-              obraFixa={{ id: d.obra_id, nome: d.obra?.nome }}
-              demandaPaiId={d.id}
-              aoCriar={(novoId) => {
-                setCriandoFilha(false)
-                aoAbrir(novoId) // abre a filha recem-criada
-              }}
-              aoCancelar={() => setCriandoFilha(false)}
-            />
-          ) : (
-            <button
-              type="button"
-              className="botao-filha"
-              onClick={() => setCriandoFilha(true)}
-            >
-              <Icone nome="mais" size={16} /> Criar demanda vinculada
-            </button>
-          )}
-        </div>
-      )}
 
       {/* Historico */}
       <HistoricoStatus key={`h${versao}`} demandaId={d.id} />

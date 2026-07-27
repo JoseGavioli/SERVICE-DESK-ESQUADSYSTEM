@@ -2193,20 +2193,6 @@ textarea::placeholder {
 }
 
 /* obra herdada (modo filha) */
-.campo-obra-fixa {
-  margin: 0;
-  padding: 0.9rem;
-  background: var(--surface);
-  border-radius: var(--raio-card);
-  box-shadow: var(--sombra-sm);
-  color: var(--texto);
-  font-size: 0.95rem;
-}
-.campo-obra-fixa em {
-  font-style: normal;
-  color: var(--texto-suave);
-  font-size: 0.85rem;
-}
 
 /* Barra fixa "Criar demanda": reusa .det-barra-acao + .btn-alterar-status
    (navy + botao branco). z-46 cobre o bottom-nav (z-45). So o estado
@@ -3760,19 +3746,77 @@ textarea::placeholder {
 }
 
 /* ── Demanda-filha ─────────────────────────────────────────── */
-.filha {
-  margin-top: 1.25rem;
+/* "Revisão de demanda": botão centralizado e responsivo, abaixo dos anexos. */
+.revisao-acao {
+  display: flex;
+  justify-content: center;
+  margin: 0.4rem 0 0.5rem;
 }
 .botao-filha {
-  padding: 0.55rem 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  max-width: 340px;
+  padding: 0.75rem 1rem;
   border: 0;
-  border-radius: var(--raio-sm);
+  border-radius: var(--raio);
   background: var(--primaria);
   color: var(--primaria-texto);
   font-weight: 600;
   cursor: pointer;
   font-size: 0.95rem;
   transition: background 0.15s ease;
+}
+/* Card no topo da criação da filha: qual demanda está sendo vinculada. */
+.nd-vinculada {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  background: var(--surface);
+  border-radius: var(--raio-card);
+  box-shadow: var(--sombra-sm);
+  padding: 0.9rem;
+  border-left: 3px solid var(--primaria);
+}
+.nd-vinculada-icone {
+  flex: none;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primaria-suave);
+  color: var(--primaria);
+}
+.nd-vinculada-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+.nd-vinculada-rot {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+.nd-vinculada-dem {
+  font-size: 0.98rem;
+  color: var(--texto);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nd-vinculada-obra {
+  font-size: 0.82rem;
+  color: var(--texto-suave);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .botao-filha:hover {
   background: var(--primaria-hover);
