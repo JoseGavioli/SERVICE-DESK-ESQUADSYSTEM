@@ -68,6 +68,15 @@
   --ur-urgente-bg: #fff3e0; --ur-urgente-fg: #e65100; /* Urgente (laranja) */
   --ur-muito-bg: #ffebee; --ur-muito-fg: #c62828;  /* Muito urgente (vermelho claro) */
   --ur-atrasado-bg: #c62828; --ur-atrasado-fg: #ffffff; /* Atrasado (vermelho solido) */
+
+  /* Origem das demandas (grafico pizza) — paleta CATEGORICA validada (skill dataviz):
+     5 hues distintos p/ daltonismo + cinza neutro p/ "Sem origem". */
+  --org-marketing: #2a78d6;
+  --org-clubcasa: #eb6834;
+  --org-indicacao: #1baf7a;
+  --org-balcao: #eda100;
+  --org-instagram: #e87ba4;
+  --org-sem: #90a0b0;
 }
 
 [data-theme='dark'] {
@@ -115,6 +124,14 @@
   --ur-urgente-bg: #3a2a14; --ur-urgente-fg: #f0a868; /* Urgente (laranja) */
   --ur-muito-bg: #3d1f24; --ur-muito-fg: #ef8a8f;  /* Muito urgente (vermelho claro) */
   --ur-atrasado-bg: #b71c1c; --ur-atrasado-fg: #ffffff; /* Atrasado (vermelho solido) */
+
+  /* Origem das demandas (pizza) — variantes ESCURAS validadas (skill dataviz). */
+  --org-marketing: #3987e5;
+  --org-clubcasa: #d95926;
+  --org-indicacao: #199e70;
+  --org-balcao: #c98500;
+  --org-instagram: #d55181;
+  --org-sem: #7c8896;
 }
 
 * {

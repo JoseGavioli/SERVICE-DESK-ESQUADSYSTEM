@@ -5,9 +5,11 @@ import { urgenciaEfetiva, estaCustoAtrasado, URGENCIA_NIVEIS } from '../lib/urge
 import { textoPresenca, ultimoVistoMs, useTique } from '../lib/usePresenca'
 import { textoNotificacao } from '../lib/notificacaoTexto'
 import { haQuantoTempo } from '../lib/tempo'
+import { ORIGENS } from '../lib/novaDemanda'
 import Avatar from './Avatar'
 import EstadoVazio from './EstadoVazio'
 import Icone from './Icone'
+import PizzaOrigens from './PizzaOrigens'
 
 // Anéis "Por status": só a FILA EM ABERTO. "concluido" entra (foi reativado na
 // migração 0022 e está no fluxo). "enviado" sai dos anéis e vira um contador à
@@ -113,7 +115,7 @@ export default function Dashboard({
         supabase
           .from('demanda')
           .select(
-            'id, status, prazo, cancelamento_solicitado, vendedor_id, urgencia_manual, obra(nome, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo, papel)',
+            'id, status, prazo, origem, cancelamento_solicitado, vendedor_id, urgencia_manual, obra(nome, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo, papel)',
           ),
         supabase.rpc('datas_primeira_revisao'),
         // Vendedores ativos — base do widget "Vendedores online" (§#46).
@@ -132,6 +134,7 @@ export default function Dashboard({
     const porStatus = {}
     const porUrgencia = {}
     const porVendedor = {} // vendedor_id -> { nome, aberto }
+    const porOrigem = {} // total por origem (só donos vendedor/gerente) — pizza
     const itensAtencao = [] // as demandas em atenção (para LISTAR, não só contar)
     let emAberto = 0
     let atencao = 0
@@ -180,6 +183,14 @@ export default function Dashboard({
         }
         porVendedor[vid].aberto += 1
       }
+
+      // Total por ORIGEM (gráfico pizza, gerente/admin): TODAS as demandas
+      // (qualquer status), mas só as de dono vendedor/gerente. A conta de teste
+      // nem chega aqui — a RLS (0041) a esconde para os outros.
+      if (d.vendedor?.papel === 'vendedor' || d.vendedor?.papel === 'gerente') {
+        const org = d.origem || 'Sem origem'
+        porOrigem[org] = (porOrigem[org] ?? 0) + 1
+      }
     }
 
     itensAtencao.sort((a, b) => a.ordem - b.ordem)
@@ -192,6 +203,7 @@ export default function Dashboard({
       porStatus,
       porUrgencia,
       porVendedor,
+      porOrigem,
       equipe: equipe ?? [],
     })
   }, [])
@@ -248,6 +260,17 @@ export default function Dashboard({
     urgVisiveis.length > 0 ||
     vendedores.length > 1 ||
     enviados > 0
+
+  // Origem das demandas (gráfico pizza) — só gerente/admin. Ordem fixa das
+  // origens (§`0029`) + "Sem origem" no fim; só as que têm demanda entram.
+  const podeVerOrigens =
+    perfil.papel === 'gerente' || perfil.papel === 'admin'
+  const origensPizza =
+    dados && podeVerOrigens
+      ? [...ORIGENS, 'Sem origem']
+          .map((org) => ({ origem: org, count: dados.porOrigem[org] ?? 0 }))
+          .filter((o) => o.count > 0)
+      : []
 
   return (
     <div className="secao-dashboard">
@@ -539,6 +562,20 @@ export default function Dashboard({
                   </button>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* ORIGEM DAS DEMANDAS — gráfico pizza (só gerente/admin). Conta
+              TODAS as demandas (qualquer status) de vendedores/gerentes, exceto
+              a conta de teste (escondida pela RLS 0041). Tabela abaixo com as
+              contagens (identidade não fica só na cor). */}
+          {origensPizza.length > 0 && (
+            <div className="card-resumo card-pizza">
+              <span className="box-titulo">Origem das demandas</span>
+              <p className="pizza-nota">
+                Todas as demandas de vendedores e gerentes.
+              </p>
+              <PizzaOrigens itens={origensPizza} />
             </div>
           )}
 
