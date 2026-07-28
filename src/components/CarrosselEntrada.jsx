@@ -111,10 +111,23 @@ export default function CarrosselEntrada({ demanda, perfil }) {
 
   async function remover(a) {
     if (!window.confirm(`Remover "${a.nome_original}"?`)) return
+    setErro('')
+    // Apaga a LINHA primeiro (e ela que a tela le) e confirma pelo .select():
+    // um DELETE barrado pela RLS volta array VAZIO, sem erro — sem isto a
+    // remocao falhava EM SILENCIO e a imagem "nao sumia".
+    const { data: apagadas, error } = await supabase
+      .from('anexo')
+      .delete()
+      .eq('id', a.id)
+      .select('id')
+    if (error || !apagadas?.length) {
+      setErro('Não foi possível remover o anexo.')
+      return
+    }
+    // Linha fora: agora tira o arquivo do Storage (best-effort — se sobrar, e so
+    // um orfao invisivel, nao um erro na cara do usuario).
     await supabase.storage.from('anexos').remove([a.caminho_storage])
-    const { error } = await supabase.from('anexo').delete().eq('id', a.id)
-    if (error) setErro('Não foi possível remover o anexo.')
-    else carregar()
+    carregar()
   }
 
   // Nome unico dentro do zip: dois PDFs com o mesmo nome_original nao podem
