@@ -6,6 +6,15 @@ import { supabase } from './supabase'
 export const MB = 1024 * 1024
 export const FORMATOS_ENTRADA = ['image/jpeg', 'image/png', 'application/pdf']
 
+// Alvo de compressao das fotos de ENTRADA (§14). Fica BEM abaixo do limite de
+// validacao (2 MB) DE PROPOSITO: foto de medicao/croqui e legivel com folga em
+// ~1 MB (a 1920 px o que segura a leitura dos numeros e a resolucao, nao a
+// qualidade JPEG), e o Storage nao pode estourar (~1 GB no plano free). Antes o
+// alvo era o proprio limite de 2 MB, entao foto de 1–2 MB passava INTACTA e ia
+// enchendo o Storage. Mora aqui, num lugar so, porque vale para os DOIS
+// caminhos que enviam entrada — criacao (NdAnexos) e detalhe (CarrosselEntrada).
+export const ALVO_ENTRADA = 1 * MB
+
 // Deixa o nome seguro para usar como caminho no Storage.
 export function nomeSeguro(nome) {
   return nome.normalize('NFD').replace(/[^a-zA-Z0-9.\-_]/g, '_')

@@ -3,6 +3,7 @@ import {
   comprimirImagemSePreciso,
   validarArquivo,
   formatarTamanho,
+  ALVO_ENTRADA,
 } from '../lib/anexos'
 import Icone from './Icone'
 
@@ -20,7 +21,7 @@ export default function NdAnexos({ arquivos, aoAdicionar, aoRemover }) {
     const escolhidos = Array.from(fileList)
     const novos = []
     for (const f of escolhidos) {
-      const arquivo = await comprimirImagemSePreciso(f) // #41
+      const arquivo = await comprimirImagemSePreciso(f, ALVO_ENTRADA) // #41
       const problema = validarArquivo('entrada', arquivo)
       if (problema) setErro(`${arquivo.name}: ${problema}`)
       else novos.push(arquivo)

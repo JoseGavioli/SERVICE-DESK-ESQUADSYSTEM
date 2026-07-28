@@ -5,6 +5,7 @@ import {
   ehImagem,
   enviarAnexo,
   validarArquivo,
+  ALVO_ENTRADA,
 } from '../lib/anexos'
 import { montarZip } from '../lib/zip'
 import Lightbox from './Lightbox'
@@ -93,7 +94,7 @@ export default function CarrosselEntrada({ demanda, perfil }) {
     for (let i = 0; i < lista.length; i++) {
       const file = lista[i]
       setProgresso(lista.length > 1 ? `${i + 1} de ${lista.length}` : '')
-      const arquivo = await comprimirImagemSePreciso(file) // #41
+      const arquivo = await comprimirImagemSePreciso(file, ALVO_ENTRADA) // #41
       const problema = validarArquivo('entrada', arquivo)
       if (problema) {
         falhas.push(`${file.name}: ${problema}`)
