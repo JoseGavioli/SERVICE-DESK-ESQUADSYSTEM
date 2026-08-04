@@ -1,18 +1,19 @@
 # 📋 Handoff — Service Desk - EsquadSystem
 
-**Data:** 24/07/2026 · **Branch:** `main` (sincronizada com `origin`) · **HEAD:** `35f89fe`
+**Data:** 04/08/2026 · **Branch:** `main` (sincronizada com `origin`) · **HEAD:** `2f8ce4d`
 
 > Documento de continuidade. Para retomar: leia a **§7** (pendências) e a **§9** (armadilhas).
 > A fundação é o **`CLAUDE.md`** — leia-o por completo antes de mexer em qualquer coisa.
 
 ---
 
-## 1. ✅ Migrações: todas aplicadas (`0001` → `0043`)
+## 1. ✅ Migrações: todas aplicadas (`0001` → `0044`)
 
-Todas rodadas e confirmadas pelo dono no SQL Editor. As três desta rodada:
+Todas rodadas e confirmadas pelo dono no SQL Editor. As mais recentes:
 - **`0041`** — `perfil.oculto` + helper `perfil_oculto()`; esconde as demandas de um perfil oculto (a conta de teste) de todo mundo, menos do próprio dono.
 - **`0042`** — admin pode definir o **dono** da demanda ao criar; + o gatilho de nova demanda passa o **autor real** (`auth.uid()`).
 - **`0043`** — admin pode **anexar entrada** em demanda de outro dono (fix da 0042).
+- **`0044`** — o **dono** da demanda pode **apagar anexo de entrada** dela (tabela + Storage, este pela pasta) enquanto `nao_iniciado` — 2ª regressão da 0042/0043 (ver §6).
 
 > **Lição que se manteve.** O dono roda as migrações; **peça confirmação explícita** de que rodou (não presuma pelo silêncio), sempre diga **o que quebra se não rodar**, e prefira que a ausência degrade **só a tela nova**. Nesta rodada, a `0043` foi um bug que a `0042` criou (ver §6).
 
@@ -32,14 +33,27 @@ App web interno da **EsquadSystem** (esquadrias de alumínio) para gerir **deman
 
 ## 4. Estado atual
 
-- **Fases 0–6 completas** e no ar. Migrações **`0001` → `0043`**, todas aplicadas (§1).
+- **Fases 0–6 completas** e no ar. Migrações **`0001` → `0044`**, todas aplicadas (§1).
 - **Web Push (#14): CONCLUÍDO** — validado nas 3 plataformas (desktop, Android, iOS com PWA).
 - **Nova demanda:** reformada em **cards** (§5) — a última tela que faltava padronizar.
-- **Dashboard:** **Blocos A e B feitos**; falta o **Bloco C** (contar no banco — ver §7).
+- **Dashboard: reforma COMPLETA** — Blocos A, B e **C** (contagem híbrida, #77). A **lista** ainda tem a exposição ao corte de ~1000 (#78, aberta — ver §7).
+- **Anexos de entrada:** comprimidos para **≤ 1 MB** (`ALVO_ENTRADA` em `lib/anexos.js`) nos DOIS caminhos (criação e detalhe).
 - **Conta de teste** (`teste@gmail.com` = 'USUARIO DE TESTE'): **oculta** (0041) — não aparece nas listas/dashboard/relatório dos outros; e fora do relatório (0040).
 - **Fora do versionamento de propósito:** `deno.lock` e `supabase/functions/criar-usuario/` (Edge Function criada, **não deployada** — pendência #16).
 
 ## 5. O que foi feito
+
+### Sessões de 27/07–04/08/2026 (issues #73–#77 fechadas; #78 aberta)
+
+**Pizza "Origem das demandas" (#73).** Gráfico pizza SVG na mão (`PizzaOrigens.jsx`, sem dependência) no Dashboard, **só gerente/admin**: todas as demandas de donos vendedor/gerente (a conta de teste fica fora via RLS 0041), cores por origem + **tabela de contagens abaixo** (identidade não fica só na cor).
+
+**"Revisão de demanda" (#74).** O botão de demanda-filha (§11) voltou, renomeado: **só o vendedor dono**, **só com status `enviado`**, entre os anexos de saída e o autor. Abre **tela cheia própria** (hero + voltar + sino) com card "Revisão vinculada a #N" no topo; **origem herdada e escondida**, tipo sem "Orçamento novo", condições pré-preenchidas do pai.
+
+**Compressão de entrada ≤ 1 MB (#75).** O dono notou "foto da criação não comprime". Diagnóstico honesto: os dois caminhos JÁ comprimiam — o vazamento era o **alvo de 2 MB** (foto abaixo disso passava intacta). Fix: `ALVO_ENTRADA = 1 MB` em `lib/anexos.js`, passado nos dois chamadores. Resolução mantida (1920 px).
+
+**Dono apaga anexo de entrada (0044 + #76).** 2ª regressão da 0042/0043: o dono via a lixeira mas o DELETE batia na RLS (`anexo_excluir` só olhava autor/admin) e apagava **0 linhas SEM erro** — no PostgREST, DELETE barrado por `USING` é filtro, não erro. `0044` abre tabela + Storage (pela **pasta**, pois o owner do objeto é o admin) para o dono, só entrada, só `nao_iniciado`. `remover()` agora usa **`.delete().select()`** e trata array vazio como falha visível. Verificado adversarialmente (5 casos).
+
+**Dashboard Bloco C (#77) — contagem híbrida.** O `carregar()` puxava TODAS as demandas (corte de ~1000 do PostgREST → subcontagem silenciosa futura). Agora: **abertas como linhas** (paginadas por segurança; urgência segue só em `lib/urgencia.js`, sem 3ª cópia em SQL), **"enviado" como `count exact`/`head`**, **pizza como 6 counts** com filtro de dono via join `!inner` (só p/ quem vê), e a **RPC `datas_primeira_revisao` filtrada** pelos ids das abertas em revisão (sem filtro ela também sofria o corte, SEM `order by` — podia derrubar demanda atual). Verificação tripla: revisão adversarial (equivalência nos 4 papéis) + queries batidas ao vivo no PostgREST via curl + dashboard validado no app. A mesma exposição existe na **lista** → **#78** (aberta).
 
 ### Sessão de 24/07/2026 (issues #64–#72, todas fechadas)
 
@@ -73,6 +87,9 @@ Rede de segurança contra tela branca (`ErrorBoundary` em 2 níveis + `erro_log`
 | **`perfil.oculto` (flag)** vs filtrar por nome/id | Data-driven, como o `oculto_relatorio` (0040). Um `update` liga/desliga p/ qualquer conta. |
 | **Zip "stored" (sem compressão)** | PDF já é comprimido → comprimir renderia ~0. O objetivo é **um arquivo só**. Sem lib (§5); o ZIP é formato simples de escrever à mão. |
 | **Revisões adversariais (workflows) no fluxo** | Pegaram bugs reais **antes do commit** (ver §6 bugs). Vale rodar uma ao terminar uma tela/feature de risco. |
+| **Bloco C HÍBRIDO** (abertas como linhas + counts no banco) | Escolha do dono entre 3 opções. Contar TUDO em SQL exigiria a **3ª cópia** da regra de urgência (além de `lib/urgencia.js` e `notificar_pendencias()` — o §8 do CLAUDE.md já alerta o desencontro com DUAS). Paginação pura manteria payload crescente. O híbrido: linhas só do que é pequeno (fila aberta), count do que é ilimitado. |
+| **Compressão: alvo único `ALVO_ENTRADA` (1 MB)** | O limite de validação (2 MB) e o ALVO de compressão são coisas distintas: comprimir "até o limite" deixava fotos de 1–2 MB passarem intactas e encherem o Storage. Constante num lugar só, usada pelos dois caminhos de upload. |
+| **`.delete().select()` como padrão de remoção** | DELETE barrado por RLS **não dá erro** no PostgREST (apaga 0 linhas e "sucede"). Sem o `.select()`, a falha é invisível. Checar `error \|\| !data.length`. |
 
 *(As decisões de 16/07 — sheet de 2 toques, busca global descartada, toast descartado, cores fixas do sheet, "atrasado" só em nao_iniciado/em_andamento, `ultima_atividade()` na hora, anexo pós-envio via gatilho, PDF via `window.print()`, relatório por exceção ao §2 — seguem valendo.)*
 
@@ -83,20 +100,23 @@ Rede de segurança contra tela branca (`ErrorBoundary` em 2 níveis + `erro_log`
 4. **Enter num campo de busca submetia a Nova demanda** — ao tirar o `disabled` do botão, o implicit-submit do `<form>` voltou. Fix: `onKeyDown` no form barra Enter em `<input>`. *(Pego por revisão adversarial.)*
 5. **Filtro de cancelamento (Bloco B) ficava preso** — sem chip próprio, nem "limpar" nem os chips de status o desligavam. Fix: chip "Cancelamentos" espelhando o de "Atenção". *(Pego por revisão adversarial.)*
 6. **`anexo_entrada_criar` assumia criador = dono** — quebrou ao atribuir a demanda a outro (0042); os anexos de entrada falhavam. Fix na `0043`.
+7. **`anexo_excluir` + `anexos_storage_delete` também assumiam autor = dono** — 2ª regressão da mesma família (0042): o dono não conseguia apagar entrada subida pelo admin, **sem nenhum erro** (DELETE barrado por RLS = 0 linhas em silêncio). Fix na `0044` + `.delete().select()` no front.
+8. **`datas_primeira_revisao` sem filtro nem `order by`** — sujeita ao corte de ~1000 do PostgREST derrubando linhas ARBITRÁRIAS (o "custo atrasado" podia sumir de demanda atual). Pego na análise do Bloco C; no Dashboard já filtrada, na lista ainda não (#78).
 
-> **Padrão reforçado:** ao mudar um **invariante de posse/permissão** (ex.: "o criador é o dono"), **audite TODAS as policies dependentes** — não só a que você mexeu. Regra de negócio só no front é uma brecha; conferir sempre o par **front ↔ banco**.
+> **Padrão reforçado:** ao mudar um **invariante de posse/permissão** (ex.: "o criador é o dono"), **audite TODAS as policies dependentes** — não só a que você mexeu (já mordeu DUAS vezes: 0043 no INSERT, 0044 no DELETE). Regra de negócio só no front é uma brecha; conferir sempre o par **front ↔ banco**.
 
 ## 7. ⏳ Pendências
 
-- 📊 **Dashboard — Bloco C:** contar no banco (o `carregar()` puxa todas as demandas e conta no JS; o PostgREST corta em ~1000 linhas → depois disso os números **subcontam em silêncio**). Preventivo, não urgente no volume atual. É o que falta da reforma da dashboard.
+- 📊 **#78 — "Bloco C da lista":** `Demandas.jsx` tem a exposição ao corte de ~1000 **em triplo** (as linhas da lista + `datas_primeira_revisao` + `ultima_atividade`, todas sem filtro/paginação). Preventivo, sem efeito no volume atual. A estratégia da lista em si (paginar vs. janela) é decisão de UX — **discutir antes de implementar**.
 - 🔁 **#29 (migrar demandas):** o **go-forward** (atribuir dono ao criar) está feito (0042/0043). Sobra, **se precisar**, reatribuir demandas **JÁ existentes** para outro dono.
+- 🔒 **Anotado (sem issue):** o ramo `autor_id = auth.uid()` do `anexo_excluir` deixa o vendedor-autor apagar a própria entrada em **qualquer status** via API direta (o front nunca mostra o botão fora de `nao_iniciado`). Pré-existente à 0044; travar só se o dono quiser rigor total.
 - 📝 **Da lista de melhorias:** *não perder formulário pela metade* (a Nova demanda perde tudo se tocar em voltar) e *export/backup dos dados*.
 - 🐢 **Detalhe pesado com muitos PDFs:** cada `MiniaturaPdf` renderiza via pdf.js; demandas com 20+ PDFs de entrada travam a tela ao abrir (renderizar miniaturas sob demanda resolveria). Relevante justo no caso "muitos PDFs".
 - 🗂️ **Backlog aberto:** #43 (documentação), #32 (co-vendedor), #18 (tela de tipos), #17 (box de cor), #16 (cadastro in-app — Edge Function criada, **não deployada**).
 - 🧹 Limpeza de anexos de entrada antigos (§14) · 📅 feriados no cálculo de prazo (§8).
 
 ## 8. 🎯 Próximo passo
-**Dashboard Bloco C** (contar no banco) é o que fecha a reforma da dashboard — ou o que o dono priorizar. A auditoria de posse (§6) já foi feita, então a atribuição de dono está sólida.
+A reforma do Dashboard está **completa** (A+B+C). Candidatos: **#78** (Bloco C da lista — começar discutindo a UX da lista), *não perder formulário pela metade*, export/backup, ou o que o dono priorizar.
 
 ## 9. ⚠️ Armadilhas do ambiente (economiza horas)
 
@@ -112,7 +132,8 @@ Rede de segurança contra tela branca (`ErrorBoundary` em 2 níveis + `erro_log`
 | **Screenshot trava** no preview | Verificar por **DOM/`getComputedStyle`** via `javascript_tool` (mais confiável e preciso). |
 | **`read_network_requests` não pega cross-origin** (supabase.co) | Interceptar `window.fetch`, ou usar o client via `import('/src/lib/supabase.js')` na página. |
 | **Node/`gh` fora do PATH** | `export PATH="/c/Program Files/nodejs:$PATH"`; `gh` por caminho completo `C:/Program Files/GitHub CLI/gh.exe`. |
-| **Senha da conta de teste MUDA** | O dono a troca ao validar o Meu perfil. **Peça a atual** para validar tela logada. |
+| **Senha da conta de teste MUDA** | O dono a troca ao validar o Meu perfil. **Peça a atual** para validar tela logada. A conta é **ADMIN** (dá p/ validar telas de gerente/admin, ex.: a pizza) e está **oculta** (0041). |
+| **Validar query nova SEM depender do navegador** | Logar via REST (`POST /auth/v1/token?grant_type=password` com a anon key do `.env.local`) e bater a query com `curl` direto no PostgREST (`Prefer: count=exact`, `-I` p/ head). Prova sintaxe e semântica ao vivo, imune à instabilidade do login/preview. Usado no Bloco C. |
 | **PWA cacheia a versão antiga** | Modo `prompt` ("Nova versão → Atualizar"). Se o deploy "não pegou", quase sempre é cache. |
 | **PostgREST: ambiguidade de embed** com >1 FK | `tabela!fk_coluna` (ex.: `vendedor:perfil!vendedor_id(...)`). |
 | **Enum do Postgres** não remove valor fácil | Por isso "concluído" virou legado. `ALTER TYPE ... ADD VALUE` não roda na mesma transação em que o tipo é criado. |
@@ -126,4 +147,4 @@ Rede de segurança contra tela branca (`ErrorBoundary` em 2 níveis + `erro_log`
 
 ---
 
-_Gerado por Claude Code em 24/07/2026 (HEAD `35f89fe`)._
+_Gerado por Claude Code em 04/08/2026 (HEAD `2f8ce4d`)._
