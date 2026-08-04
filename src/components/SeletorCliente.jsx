@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { todasAsLinhas } from '../lib/paginacao'
 import Icone from './Icone'
 
 // Lista para escolher um cliente. Renderiza SO o miolo — quem desenha a moldura
@@ -19,10 +20,19 @@ export default function SeletorCliente({ aoSelecionar }) {
 
   useEffect(() => {
     async function carregar() {
-      const { data, error } = await supabase
-        .from('cliente')
-        .select('id, nome, created_at')
-        .order('nome')
+      // Em paginas (§#79): o busca-primeiro anti-duplicata (§6) so funciona se
+      // a lista tiver TODOS os clientes — com o corte de ~1000 do PostgREST, o
+      // vendedor deixaria de achar clientes antigos e recriaria duplicatas,
+      // minando o proprio motivo do design. O .order('id') desempata nomes
+      // iguais entre paginas.
+      const { data, error } = await todasAsLinhas((de, ate) =>
+        supabase
+          .from('cliente')
+          .select('id, nome, created_at')
+          .order('nome')
+          .order('id')
+          .range(de, ate),
+      )
       if (error) setErro('Erro ao carregar clientes.')
       else setClientes(data)
     }

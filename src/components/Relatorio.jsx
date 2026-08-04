@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { todasAsLinhas } from '../lib/paginacao'
 import EstadoVazio from './EstadoVazio'
 import Icone from './Icone'
 
@@ -47,14 +48,21 @@ export default function Relatorio({ naoLidas, aoAbrirNotif, aoVoltar }) {
       const inicio = new Date(ano, m - 1, 1)
       const fim = new Date(ano, m, 1) // 1o dia do mes seguinte (exclusivo)
 
-      const { data, error } = await supabase
-        .from('demanda')
-        .select(
-          'id, created_at, origem, status, vendedor_id, vendedor:perfil!vendedor_id(nome_completo, oculto_relatorio), obra(cliente(nome))',
-        )
-        .gte('created_at', inicio.toISOString())
-        .lt('created_at', fim.toISOString())
-        .order('created_at')
+      // Em paginas (§#79): um mes com 1000+ demandas estouraria o corte do
+      // PostgREST e o relatorio SUBCONTARIA em silencio — inaceitavel num
+      // relatorio. O .order('id') desempata created_at igual entre paginas.
+      const { data, error } = await todasAsLinhas((de, ate) =>
+        supabase
+          .from('demanda')
+          .select(
+            'id, created_at, origem, status, vendedor_id, vendedor:perfil!vendedor_id(nome_completo, oculto_relatorio), obra(cliente(nome))',
+          )
+          .gte('created_at', inicio.toISOString())
+          .lt('created_at', fim.toISOString())
+          .order('created_at')
+          .order('id')
+          .range(de, ate),
+      )
 
       if (!vivo) return
       if (error) setErro('Não foi possível carregar o relatório.')

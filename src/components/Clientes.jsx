@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { todasAsLinhas } from '../lib/paginacao'
 import ObrasDoCliente from './ObrasDoCliente'
 import Icone from './Icone'
 
@@ -36,10 +37,17 @@ export default function Clientes({ perfil, naoLidas, aoAbrirNotif }) {
 
   async function carregar() {
     setCarregando(true)
-    const { data, error } = await supabase
-      .from('cliente')
-      .select('id, nome, observacoes')
-      .order('nome')
+    // Em paginas (§#79): a tela e o busca-primeiro precisam de TODOS os
+    // clientes — o corte de ~1000 do PostgREST sumiria com os antigos em
+    // silencio. O .order('id') desempata nomes iguais entre paginas.
+    const { data, error } = await todasAsLinhas((de, ate) =>
+      supabase
+        .from('cliente')
+        .select('id, nome, observacoes')
+        .order('nome')
+        .order('id')
+        .range(de, ate),
+    )
 
     if (error) setErro('Não foi possível carregar os clientes.')
     else setClientes(data)
