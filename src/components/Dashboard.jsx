@@ -6,6 +6,7 @@ import { textoPresenca, ultimoVistoMs, useTique } from '../lib/usePresenca'
 import { textoNotificacao } from '../lib/notificacaoTexto'
 import { haQuantoTempo } from '../lib/tempo'
 import { ORIGENS } from '../lib/novaDemanda'
+import { todasAsLinhas } from '../lib/paginacao'
 import Avatar from './Avatar'
 import EstadoVazio from './EstadoVazio'
 import Icone from './Icone'
@@ -121,27 +122,22 @@ export default function Dashboard({
     //  - o que cresce sem limite (ENVIADAS e a pizza de ORIGENS): so a
     //    CONTAGEM, feita pelo banco (count exact + head: nenhuma linha vem).
 
-    // 1) Abertas, em paginas ordenadas: se a fila um dia passar de 1000, a
-    //    proxima pagina busca o resto em vez de subcontar. (Sem .order() a
-    //    paginacao nao e estavel — o banco poderia repetir/pular linhas.)
-    //    ATENCAO: "pagina menor que PAGINA" = acabou. Isso assume PAGINA <=
-    //    max-rows do PostgREST (default 1000). Se um dia o max-rows do projeto
-    //    for REDUZIDO, baixe PAGINA junto — senao toda pagina volta "curta" e o
-    //    loop para na primeira, subcontando de novo.
-    const PAGINA = 1000
-    const abertas = []
-    for (let de = 0; ; de += PAGINA) {
-      const { data } = await supabase
-        .from('demanda')
-        .select(
-          'id, status, prazo, cancelamento_solicitado, vendedor_id, urgencia_manual, obra(nome, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo, papel)',
+    // 1) Abertas, em paginas (helper compartilhado com a lista — §#77/#78):
+    //    se a fila um dia passar de 1000, a proxima pagina busca o resto em
+    //    vez de subcontar.
+    const abertas =
+      (
+        await todasAsLinhas((de, ate) =>
+          supabase
+            .from('demanda')
+            .select(
+              'id, status, prazo, cancelamento_solicitado, vendedor_id, urgencia_manual, obra(nome, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo, papel)',
+            )
+            .in('status', STATUS_ORDEM)
+            .order('id')
+            .range(de, ate),
         )
-        .in('status', STATUS_ORDEM)
-        .order('id')
-        .range(de, de + PAGINA - 1)
-      abertas.push(...(data ?? []))
-      if (!data || data.length < PAGINA) break
-    }
+      ).data ?? []
 
     // 2) O que depende das abertas + as contagens, em paralelo:
     //  - datas da 1a revisao de custo: SO das abertas em revisao (o .in()

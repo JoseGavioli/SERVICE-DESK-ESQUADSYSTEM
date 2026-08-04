@@ -14,6 +14,7 @@ import EstadoVazio from './EstadoVazio'
 import Avatar from './Avatar'
 import Icone from './Icone'
 import { haQuantoTempo } from '../lib/tempo'
+import { todasAsLinhas } from '../lib/paginacao'
 
 // Rank de urgencia (0 = mais critico) para ordenar a fila.
 const RANK_URGENCIA = Object.fromEntries(
@@ -80,16 +81,30 @@ export default function Demandas({
   // para refletir mudancas de status sem "piscar" a lista inteira).
   async function carregar({ silencioso = false } = {}) {
     if (!silencioso) setCarregando(true)
+    // §Bloco C da lista (#78): as tres consultas viram PAGINAS (todasAsLinhas)
+    // — a busca/arvore/filtros sao client-side e precisam de TODAS as linhas;
+    // sem paginar, o corte de ~1000 do PostgREST comecaria a sumir com as mais
+    // antigas (e com os selos "custo atrasado"/"movida ha X") em silencio.
+    // O `.order('id')` extra desempata `created_at` igual entre paginas.
     const [{ data, error }, { data: datas }, { data: atividades }] =
       await Promise.all([
-        supabase
-          .from('demanda')
-          .select(
-            'id, descricao, prazo, status, created_at, demanda_pai_id, cancelamento_solicitado, vendedor_id, urgencia_manual, tipo_demanda(nome), obra(nome, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo, avatar_path), comentario(count)',
-          )
-          .order('created_at', { ascending: false }),
-        supabase.rpc('datas_primeira_revisao'),
-        supabase.rpc('ultima_atividade'), // §"movida ha X" (migracao 0037)
+        todasAsLinhas((de, ate) =>
+          supabase
+            .from('demanda')
+            .select(
+              'id, descricao, prazo, status, created_at, demanda_pai_id, cancelamento_solicitado, vendedor_id, urgencia_manual, tipo_demanda(nome), obra(nome, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo, avatar_path), comentario(count)',
+            )
+            .order('created_at', { ascending: false })
+            .order('id')
+            .range(de, ate),
+        ),
+        todasAsLinhas((de, ate) =>
+          supabase.rpc('datas_primeira_revisao').order('demanda_id').range(de, ate),
+        ),
+        // §"movida ha X" (migracao 0037)
+        todasAsLinhas((de, ate) =>
+          supabase.rpc('ultima_atividade').order('demanda_id').range(de, ate),
+        ),
       ])
     if (error) setErro('Não foi possível carregar as demandas.')
     else setDemandas(data)
