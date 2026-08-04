@@ -15,6 +15,9 @@ import PizzaOrigens from './PizzaOrigens'
 // migração 0022 e está no fluxo). "enviado" sai dos anéis e vira um contador à
 // parte (§Bloco A): é terminal e permanente — na base do arco iria, com o tempo,
 // encolher as fatias das abertas. "cancelada" não é exibida (decisão do dono).
+// Alem da ordem de exibicao, esta lista E o filtro da busca (§Bloco C): o
+// carregar() so traz do banco as demandas NESTES status (a fila em aberto).
+// Terminais (enviado/cancelada) nao viram linhas — viram contagem.
 const STATUS_ORDEM = [
   'nao_iniciado',
   'em_andamento',
@@ -22,8 +25,6 @@ const STATUS_ORDEM = [
   'em_revisao_custo',
   'concluido',
 ]
-// Terminais NAO entram no "em aberto" nem em "por vendedor".
-const TERMINAIS = ['enviado', 'cancelada']
 
 // Cor FORTE de cada nivel (a cor da TAG de urgencia, nao o tint apagado).
 // 'atrasado' ja tem -bg solido (#c62828/#b71c1c); os demais usam -fg (o -bg
@@ -110,14 +111,73 @@ export default function Dashboard({
   useTique() // faz o "online há X" atualizar sozinho enquanto a tela fica aberta
 
   const carregar = useCallback(async () => {
-    const [{ data: demandas }, { data: revs }, { data: equipe }] =
+    // §Bloco C — o PostgREST corta QUALQUER resposta em ~1000 linhas. Buscar
+    // "todas as demandas" e contar aqui funcionava no comeco, mas passaria a
+    // SUBCONTAR em silencio quando o historico crescesse. A divisao agora:
+    //  - ABERTAS (a fila real, pequena e auto-limitada): vem como LINHAS — a
+    //    urgencia/atencao continuam calculadas no app, porque a regra de dias
+    //    uteis vive em lib/urgencia.js (fonte unica, §8 do CLAUDE.md) e nao
+    //    deve ganhar copia em SQL;
+    //  - o que cresce sem limite (ENVIADAS e a pizza de ORIGENS): so a
+    //    CONTAGEM, feita pelo banco (count exact + head: nenhuma linha vem).
+
+    // 1) Abertas, em paginas ordenadas: se a fila um dia passar de 1000, a
+    //    proxima pagina busca o resto em vez de subcontar. (Sem .order() a
+    //    paginacao nao e estavel — o banco poderia repetir/pular linhas.)
+    //    ATENCAO: "pagina menor que PAGINA" = acabou. Isso assume PAGINA <=
+    //    max-rows do PostgREST (default 1000). Se um dia o max-rows do projeto
+    //    for REDUZIDO, baixe PAGINA junto — senao toda pagina volta "curta" e o
+    //    loop para na primeira, subcontando de novo.
+    const PAGINA = 1000
+    const abertas = []
+    for (let de = 0; ; de += PAGINA) {
+      const { data } = await supabase
+        .from('demanda')
+        .select(
+          'id, status, prazo, cancelamento_solicitado, vendedor_id, urgencia_manual, obra(nome, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo, papel)',
+        )
+        .in('status', STATUS_ORDEM)
+        .order('id')
+        .range(de, de + PAGINA - 1)
+      abertas.push(...(data ?? []))
+      if (!data || data.length < PAGINA) break
+    }
+
+    // 2) O que depende das abertas + as contagens, em paralelo:
+    //  - datas da 1a revisao de custo: SO das abertas em revisao (o .in()
+    //    filtra o resultado da funcao; sem ele a resposta tambem sofreria o
+    //    corte de 1000 — e, sem "order by", o banco poderia derrubar justo uma
+    //    demanda atual, sumindo com o "custo atrasado" em silencio);
+    //  - "enviado": contagem pura (o historico inteiro, sem trazer linhas);
+    //  - pizza de origens: uma contagem por origem, so p/ quem VE a pizza
+    //    (gerente/admin). O filtro do dono (vendedor/gerente) e o join !inner;
+    //    a conta de teste segue fora (a RLS 0041 vale p/ contagens tambem).
+    const idsEmRevisao = abertas
+      .filter((d) => d.status === 'em_revisao_custo')
+      .map((d) => d.id)
+    const veOrigens = perfil.papel === 'gerente' || perfil.papel === 'admin'
+    const contarOrigem = async (org) => {
+      let q = supabase
+        .from('demanda')
+        .select('vendedor:perfil!vendedor_id!inner(papel)', {
+          count: 'exact',
+          head: true,
+        })
+        .in('vendedor.papel', ['vendedor', 'gerente'])
+      q = org === null ? q.is('origem', null) : q.eq('origem', org)
+      const { count } = await q
+      return count ?? 0
+    }
+
+    const [{ data: revs }, { count: enviados }, { data: equipe }, contagens] =
       await Promise.all([
+        idsEmRevisao.length
+          ? supabase.rpc('datas_primeira_revisao').in('demanda_id', idsEmRevisao)
+          : Promise.resolve({ data: [] }),
         supabase
           .from('demanda')
-          .select(
-            'id, status, prazo, origem, cancelamento_solicitado, vendedor_id, urgencia_manual, obra(nome, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo, papel)',
-          ),
-        supabase.rpc('datas_primeira_revisao'),
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'enviado'),
         // Vendedores ativos — base do widget "Vendedores online" (§#46).
         // `visto_em` = ultimo momento online (p/ "online ha X" de quem saiu).
         supabase
@@ -126,28 +186,35 @@ export default function Dashboard({
           .eq('papel', 'vendedor')
           .eq('ativo', true)
           .order('nome_completo'),
+        veOrigens
+          ? Promise.all([...ORIGENS, null].map(contarOrigem))
+          : Promise.resolve([]),
       ])
+
     // Data da 1a revisao de custo por demanda (RPC devolve { demanda_id, data }).
     const rev = {}
     for (const r of revs ?? []) rev[r.demanda_id] = r.data
 
+    // Pizza: a contagem i corresponde a origem i; null (demandas de antes da
+    // 0029) vira "Sem origem".
+    const porOrigem = {}
+    ;[...ORIGENS, 'Sem origem'].forEach((org, i) => {
+      if (contagens[i] > 0) porOrigem[org] = contagens[i]
+    })
+
     const porStatus = {}
     const porUrgencia = {}
     const porVendedor = {} // vendedor_id -> { nome, aberto }
-    const porOrigem = {} // total por origem (só donos vendedor/gerente) — pizza
     const itensAtencao = [] // as demandas em atenção (para LISTAR, não só contar)
-    let emAberto = 0
     let atencao = 0
     let cancelamentos = 0 // só cancelamento solicitado (chip do staff, §Bloco B)
 
-    for (const d of demandas ?? []) {
+    for (const d of abertas) {
       porStatus[d.status] = (porStatus[d.status] ?? 0) + 1
-      const terminal = TERMINAIS.includes(d.status)
-      if (!terminal) emAberto += 1
 
       // "Atenção" = 1x por demanda: prazo vencido OU custo atrasado OU
       // cancelamento solicitado (mesma regra do atalho {soAtencao} da lista).
-      const u = urgenciaEfetiva(d) // manual (gerente) ou calculada; null se terminal
+      const u = urgenciaEfetiva(d) // manual (gerente) ou calculada
       const prazoVencido = u?.nivel === 'atrasado'
       const custoAtras = estaCustoAtrasado(d.status, rev[d.id])
       if (d.cancelamento_solicitado) cancelamentos += 1
@@ -168,35 +235,26 @@ export default function Dashboard({
         })
       }
 
-      // Urgencia so existe para nao-terminais (u == null nos terminais).
       if (u) porUrgencia[u.nivel] = (porUrgencia[u.nivel] ?? 0) + 1
 
-      // Por vendedor: demandas ABERTAS por vendedor (so o staff usa).
-      if (!terminal) {
-        const vid = d.vendedor_id
-        if (!porVendedor[vid]) {
-          porVendedor[vid] = {
-            nome: d.vendedor?.nome_completo || '—',
-            papel: d.vendedor?.papel,
-            aberto: 0,
-          }
+      // Por vendedor: demandas ABERTAS por vendedor (so o staff usa) — e aqui
+      // TODAS as linhas ja sao abertas.
+      const vid = d.vendedor_id
+      if (!porVendedor[vid]) {
+        porVendedor[vid] = {
+          nome: d.vendedor?.nome_completo || '—',
+          papel: d.vendedor?.papel,
+          aberto: 0,
         }
-        porVendedor[vid].aberto += 1
       }
-
-      // Total por ORIGEM (gráfico pizza, gerente/admin): TODAS as demandas
-      // (qualquer status), mas só as de dono vendedor/gerente. A conta de teste
-      // nem chega aqui — a RLS (0041) a esconde para os outros.
-      if (d.vendedor?.papel === 'vendedor' || d.vendedor?.papel === 'gerente') {
-        const org = d.origem || 'Sem origem'
-        porOrigem[org] = (porOrigem[org] ?? 0) + 1
-      }
+      porVendedor[vid].aberto += 1
     }
 
     itensAtencao.sort((a, b) => a.ordem - b.ordem)
 
     setDados({
-      emAberto,
+      emAberto: abertas.length,
+      enviados: enviados ?? 0,
       atencao,
       cancelamentos,
       itensAtencao,
@@ -206,7 +264,7 @@ export default function Dashboard({
       porOrigem,
       equipe: equipe ?? [],
     })
-  }, [])
+  }, [perfil.papel])
 
   useEffect(() => {
     carregar()
@@ -254,7 +312,8 @@ export default function Dashboard({
       : []
   const maxVend = vendedores.reduce((m, v) => Math.max(m, v.aberto), 0)
   // "Enviado" fora dos anéis, como contador (§Bloco A). Entra na "Distribuição".
-  const enviados = dados?.porStatus?.enviado ?? 0
+  // Vem CONTADO do banco (§Bloco C) — o historico de enviadas cresce sem limite.
+  const enviados = dados?.enviados ?? 0
   const temDistribuicao =
     statusVisiveis.length > 0 ||
     urgVisiveis.length > 0 ||
