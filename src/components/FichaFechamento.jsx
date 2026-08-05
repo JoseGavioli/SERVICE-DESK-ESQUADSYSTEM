@@ -6,23 +6,10 @@ import {
   DESCRICAO_PADRAO_FECHAMENTO,
   montarInsertFicha,
   numeroInput,
-  subPedido,
-  subConsultores,
-  subDadosCliente,
-  subRt,
-  subDadosObra,
-  subVigencia,
 } from '../lib/ficha'
-import { resumir } from '../lib/novaDemanda'
-import CardCampo from './CardCampo'
 import NdCabecalho from './NdCabecalho'
 import NdClienteObra from './NdClienteObra'
-import FiPedido from './FiPedido'
-import FiConsultores from './FiConsultores'
-import FiDadosCliente from './FiDadosCliente'
-import FiRt from './FiRt'
-import FiDadosObra from './FiDadosObra'
-import FiVigencia from './FiVigencia'
+import FichaCards from './FichaCards'
 import Icone from './Icone'
 
 // Tela da FICHA DE PEDIDO DE VENDAS (§issue #80). Abre quando o vendedor toca
@@ -216,149 +203,13 @@ export default function FichaFechamento({
             />
           )}
 
-          <CardCampo
-            id="card-fi-pedido"
-            icone="arquivo"
-            titulo="Pedido"
-            subtitulo={subPedido(ficha)}
-            preenchido={Boolean(
-              String(ficha.num_proposta).trim() || String(ficha.valor).trim(),
-            )}
-            aberto={aberto === 'fi-pedido'}
-            aoClicar={() => alternar('fi-pedido')}
-          >
-            <FiPedido ficha={ficha} mudar={mudar} />
-          </CardCampo>
-
-          <CardCampo
-            id="card-fi-consultores"
-            icone="percentual"
-            titulo="Consultores e comissão"
-            subtitulo={subConsultores(ficha, nomeVendedor)}
-            preenchido={String(ficha.comissao_pct).trim() !== ''}
-            aberto={aberto === 'fi-consultores'}
-            aoClicar={() => alternar('fi-consultores')}
-          >
-            <FiConsultores
-              ficha={ficha}
-              mudar={mudar}
-              nomeVendedor={nomeVendedor}
-            />
-          </CardCampo>
-
-          <CardCampo
-            id="card-fi-cliente"
-            icone="perfil"
-            titulo="Dados do cliente"
-            subtitulo={subDadosCliente(ficha)}
-            preenchido={Boolean(
-              String(ficha.cliente_cpf).trim() ||
-                String(ficha.cliente_telefone1).trim(),
-            )}
-            aberto={aberto === 'fi-cliente'}
-            aoClicar={() => alternar('fi-cliente')}
-          >
-            <FiDadosCliente ficha={ficha} mudar={mudar} />
-          </CardCampo>
-
-          <CardCampo
-            id="card-fi-rt"
-            icone="calculadora"
-            titulo="Arquitetura e Engenharia"
-            subtitulo={subRt(ficha)}
-            preenchido={ficha.rt}
-            aberto={aberto === 'fi-rt'}
-            aoClicar={() => alternar('fi-rt')}
-          >
-            <FiRt ficha={ficha} mudar={mudar} />
-          </CardCampo>
-
-          <CardCampo
-            id="card-fi-obra"
-            icone="origem"
-            titulo="Dados da obra"
-            subtitulo={subDadosObra(ficha)}
-            preenchido={Boolean(String(ficha.mestre_obra).trim())}
-            aberto={aberto === 'fi-obra'}
-            aoClicar={() => alternar('fi-obra')}
-          >
-            <FiDadosObra ficha={ficha} mudar={mudar} />
-          </CardCampo>
-
-          <CardCampo
-            id="card-fi-medicao"
-            icone="lista"
-            titulo="Medição p/ contramarco"
-            subtitulo={
-              String(ficha.medicao_contramarco).trim()
-                ? resumir(ficha.medicao_contramarco)
-                : 'Condições e observações'
-            }
-            preenchido={Boolean(String(ficha.medicao_contramarco).trim())}
-            aberto={aberto === 'fi-medicao'}
-            aoClicar={() => alternar('fi-medicao')}
-          >
-            <textarea
-              value={ficha.medicao_contramarco}
-              onChange={(e) => mudar('medicao_contramarco', e.target.value)}
-              rows={4}
-              aria-label="Condição de medição para contramarco"
-            />
-          </CardCampo>
-
-          <CardCampo
-            id="card-fi-particularidades"
-            icone="aviso"
-            titulo="Particularidades da obra"
-            subtitulo={
-              String(ficha.fiscal_obra).trim() ||
-              String(ficha.particularidades).trim()
-                ? [
-                    String(ficha.fiscal_obra).trim(),
-                    resumir(ficha.particularidades, 24),
-                  ]
-                    .filter(Boolean)
-                    .join(' · ')
-                : 'Fiscal de obra e atenção especial'
-            }
-            preenchido={Boolean(
-              String(ficha.fiscal_obra).trim() ||
-                String(ficha.particularidades).trim(),
-            )}
-            aberto={aberto === 'fi-particularidades'}
-            aoClicar={() => alternar('fi-particularidades')}
-          >
-            <label className="campo-linha">
-              <span className="campo-rot">Fiscal de obra</span>
-              <input
-                type="text"
-                value={ficha.fiscal_obra}
-                onChange={(e) => mudar('fiscal_obra', e.target.value)}
-              />
-            </label>
-            <label className="campo-linha">
-              <span className="campo-rot">
-                O que necessita de atenção especial
-              </span>
-              <textarea
-                value={ficha.particularidades}
-                onChange={(e) => mudar('particularidades', e.target.value)}
-                rows={4}
-              />
-            </label>
-          </CardCampo>
-
-          <CardCampo
-            id="card-fi-vigencia"
-            icone="relogio"
-            titulo="Vigência do contrato"
-            subtitulo={subVigencia(ficha)}
-            preenchido={subVigencia(ficha).includes('preenchido')}
-            aberto={aberto === 'fi-vigencia'}
-            aoClicar={() => alternar('fi-vigencia')}
-          >
-            <FiVigencia ficha={ficha} mudar={mudar} />
-          </CardCampo>
+          <FichaCards
+            ficha={ficha}
+            mudar={mudar}
+            nomeVendedor={nomeVendedor}
+            aberto={aberto}
+            alternar={alternar}
+          />
         </div>
 
         {tentou && faltaCliente && (

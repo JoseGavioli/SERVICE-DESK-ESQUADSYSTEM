@@ -26,7 +26,9 @@ export function CampoFicha({
 }
 
 // Toggle Sim/Nao (checkbox estilizado, como o "Tem RT?" das condicoes).
-export function SimNaoFicha({ rotulo, valor, aoMudar }) {
+// `desabilitado` serve a edicao da ficha: a RT e da DEMANDA e nao muda por
+// aqui depois de criada (§F3) — o resto do form pode continuar editavel.
+export function SimNaoFicha({ rotulo, valor, aoMudar, desabilitado }) {
   return (
     <label className="campo-linha campo-inline">
       <span className="campo-rot">{rotulo}</span>
@@ -35,13 +37,14 @@ export function SimNaoFicha({ rotulo, valor, aoMudar }) {
         className="campo-check"
         checked={valor}
         onChange={(e) => aoMudar(e.target.checked)}
+        disabled={desabilitado}
       />
     </label>
   )
 }
 
 // Porcentagem (0–100) com o "%" do lado, como na RT das condicoes.
-export function PctFicha({ rotulo, valor, aoMudar }) {
+export function PctFicha({ rotulo, valor, aoMudar, desabilitado }) {
   return (
     <label className="campo-linha campo-inline">
       <span className="campo-rot">{rotulo}</span>
@@ -55,6 +58,7 @@ export function PctFicha({ rotulo, valor, aoMudar }) {
           value={valor}
           onChange={(e) => aoMudar(e.target.value)}
           aria-label={rotulo}
+          disabled={desabilitado}
         />
         <span>%</span>
       </span>

@@ -5471,3 +5471,31 @@ button.cad-item:hover {
 .fi-consultor-fixo strong {
   color: var(--texto);
 }
+
+/* F3 (§#80): ver/editar a ficha. O fieldset e so o mecanismo nativo de
+   desabilitar tudo de uma vez no modo leitura — sem cara de fieldset. */
+.fi-fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+  min-width: 0; /* fieldset tem min-width intrinseco que estoura no mobile */
+  display: contents;
+}
+.fi-somente-leitura,
+.fi-salvo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+  margin: 10px 16px 0;
+}
+.fi-salvo {
+  color: var(--ok, #2e7d32);
+  font-weight: 600;
+}
+/* Box da ficha no detalhe (mesma linguagem do card do Relatorio). */
+.box-ficha {
+  margin: 12px 0;
+  width: 100%;
+  text-align: left;
+}

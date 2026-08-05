@@ -133,6 +133,42 @@ export function montarInsertFicha(ficha, demandaId) {
   }
 }
 
+// Linha do banco -> estado da tela (§F3, ver/editar). O inverso do
+// montarInsertFicha: null vira '' e numero vira texto (os inputs sao
+// controlados por string). A RT vem da DEMANDA (fonte unica, 0045).
+export function fichaParaEstado(linha, demanda) {
+  const f = fichaVazia(hojeIsoLocal())
+  // data_pedido em branco no banco NAO pode virar "hoje" na tela: um mero
+  // "Salvar alteracoes" gravaria uma data que ninguem pediu.
+  f.data_pedido = ''
+  for (const campo of Object.keys(f)) {
+    if (campo === 'rt' || campo === 'rt_percentual') continue // da demanda
+    const v = linha[campo]
+    if (v == null) continue
+    f[campo] = typeof v === 'boolean' ? v : String(v)
+  }
+  // VALOR: o banco devolve NUMERO (45000.5). O campo e texto em formato BR e
+  // o salvar passa por numeroBr (ponto = milhar) — re-salvar "45000.5" cru
+  // viraria 450005 (achado da revisao). Formatamos de volta para BR: a
+  // ida-e-volta fecha e o campo ainda fica mais legivel ("45.000,50").
+  if (linha.valor != null) {
+    f.valor = linha.valor.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+  }
+  f.rt = Boolean(demanda.rt)
+  f.rt_percentual =
+    demanda.rt_percentual != null ? String(demanda.rt_percentual) : ''
+  return f
+}
+
+// 52300 -> "R$ 52.300,00" (para o resumo no detalhe).
+export function formatarValorBr(n) {
+  if (n == null) return null
+  return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+}
+
 // Subtitulos dos cards fechados (mostram o que ja foi preenchido).
 export function subPedido(f) {
   const partes = []

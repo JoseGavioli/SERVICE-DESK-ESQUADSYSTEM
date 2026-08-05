@@ -11,6 +11,8 @@ import HistoricoStatus from './HistoricoStatus'
 import Comentarios from './Comentarios'
 import Anexos from './Anexos'
 import NovaDemanda from './NovaDemanda'
+import FichaDemanda from './FichaDemanda'
+import { formatarValorBr } from '../lib/ficha'
 import AlterarPrazo from './AlterarPrazo'
 import DefinirUrgencia from './DefinirUrgencia'
 import Avatar from './Avatar'
@@ -36,6 +38,9 @@ export default function DetalheDemanda({
   const [versao, setVersao] = useState(0) // muda apos uma acao p/ recarregar os filhos
   const [criandoFilha, setCriandoFilha] = useState(false)
   const [dataRevisao, setDataRevisao] = useState(null) // 1a entrada em revisao (§issue #13)
+  // Fechamento (§#80/F3): resumo da ficha p/ a box + tela de ver/editar.
+  const [fichaResumo, setFichaResumo] = useState(null)
+  const [vendoFicha, setVendoFicha] = useState(false)
 
   async function carregar() {
     const { data, error } = await supabase
@@ -47,6 +52,19 @@ export default function DetalheDemanda({
       .single()
     if (error) setErro('Não foi possível carregar a demanda.')
     else setD(data)
+
+    // Fechamento: o resumo da ficha (nº/valor/data) p/ a box (§F3). Null
+    // tanto p/ tipo sem ficha quanto p/ fechamento que ficou sem ela.
+    if (data?.tipo_demanda?.com_ficha) {
+      const { data: fi } = await supabase
+        .from('ficha_fechamento')
+        .select('num_proposta, valor, data_pedido')
+        .eq('demanda_id', demandaId)
+        .maybeSingle()
+      setFichaResumo(fi ?? null)
+    } else {
+      setFichaResumo(null)
+    }
 
     // Data da 1a entrada em "revisao de custo" (para "ha X dias", §issue #13).
     const { data: rev } = await supabase
@@ -117,6 +135,26 @@ export default function DetalheDemanda({
   const podeCriarFilha = d.status === 'enviado' && perfil.id === d.vendedor_id
   // Dias uteis em revisao de custo (§issue #13); null se nunca entrou.
   const diasRevisao = diasUteisDesde(dataRevisao)
+  // Fechamento (tipo com ficha, §#80/F3): rotulos e box proprios.
+  const ehFicha = Boolean(d.tipo_demanda?.com_ficha)
+
+  // Vendo/editando a FICHA: tela cheia propria (§F3). Ao voltar, recarrega —
+  // o resumo da box pode ter mudado (ou a ficha acabou de ser preenchida).
+  if (vendoFicha) {
+    return (
+      <FichaDemanda
+        demanda={d}
+        codigo={codigo}
+        perfil={perfil}
+        aoVoltar={() => {
+          setVendoFicha(false)
+          carregar()
+        }}
+        naoLidas={naoLidas}
+        aoAbrirNotif={aoAbrirNotif}
+      />
+    )
+  }
 
   // Criando a "Revisão de demanda" (filha): tela CHEIA própria, com hero
   // (voltar + sino), como a Nova demanda pelo "+". §11
@@ -195,42 +233,80 @@ export default function DetalheDemanda({
         </div>
       </div>
 
-      {/* Descricao */}
+      {/* Descricao — no fechamento vira "Informacao adicional" (§#80/F3). */}
       <div className="det-secao">
-        <h3 className="det-secao-titulo">Descrição</h3>
+        <h3 className="det-secao-titulo">
+          {ehFicha ? 'Informação adicional' : 'Descrição'}
+        </h3>
         <p className="det-descricao">{d.descricao}</p>
       </div>
 
-      {/* Dados do orcamento: CLUB CASA, RT e arquiteto (§issue #35).
-          CLUB CASA e RT sao sempre Sim/Nao; arquiteto so aparece se preenchido. */}
-      <div className="det-extras">
-        {d.origem && (
-          <div className="det-extra">
-            <span className="det-extra-rot">Origem</span>
-            <span className="det-extra-val">{d.origem}</span>
-          </div>
-        )}
-        <div className="det-extra">
-          <span className="det-extra-rot">CLUB CASA</span>
-          <span className={`det-extra-val ${d.club_casa ? 'sim' : ''}`}>
-            {d.club_casa ? 'Sim' : 'Não'}
+      {/* Fechamento: a box da FICHA (resumo + abre a tela de ver/editar).
+          O botao do PDF (F4) entrara aqui tambem. §#80/F3 */}
+      {ehFicha && (
+        <button
+          type="button"
+          className="admin-card box-ficha"
+          onClick={() => setVendoFicha(true)}
+        >
+          <span className="admin-icone">
+            <Icone nome="arquivo" size={20} />
           </span>
-        </div>
-        <div className="det-extra">
-          <span className="det-extra-rot">RT</span>
-          <span className={`det-extra-val ${d.rt ? 'sim' : ''}`}>
-            {d.rt
-              ? `Sim${d.rt_percentual != null ? ` — ${d.rt_percentual}%` : ''}`
-              : 'Não'}
+          <span className="admin-texto">
+            <strong className="admin-titulo">Ficha de pedido de vendas</strong>
+            <span className="admin-sub">
+              {fichaResumo
+                ? [
+                    fichaResumo.num_proposta
+                      ? `Nº ${fichaResumo.num_proposta}`
+                      : null,
+                    formatarValorBr(fichaResumo.valor),
+                    fichaResumo.data_pedido
+                      ?.split('-')
+                      .reverse()
+                      .join('/'),
+                  ]
+                    .filter(Boolean)
+                    .join(' · ') || 'Toque para ver a ficha'
+                : 'Sem ficha'}
+            </span>
           </span>
-        </div>
-        {d.arquiteto_engenheiro && (
+          <Icone nome="chevron-direita" size={18} />
+        </button>
+      )}
+
+      {/* Dados do orcamento: CLUB CASA, RT e arquiteto (§issue #35) — no
+          fechamento a box some (esses dados vivem na ficha; §#80/F3). */}
+      {!ehFicha && (
+        <div className="det-extras">
+          {d.origem && (
+            <div className="det-extra">
+              <span className="det-extra-rot">Origem</span>
+              <span className="det-extra-val">{d.origem}</span>
+            </div>
+          )}
           <div className="det-extra">
-            <span className="det-extra-rot">Arquiteto/engenheiro</span>
-            <span className="det-extra-val">{d.arquiteto_engenheiro}</span>
+            <span className="det-extra-rot">CLUB CASA</span>
+            <span className={`det-extra-val ${d.club_casa ? 'sim' : ''}`}>
+              {d.club_casa ? 'Sim' : 'Não'}
+            </span>
           </div>
-        )}
-      </div>
+          <div className="det-extra">
+            <span className="det-extra-rot">RT</span>
+            <span className={`det-extra-val ${d.rt ? 'sim' : ''}`}>
+              {d.rt
+                ? `Sim${d.rt_percentual != null ? ` — ${d.rt_percentual}%` : ''}`
+                : 'Não'}
+            </span>
+          </div>
+          {d.arquiteto_engenheiro && (
+            <div className="det-extra">
+              <span className="det-extra-rot">Arquiteto/engenheiro</span>
+              <span className="det-extra-val">{d.arquiteto_engenheiro}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Prazo (logo apos os dados do orcamento) + ajustar prazo (staff, §#3) */}
       <div className="det-prazo-linha">
