@@ -5499,3 +5499,141 @@ button.cad-item:hover {
   width: 100%;
   text-align: left;
 }
+
+/* ── F4 (§#80): PDF da ficha — pre-visualizacao + impressao ─────
+   A folha e SEMPRE clara (e um documento em papel), mesmo no tema escuro. */
+.fp-tela {
+  padding: 12px;
+}
+.fp-acoes {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.fp-imprimir {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--marca-navy);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.fp-dica-ios {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+.fp-folha {
+  background: #fff;
+  color: #000;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 22px;
+  border: 1px solid #333;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+.fp-cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.fp-logo {
+  height: 44px;
+  flex-shrink: 0;
+}
+.fp-titulo {
+  flex: 1;
+  text-align: center;
+  font-size: 1.25rem;
+  margin: 0;
+  color: #000;
+}
+.fp-grade {
+  border: 1px solid #333;
+  border-bottom: none;
+}
+.fp-linha {
+  display: flex;
+}
+.fp-cel {
+  border-bottom: 1px solid #333;
+  border-right: 1px solid #333;
+  padding: 4px 7px;
+  min-height: 1.6em;
+  overflow-wrap: anywhere;
+}
+.fp-cel:last-child {
+  border-right: none;
+}
+.fp-cresce { flex: 1; }
+.fp-cresce3 { flex: 3; }
+.fp-pctcel { flex: 0 0 3.4em; text-align: right; }
+.fp-alto { min-height: 3.4em; }
+.fp-centro { text-align: center; }
+.fp-assinatura { min-height: 4.2em; }
+.fp-espaco { display: inline-block; width: 3em; }
+.fp-espaco-p { margin-left: 0.8em; font-weight: 700; }
+.fp-naosim {
+  display: inline-flex;
+  gap: 1.2em;
+  margin-left: 0.6em;
+}
+/* Faixas azuis do papel — a cor precisa sair na impressao. */
+.fp-faixa,
+.fp-faixa-meia {
+  background: #bdd7ee;
+  font-weight: 700;
+  text-align: center;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+.fp-faixa { flex: 1; }
+.fp-faixa-meia { flex: 0 0 50%; text-align: left; }
+.fp-rodape {
+  text-align: center;
+  margin-top: 14px;
+  font-size: 0.78rem;
+  color: #000;
+}
+
+@media print {
+  /* So a FOLHA sai. O truque da visibilidade e ESCOPADO pela classe que o
+     FichaPdf poe no <body> enquanto esta montado — sem escopo, imprimir o
+     RELATORIO mensal sairia em branco (ele tem print CSS proprio). */
+  .body-imprime-ficha * {
+    visibility: hidden;
+  }
+  .body-imprime-ficha .fp-folha,
+  .body-imprime-ficha .fp-folha * {
+    visibility: visible;
+  }
+  /* A folha fica NO FLUXO (nada de position:absolute: Safari/Firefox
+     historicamente CLIPAM na 1a pagina conteudo absoluto que transborda —
+     ficha verbosa pagina normalmente assim). O resto da tela ja sumiu. */
+  .body-imprime-ficha .fp-tela {
+    padding: 0;
+  }
+  .fp-folha {
+    margin: 0;
+    width: 100%;
+    max-width: none;
+    border: none;
+    padding: 0;
+    font-size: 11px;
+  }
+  /* @page NAO e escopavel por classe — vale p/ TODO print do app, inclusive
+     o Relatorio mensal (antes: margens default do navegador). Aceito de
+     proposito: A4 + 10mm e um padrao sensato para os dois. */
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+}

@@ -3,8 +3,8 @@
 > Este arquivo é a fundação do projeto. Leia-o por completo antes de qualquer ação.
 > Ele define **o que o app é**, **as regras de negócio** e **como você (Claude Code) deve trabalhar comigo**.
 
-> **Status atual (16/07/2026):** Fases 0–6 **concluídas**, app **no ar e em uso real** (deploy na **Vercel**, CD ativo — push na `main` publica). Depois delas: repaginação visual (marca **EsquadSystem**, tema claro/escuro, PWA), **notificações in-app em tempo real** (§15), **Web Push concluído** (validado em desktop, Android e iOS), 4º papel **gerente** (§5), **relatório mensal** (§18) e uma **rede de segurança** contra tela branca (ErrorBoundary + log de erros + tela de Erros para o admin).
-> Backend em Supabase; migrações **`0001`–`0040`** aplicadas. Pendências ativas em §17.
+> **Status atual (05/08/2026):** Fases 0–6 **concluídas**, app **no ar e em uso real** (deploy na **Vercel**, CD ativo — push na `main` publica). Depois delas: repaginação visual (marca **EsquadSystem**, tema claro/escuro, PWA), **notificações in-app em tempo real** (§15), **Web Push concluído** (validado em desktop, Android e iOS), 4º papel **gerente** (§5), **relatório mensal** (§18), uma **rede de segurança** contra tela branca (ErrorBoundary + log de erros + tela de Erros para o admin) e a **ficha de pedido de vendas no Fechamento** (§19).
+> Backend em Supabase; migrações **`0001`–`0046`** aplicadas. Pendências ativas em §17.
 > Para retomar o trabalho, leia também o **`HANDOFF.md`** na raiz (estado, decisões com o porquê e armadilhas do ambiente).
 
 ---
@@ -126,6 +126,10 @@ Login via **Supabase Auth**, baseado em **email + senha** (nativo do Supabase).
 - `nome`
 - `ativo` — boolean
 - `created_at`
+- `com_ficha` — boolean (§`0045`): tipo que tem **ficha de pedido de vendas** (hoje só o Fechamento — ver §19). Liga a ficha E o fluxo de status próprio (§7).
+
+### `ficha_fechamento` (§19 — migração `0045`)
+- 1 por demanda (`demanda_id` **único**, FK → demanda, apaga junto). Espelha o papel: pedido (data/nº proposta/valor/pagamento/NF), comissões (a % do dono + até 2 consultores extras), dados do cliente (CPF, endereço, contatos…), dados bancários da RT, dados da obra, medição p/ contramarco, particularidades e vigência do contrato. **O RT sim/não + % NÃO são colunas dela** — reusam `demanda.rt`/`rt_percentual` (fonte única). Quase tudo nullable (o papel também circula meio em branco).
 
 ### `demanda`
 - `id` (automático)
@@ -210,6 +214,7 @@ qualquer estado nao-terminal -> cancelada [TERMINAL, so Admin efetiva]
 > **A volta do `concluido` é só para `em_andamento`** (migração `0023`) — não volta para revisão de custo.
 > A regra "revisão de custo é obrigatória" continua valendo: ninguém pula de `em_andamento` direto para `enviado`.
 > **Anexo depois do envio:** a partir da `0038`, o staff pode anexar saída também no `enviado` (se faltou um arquivo) — e um gatilho registra isso no histórico + avisa o vendedor. Ver §14.
+> **EXCEÇÃO — tipo com ficha (Fechamento, ago/2026, §19):** demanda de tipo `com_ficha` **pula a revisão de custo**: `em_andamento → concluido` direto, e **entrar** em revisão é bloqueado (migração `0045`; a `mover_status` tem **dois trilhos**, escolhidos pela flag). Congelar/cancelar/terminais iguais. Fechamento antigo que já estivesse em revisão **consegue sair** (as saídas continuam válidas). A UI escolhe o trilho em `lib/transicoes.js` (`transicoesDe`), mas quem garante é o banco.
 
 ---
 
@@ -262,6 +267,7 @@ Os tipos vivem na tabela `tipo_demanda` (banco), **não** chumbados no código. 
 6. Orçamento novo para obra em andamento (novo contrato, mesmo cliente e obra)
 
 > Ressalva: tipos são "rótulos" (nome + status ativo). Se um dia um tipo precisar de **comportamento** próprio (ex.: "fechamento obriga anexar contrato"), isso volta a exigir código. Para o uso atual, rótulo basta.
+> **A ressalva se concretizou (ago/2026):** o **Fechamento** ganhou comportamento próprio — a coluna **`tipo_demanda.com_ficha`** (migração `0045`) liga a **ficha de pedido de vendas** (§19) e o fluxo de status próprio (§7). A decisão vive numa **flag data-driven**, não no nome do tipo: renomear não quebra nada.
 
 ---
 
@@ -398,3 +404,19 @@ Entra **por exceção** ao §2: aquele item veda relatórios **de tempo**/painel
 - **Sem migração:** lê a `demanda` direto (a RLS já libera admin/atendente/gerente) e agrega no app.
 
 > Contagem é por **`created_at`** da demanda (quando foi solicitada), com o recorte do mês no fuso de Brasília.
+
+---
+
+## 19. FICHA DE PEDIDO DE VENDAS (Fechamento — ago/2026, issue #80)
+
+Quando o cliente **fecha a venda**, o vendedor preenchia uma ficha de papel que o admin transcrevia no sistema e encaminhava ao setor de contratos. Agora a ficha é preenchida **no app**, na criação da demanda de **Fechamento** (tipo com `com_ficha = true`, §10).
+
+**Fluxo de criação:**
+- Nova demanda com tipo de ficha → o form encolhe para **tipo, prazo, "Informação adicional" (opcional — vira a `descricao`; sem texto entra o padrão "Fechamento — ver ficha de pedido de vendas.") e anexos** (+ Proprietário, para o admin). Origem e condições **não aparecem** (`origem` fica **nula** → "Sem origem" no relatório §18; na demanda-filha, herda do pai).
+- O botão vira **"Preencher ficha"** → tela própria com as seções do papel em cards; o **cliente é escolhido DENTRO da ficha** (busca-primeiro, §6) — único obrigatório. O 1º consultor é **sempre o vendedor dono** (+ até 2 extras com %). O **RT sim/não + %** da ficha grava nos campos `rt`/`rt_percentual` **da demanda** (fonte única); o resto vive na tabela **`ficha_fechamento`** (1:1 com a demanda, morre junto).
+
+**Depois de criada:**
+- Detalhe: "Descrição" vira **"Informação adicional"**, a box origem/CLUB CASA/RT **some**, e a box **"Ficha de pedido de vendas"** (resumo nº/valor/data) abre a tela de **ver/editar**.
+- **Edição da ficha** (RLS `0045`, o front espelha): admin/atendente até a demanda ser terminal; o **dono** só em `Não iniciado`; os demais **só leem**. A **RT não muda** pela edição (é da demanda, que não tem update direto — todo update passa por função). Ninguém apaga a ficha sozinha.
+- **Status:** trilho próprio, **sem revisão de custo** (§7).
+- **PDF:** botão "Gerar PDF da ficha" (**dono + admin/atendente**; gerente não) → pré-visualização da **réplica fiel do papel** + `window.print()` (sem dependência, §5). Assinaturas saem **em branco** (assina-se no papel). ⚠ No iPhone com o **PWA instalado** o WebKit ignora `window.print()` — o app mostra a dica de abrir pelo Safari (mesma limitação do relatório §18).

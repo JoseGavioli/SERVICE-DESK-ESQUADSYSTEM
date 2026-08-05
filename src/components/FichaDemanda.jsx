@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { fichaParaEstado, fichaVazia, hojeIsoLocal, montarInsertFicha } from '../lib/ficha'
 import NdCabecalho from './NdCabecalho'
 import FichaCards from './FichaCards'
+import FichaPdf from './FichaPdf'
 import EstadoVazio from './EstadoVazio'
 import Icone from './Icone'
 
@@ -30,6 +31,7 @@ export default function FichaDemanda({
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
   const [salvo, setSalvo] = useState(false) // feedback "Ficha salva"
+  const [vendoPdf, setVendoPdf] = useState(false) // pre-visualizacao (§F4)
 
   const terminal = demanda.status === 'enviado' || demanda.status === 'cancelada'
   const ehStaff = perfil.papel === 'admin' || perfil.papel === 'atendente'
@@ -40,6 +42,9 @@ export default function FichaDemanda({
   // (nao-terminal) — atendente edita mas nao cria (0045).
   const podeCriar =
     donoNaJanela || (perfil.papel === 'admin' && !terminal)
+  // Gerar PDF (§F4): dono + admin/atendente (decisao do dono; gerente nao).
+  // Gerar e LEITURA — o dono pode mesmo fora da janela de edicao.
+  const podePdf = ehStaff || perfil.id === demanda.vendedor_id
 
   const nomeVendedor = demanda.vendedor?.nome_completo ?? '—'
 
@@ -165,6 +170,18 @@ export default function FichaDemanda({
     )
   }
 
+  // Pre-visualizacao do PDF (§F4): a folha substitui a tela inteira.
+  if (vendoPdf) {
+    return (
+      <FichaPdf
+        ficha={ficha}
+        demanda={demanda}
+        nomeVendedor={nomeVendedor}
+        aoVoltar={() => setVendoPdf(false)}
+      />
+    )
+  }
+
   const podeMexer = semFicha ? podeCriar : podeEditar
 
   return (
@@ -199,6 +216,20 @@ export default function FichaDemanda({
               <span className="nd-vinculada-obra">{demanda.obra?.nome}</span>
             </span>
           </div>
+
+          {/* Gerar PDF (§F4): dono + staff; so quando a ficha EXISTE. Reusa o
+              estilo do botao central da Revisao de demanda. */}
+          {podePdf && !semFicha && (
+            <div className="revisao-acao">
+              <button
+                type="button"
+                className="botao-filha"
+                onClick={() => setVendoPdf(true)}
+              >
+                <Icone nome="arquivo" size={16} /> Gerar PDF da ficha
+              </button>
+            </div>
+          )}
 
           {/* `desabilitado` = modo leitura: os campos travam mas os cards
               continuam ABRINDO (o fieldset fica no miolo de cada card).

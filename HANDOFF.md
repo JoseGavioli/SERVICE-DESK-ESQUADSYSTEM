@@ -36,13 +36,15 @@ App web interno da **EsquadSystem** (esquadrias de alumínio) para gerir **deman
 - **Web Push (#14): CONCLUÍDO** — validado nas 3 plataformas (desktop, Android, iOS com PWA).
 - **Dashboard: reforma COMPLETA** (A+B+C, #77) e **TODAS as listagens ilimitadas paginadas** (#78/#79 — helper `lib/paginacao.js`, `todasAsLinhas`): lista, RPCs, Relatório, SeletorCliente, Clientes. A classe de bug "corte silencioso de ~1000 do PostgREST" está **encerrada** no app.
 - **Anexos de entrada:** comprimidos para **≤ 1 MB** (`ALVO_ENTRADA` em `lib/anexos.js`) nos DOIS caminhos (criação e detalhe) — #75.
-- **Ficha de pedido de vendas (#80): F1+F2 prontas** — o vendedor preenche a ficha no app ao criar demanda de Fechamento (tela própria, cards por seção do papel), e o fluxo de status pula a revisão. Falta **F3** (detalhe: rótulo/box oculta/edição da ficha) e **F4** (PDF da ficha via `window.print()`). Demandas de teste #36/#37 criadas pela conta oculta na validação.
+- **Ficha de pedido de vendas (#80): COMPLETA (F1–F4)** — o vendedor preenche a ficha no app ao criar demanda de Fechamento; o fluxo de status pula a revisão (dois trilhos na `mover_status`); o detalhe tem a box da ficha (ver/**editar** com permissões espelhando a RLS; RT travada — é da demanda); e o **PDF** sai como réplica fiel do papel via `window.print()`. Spec registrada no **CLAUDE.md §19** (+ exceções em §7/§10). ⚠ iPhone com PWA instalado não imprime (`window.print()` é ignorado em standalone — o app mostra a dica de abrir pelo Safari; mesma limitação do Relatório). Demandas de teste #36/#37 criadas pela conta oculta na validação.
 - **Conta de teste** (`teste@gmail.com` = 'USUARIO DE TESTE'): **oculta** (0041) — não aparece nas listas/dashboard/relatório dos outros; e fora do relatório (0040).
 - **Fora do versionamento de propósito:** `deno.lock` e `supabase/functions/criar-usuario/` (Edge Function criada, **não deployada** — pendência #16).
 
 ## 5. O que foi feito
 
-### Sessão de 04–05/08/2026 (issues #78/#79 fechadas; #80 em andamento, F1+F2)
+### Sessão de 04–05/08/2026 (issues #78/#79/#80/#81 fechadas)
+
+**Ficha — F3+F4 (#80).** F3: detalhe do fechamento ("Informação adicional", box de condições oculta, box da ficha com resumo) + `FichaDemanda` (ver/editar/preencher-atrasado; cards compartilhados em `FichaCards`; fieldset **por card** — o card abre pra ler mesmo travado; `Miolo` fora do componente senão o input perdia o foco a cada tecla). F4: `FichaPdf` (réplica do papel + `window.print()`; visibilidade do print **escopada** por classe no body — sem escopo, o print do Relatório sairia em branco; folha **no fluxo**, sem `position:absolute` — WebKit/Gecko clipam multi-página). Bloqueantes pegos pelas revisões antes dos commits: round-trip do **valor com centavos** (banco devolve `45000.5`; re-salvar virava 450005) e **RT editável-mas-descartada** no preencher-atrasado.
 
 **Paginação da lista + 3 telas (#78/#79).** `lib/paginacao.js` (`todasAsLinhas`: páginas de 1000 até acabar; erro em qualquer página falha o todo; teto anti-loop). Aplicado em `Demandas.jsx` (linhas + as 2 RPCs, com desempate `.order('id')`), `Dashboard.jsx` (refatorado p/ o helper), `Relatorio.jsx`, `SeletorCliente.jsx` (o busca-primeiro anti-duplicata dependia de ver TODOS os clientes) e `Clientes.jsx`. Verificado ao vivo (RPC paginada via curl com `limit`/`offset` — que é o que o `.range()` do supabase-js emite; conferido no fonte instalado).
 
@@ -112,7 +114,7 @@ Rede de segurança contra tela branca (`ErrorBoundary` em 2 níveis + `erro_log`
 
 ## 7. ⏳ Pendências
 
-- 📋 **#80 (ficha de fechamento) — F3 e F4:** F3 = detalhe da demanda de fechamento (rótulo "Informação adicional", esconder a box origem/RT/CLUB CASA, **ver/editar a ficha** — a RLS de editar já existe, falta a tela) · F4 = **PDF da ficha** preenchida (réplica HTML do papel + `window.print()`, botão p/ dono + admin/atendente). Consequência já aceita: fechamento sem origem → "Sem origem" no relatório mensal.
+- 📝 **Anotações da #80 (nada bloqueante):** fechamento fica com origem nula → "Sem origem" no relatório (aceito pelo dono) · o PDF imprime o **estado atual da tela** (edição não salva sai na folha — "imprime o que se vê", decisão de produto) · `@page A4/10mm` vale pra **todo** print do app, inclusive o Relatório (aceito e documentado no CSS).
 - 🔁 **#29 (migrar demandas):** o **go-forward** (atribuir dono ao criar) está feito (0042/0043). Sobra, **se precisar**, reatribuir demandas **JÁ existentes** para outro dono.
 - 🔒 **Anotado (sem issue):** o ramo `autor_id = auth.uid()` do `anexo_excluir` deixa o vendedor-autor apagar a própria entrada em **qualquer status** via API direta (o front nunca mostra o botão fora de `nao_iniciado`). Pré-existente à 0044; travar só se o dono quiser rigor total.
 - 📝 **Da lista de melhorias:** *não perder formulário pela metade* (a Nova demanda perde tudo se tocar em voltar) e *export/backup dos dados*.
@@ -121,7 +123,7 @@ Rede de segurança contra tela branca (`ErrorBoundary` em 2 níveis + `erro_log`
 - 🧹 Limpeza de anexos de entrada antigos (§14) · 📅 feriados no cálculo de prazo (§8).
 
 ## 8. 🎯 Próximo passo
-**#80 — F3** (detalhe do fechamento: rótulos, box oculta, ver/editar ficha) e depois **F4** (PDF). A issue #80 fecha quando a feature completa estiver no ar.
+A **#80 está completa e fechada**. Candidatos do backlog: *não perder formulário pela metade*, export/backup, #29 (reatribuir demandas existentes), #43/#32/#18/#17/#16 — ou o que o dono priorizar.
 
 ## 9. ⚠️ Armadilhas do ambiente (economiza horas)
 
