@@ -38,3 +38,21 @@ export const TRANSICOES = {
   enviado: [], // terminal
   cancelada: [], // terminal
 }
+
+// Trilho do FECHAMENTO (tipo com ficha, §issue #80): a revisao de custo e
+// PULADA — de "em andamento" vai direto a "concluido". So o em_andamento
+// difere; os demais status usam o mapa normal (inclusive em_revisao_custo:
+// fechamento ANTIGO que ja estava la precisa conseguir sair).
+const EM_ANDAMENTO_COM_FICHA = [
+  { para: 'concluido', rotulo: 'Concluir (pedido pronto)', icone: 'check', exigeComentario: false },
+  { para: 'congelado', rotulo: 'Congelar', icone: 'neve', exigeComentario: true },
+  { para: 'cancelada', rotulo: 'Cancelar', icone: 'cancelado', exigeComentario: true, soAdmin: true },
+]
+
+// Use SEMPRE esta funcao (nao o mapa direto) quando a demanda estiver na mao:
+// ela escolhe o trilho pela flag `com_ficha` do tipo (banco decide igual, na
+// mover_status — se divergirem, o banco manda).
+export function transicoesDe(status, comFicha) {
+  if (comFicha && status === 'em_andamento') return EM_ANDAMENTO_COM_FICHA
+  return TRANSICOES[status] || []
+}

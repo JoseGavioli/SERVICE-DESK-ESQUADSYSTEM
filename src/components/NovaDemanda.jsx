@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { enviarAnexo } from '../lib/anexos'
+import { obterOuCriarObraPadrao } from '../lib/obraPadrao'
 import {
   ORIGENS,
   calcularFaltantes,
   listaPt,
   resumir,
 } from '../lib/novaDemanda'
+import { fichaVazia, hojeIsoLocal } from '../lib/ficha'
 import CardCampo from './CardCampo'
+import FichaFechamento from './FichaFechamento'
 import NdCabecalho from './NdCabecalho'
 import NdClienteObra from './NdClienteObra'
 import NdOpcoes from './NdOpcoes'
@@ -70,12 +73,29 @@ export default function NovaDemanda({
   const [tentou, setTentou] = useState(false) // ja tentou criar? (so ai marcamos)
   const [donos, setDonos] = useState([]) // possiveis donos (so o admin usa)
   const [proprietario, setProprietario] = useState(null) // dono escolhido; null = eu
+  // FECHAMENTO (§#80): a ficha e sua tela. O estado vive AQUI para o vendedor
+  // poder voltar (ajustar prazo/anexos) sem perder o que ja digitou na ficha.
+  // Na FILHA, a RT herdada do pai ja vem SEMEADA na ficha (como as condicoes
+  // herdadas do fluxo normal, §11) — o vendedor pode ajustar na secao de RT.
+  const [preenchendoFicha, setPreenchendoFicha] = useState(false)
+  const [ficha, setFicha] = useState(() => ({
+    ...fichaVazia(hojeIsoLocal()),
+    ...(ehFilha && demandaPai?.rt
+      ? {
+          rt: true,
+          rt_percentual:
+            demandaPai.rt_percentual != null
+              ? String(demandaPai.rt_percentual)
+              : '',
+        }
+      : {}),
+  }))
 
   useEffect(() => {
     async function carregarTipos() {
       const { data } = await supabase
         .from('tipo_demanda')
-        .select('id, nome')
+        .select('id, nome, com_ficha')
         .eq('ativo', true)
         .order('id')
       if (data) setTipos(data)
@@ -120,8 +140,15 @@ export default function NovaDemanda({
     setAberto('obra') // encadeia: quem acabou de escolher o cliente vai na obra
   }
 
+  // Tipo com FICHA (Fechamento, §#80): o form encolhe para tipo + prazo +
+  // "Informacao adicional" (opcional) + anexos, e o botao vira "Preencher
+  // ficha" — cliente, origem e condicoes passam para a tela da ficha.
+  const tipoEscolhido = tipos.find((t) => String(t.id) === String(tipoId))
+  const ehFechamento = Boolean(tipoEscolhido?.com_ficha)
+
   const faltantes = calcularFaltantes({
     ehFilha,
+    ehFechamento,
     cliente,
     tipoId,
     descricao,
@@ -135,32 +162,6 @@ export default function NovaDemanda({
   // alguem por nao ter preenchido o que ele ainda nem viu e hostil. E, como isto
   // e DERIVADO (nao e estado), o vermelho some sozinho quando o campo e preenchido.
   const marcado = (id) => tentou && faltantes.some((f) => f.id === id)
-
-  // Acha (ou cria) a obra padrao "Obra de {cliente}" quando nenhuma foi
-  // escolhida. Roda sob a RLS do vendedor (ele ja pode criar obras). Retorna o
-  // id da obra, ou null em caso de erro (com a mensagem ja sinalizada).
-  async function obterOuCriarObraPadrao() {
-    const nome = `Obra de ${cliente.nome}`
-    const { data: existente } = await supabase
-      .from('obra')
-      .select('id')
-      .eq('cliente_id', cliente.id)
-      .eq('nome', nome)
-      .limit(1)
-      .maybeSingle()
-    if (existente) return existente.id
-
-    const { data: nova, error } = await supabase
-      .from('obra')
-      .insert({ cliente_id: cliente.id, nome })
-      .select('id')
-      .single()
-    if (error) {
-      setErro('Não foi possível criar a obra padrão do cliente.')
-      return null
-    }
-    return nova.id
-  }
 
   async function salvar(evento) {
     evento.preventDefault()
@@ -176,13 +177,21 @@ export default function NovaDemanda({
       return
     }
 
+    // Fechamento (§#80): este form nao salva nada — ele encaminha para a tela
+    // da FICHA, que e quem cria demanda + ficha + anexos.
+    if (ehFechamento) {
+      setPreenchendoFicha(true)
+      return
+    }
+
     setSalvando(true)
 
     // Obra: a escolhida, ou "Obra de {cliente}" (achar-ou-criar) se ficou em branco.
     let obraId = obra?.id
     if (!obraId) {
-      obraId = await obterOuCriarObraPadrao()
+      obraId = await obterOuCriarObraPadrao(cliente)
       if (!obraId) {
+        setErro('Não foi possível criar a obra padrão do cliente.')
         setSalvando(false)
         return
       }
@@ -249,9 +258,85 @@ export default function NovaDemanda({
 
   const textoBotao = salvando
     ? 'Salvando…'
-    : ehFilha
-      ? 'Criar demanda vinculada'
-      : 'Criar demanda'
+    : ehFechamento
+      ? 'Preencher ficha'
+      : ehFilha
+        ? 'Criar demanda vinculada'
+        : 'Criar demanda'
+
+  // Card da descricao — vira "Informacao adicional" (OPCIONAL) no fechamento
+  // (§#80). Extraido p/ variavel porque a POSICAO muda: no fechamento ele
+  // desce para baixo do divisor "Opcional daqui pra baixo".
+  const cardDescricao = (
+    <CardCampo
+      id="card-descricao"
+      icone="arquivo"
+      titulo={ehFechamento ? 'Informação adicional' : 'Descrição'}
+      selo="não editável depois"
+      subtitulo={
+        descricao.trim()
+          ? resumir(descricao)
+          : ehFechamento
+            ? 'Algo a acrescentar? (opcional)'
+            : 'O que precisa ser feito?'
+      }
+      preenchido={Boolean(descricao.trim())}
+      faltando={marcado('descricao')}
+      aberto={aberto === 'descricao'}
+      aoClicar={() => alternar('descricao')}
+    >
+      <textarea
+        value={descricao}
+        onChange={(e) => setDescricao(e.target.value)}
+        rows={5}
+        aria-label={ehFechamento ? 'Informação adicional' : 'Descrição da demanda'}
+        autoFocus
+      />
+      {/* §9: a descricao congela na criacao. Avisamos ANTES de escrever —
+          que e quando ainda da para caprichar. */}
+      <p className="nd-dica">
+        Este texto fica <strong>congelado</strong> na criação. Correções
+        depois vão nos comentários da demanda.
+      </p>
+    </CardCampo>
+  )
+
+  // Preenchendo a FICHA (§#80): a tela dela substitui o form inteiro. O estado
+  // (cliente/obra/ficha) mora AQUI, entao voltar e retornar nao perde nada.
+  if (preenchendoFicha) {
+    return (
+      <FichaFechamento
+        perfil={perfil}
+        base={{
+          tipoId,
+          prazo,
+          infoAdicional: descricao,
+          arquivos,
+          proprietario,
+          demandaPaiId,
+          origemHerdada: ehFilha ? origem || null : null,
+          // Filha: o arquiteto do pai (ja carregado no estado) e preservado.
+          arquitetoHerdado: ehFilha ? arquiteto.trim() || null : null,
+        }}
+        cliente={cliente}
+        aoEscolherCliente={(c) => {
+          setCliente(c)
+          setObra(null) // a obra que estava escolhida era de OUTRO cliente
+        }}
+        obra={obra}
+        aoEscolherObra={setObra}
+        ficha={ficha}
+        aoMudarFicha={setFicha}
+        ehFilha={ehFilha}
+        obraFixa={obraFixa}
+        demandaPai={demandaPai}
+        aoVoltar={() => setPreenchendoFicha(false)}
+        aoCriar={aoCriar}
+        naoLidas={naoLidas}
+        aoAbrirNotif={aoAbrirNotif}
+      />
+    )
+  }
 
   // O form e a barra "Criar demanda" sao IRMAOS: assim a barra pode ficar fixa
   // no rodape (modo principal) cobrindo o bottom-nav. O botao submete o form
@@ -291,18 +376,21 @@ export default function NovaDemanda({
               </span>
             </div>
           ) : (
-            <NdClienteObra
-              cliente={cliente}
-              obra={obra}
-              aoEscolherCliente={escolherCliente}
-              aoEscolherObra={(o) => {
-                setObra(o)
-                setAberto(null)
-              }}
-              aberto={aberto}
-              aoAlternar={alternar}
-              faltandoCliente={marcado('cliente')}
-            />
+            /* Fechamento: o cliente e escolhido DENTRO da ficha (§#80). */
+            !ehFechamento && (
+              <NdClienteObra
+                cliente={cliente}
+                obra={obra}
+                aoEscolherCliente={escolherCliente}
+                aoEscolherObra={(o) => {
+                  setObra(o)
+                  setAberto(null)
+                }}
+                aberto={aberto}
+                aoAlternar={alternar}
+                faltandoCliente={marcado('cliente')}
+              />
+            )
           )}
 
           <CardCampo
@@ -325,33 +413,7 @@ export default function NovaDemanda({
             />
           </CardCampo>
 
-          <CardCampo
-            id="card-descricao"
-            icone="arquivo"
-            titulo="Descrição"
-            selo="não editável depois"
-            subtitulo={
-              descricao.trim() ? resumir(descricao) : 'O que precisa ser feito?'
-            }
-            preenchido={Boolean(descricao.trim())}
-            faltando={marcado('descricao')}
-            aberto={aberto === 'descricao'}
-            aoClicar={() => alternar('descricao')}
-          >
-            <textarea
-              value={descricao}
-              onChange={(e) => setDescricao(e.target.value)}
-              rows={5}
-              aria-label="Descrição da demanda"
-              autoFocus
-            />
-            {/* §9: a descricao congela na criacao. Avisamos ANTES de escrever —
-                que e quando ainda da para caprichar. */}
-            <p className="nd-dica">
-              Este texto fica <strong>congelado</strong> na criação. Correções
-              depois vão nos comentários da demanda.
-            </p>
-          </CardCampo>
+          {!ehFechamento && cardDescricao}
 
           <NdPrazo
             prazo={prazo}
@@ -363,8 +425,9 @@ export default function NovaDemanda({
           />
 
           {/* Origem: só na demanda normal. Na filha ela é herdada do pai
-              (escondida — a revisão veio do mesmo lead). §11 */}
-          {!ehFilha && (
+              (escondida — a revisão veio do mesmo lead, §11); no fechamento
+              nem existe (§#80). */}
+          {!ehFilha && !ehFechamento && (
             <CardCampo
               id="card-origem"
               icone="origem"
@@ -393,25 +456,31 @@ export default function NovaDemanda({
             <span>Opcional daqui pra baixo</span>
           </p>
 
-          <CardCampo
-            id="card-condicoes"
-            icone="percentual"
-            titulo="Condições comerciais"
-            subtitulo={subCondicoes()}
-            preenchido={rt || Boolean(arquiteto.trim())}
-            faltando={marcado('condicoes')}
-            aberto={aberto === 'condicoes'}
-            aoClicar={() => alternar('condicoes')}
-          >
-            <NdCondicoes
-              rt={rt}
-              aoMudarRt={setRt}
-              rtPercentual={rtPercentual}
-              aoMudarPercentual={setRtPercentual}
-              arquiteto={arquiteto}
-              aoMudarArquiteto={setArquiteto}
-            />
-          </CardCampo>
+          {/* No fechamento a "Informacao adicional" e opcional — desce p/ ca. */}
+          {ehFechamento && cardDescricao}
+
+          {/* Condicoes: no fechamento, RT e afins moram na FICHA (§#80). */}
+          {!ehFechamento && (
+            <CardCampo
+              id="card-condicoes"
+              icone="percentual"
+              titulo="Condições comerciais"
+              subtitulo={subCondicoes()}
+              preenchido={rt || Boolean(arquiteto.trim())}
+              faltando={marcado('condicoes')}
+              aberto={aberto === 'condicoes'}
+              aoClicar={() => alternar('condicoes')}
+            >
+              <NdCondicoes
+                rt={rt}
+                aoMudarRt={setRt}
+                rtPercentual={rtPercentual}
+                aoMudarPercentual={setRtPercentual}
+                arquiteto={arquiteto}
+                aoMudarArquiteto={setArquiteto}
+              />
+            </CardCampo>
+          )}
 
           <CardCampo
             id="card-anexos"

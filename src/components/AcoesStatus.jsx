@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { TRANSICOES } from '../lib/transicoes'
+import { transicoesDe } from '../lib/transicoes'
 import Icone from './Icone'
 
 // Acoes de status (so atendente/admin; vendedor nunca). No detalhe, aparece
@@ -19,10 +19,15 @@ export default function AcoesStatus({ demanda, perfil, aoMover }) {
   // esconde e o banco tambem barra (§issue #44).
   if (perfil.papel !== 'admin' && perfil.papel !== 'atendente') return null
 
-  // Opcoes do status atual. O "Cancelar" (efetivar) NAO fica mais aqui: ele
-  // migrou para o componente Cancelamento, junto do "Solicitar cancelamento"
-  // do vendedor (§issue #36). Por isso filtramos 'cancelada' fora do sheet.
-  const opcoes = (TRANSICOES[demanda.status] || []).filter(
+  // Opcoes do status atual — trilho escolhido pela flag com_ficha do tipo
+  // (fechamento pula a revisao de custo, §#80). O "Cancelar" (efetivar) NAO
+  // fica mais aqui: ele migrou para o componente Cancelamento, junto do
+  // "Solicitar cancelamento" do vendedor (§issue #36). Por isso filtramos
+  // 'cancelada' fora do sheet.
+  const opcoes = transicoesDe(
+    demanda.status,
+    demanda.tipo_demanda?.com_ficha,
+  ).filter(
     (t) => t.para !== 'cancelada' && (!t.soAdmin || perfil.papel === 'admin'),
   )
   if (opcoes.length === 0) return null // estado terminal — sem barra (nav aparece)

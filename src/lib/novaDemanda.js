@@ -44,8 +44,13 @@ export function resumir(texto, max = 42) {
 //
 // A OBRA nao entra de proposito: ela e opcional — sem escolha, a demanda cai na
 // "Obra de {cliente}" (achar-ou-criar, no componente).
+//
+// FECHAMENTO (tipo com ficha, §#80): o cliente e escolhido DENTRO da ficha, a
+// descricao vira "Informacao adicional" (opcional), e origem/condicoes nem
+// aparecem — nada disso e obrigatorio aqui.
 export function calcularFaltantes({
   ehFilha,
+  ehFechamento,
   cliente,
   tipoId,
   descricao,
@@ -55,13 +60,16 @@ export function calcularFaltantes({
   rtPercentual,
 }) {
   const faltantes = []
-  if (!ehFilha && !cliente) faltantes.push({ id: 'cliente', nome: 'cliente' })
+  if (!ehFilha && !ehFechamento && !cliente)
+    faltantes.push({ id: 'cliente', nome: 'cliente' })
   if (!tipoId) faltantes.push({ id: 'tipo', nome: 'tipo' })
-  if (!descricao.trim()) faltantes.push({ id: 'descricao', nome: 'descrição' })
+  if (!ehFechamento && !descricao.trim())
+    faltantes.push({ id: 'descricao', nome: 'descrição' })
   if (!prazo) faltantes.push({ id: 'prazo', nome: 'prazo' })
   // Na filha a origem é herdada do pai (escondida) — não é obrigatória aqui.
-  if (!ehFilha && !origem) faltantes.push({ id: 'origem', nome: 'origem' })
-  if (rt && String(rtPercentual).trim() === '')
+  if (!ehFilha && !ehFechamento && !origem)
+    faltantes.push({ id: 'origem', nome: 'origem' })
+  if (!ehFechamento && rt && String(rtPercentual).trim() === '')
     faltantes.push({ id: 'condicoes', nome: '% da RT' })
   return faltantes
 }

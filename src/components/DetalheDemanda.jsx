@@ -41,7 +41,7 @@ export default function DetalheDemanda({
     const { data, error } = await supabase
       .from('demanda')
       .select(
-        'id, descricao, prazo, status, created_at, vendedor_id, obra_id, cancelamento_solicitado, origem, urgencia_manual, club_casa, rt, rt_percentual, arquiteto_engenheiro, tipo_demanda(nome), obra(nome, endereco, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo, avatar_path)',
+        'id, descricao, prazo, status, created_at, vendedor_id, obra_id, cancelamento_solicitado, origem, urgencia_manual, club_casa, rt, rt_percentual, arquiteto_engenheiro, tipo_demanda(nome, com_ficha), obra(nome, endereco, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo, avatar_path)',
       )
       .eq('id', demandaId)
       .single()

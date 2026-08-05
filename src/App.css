@@ -5459,3 +5459,15 @@ button.cad-item:hover {
 .confirmar-limpar button.perigo:hover {
   background: var(--perigo-hover);
 }
+
+/* ── Ficha de pedido de vendas (§issue #80) ─────────────────────
+   A tela reusa a linguagem da Nova demanda (nd-cards, campo-linha etc.);
+   aqui so o que e proprio dela. */
+.fi-consultor-fixo {
+  margin: 0 0 10px;
+  font-size: 0.92rem;
+  color: var(--texto-suave);
+}
+.fi-consultor-fixo strong {
+  color: var(--texto);
+}

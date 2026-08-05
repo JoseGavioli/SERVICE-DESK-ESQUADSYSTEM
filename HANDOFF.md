@@ -1,19 +1,18 @@
 # 📋 Handoff — Service Desk - EsquadSystem
 
-**Data:** 04/08/2026 · **Branch:** `main` (sincronizada com `origin`) · **HEAD:** `2f8ce4d`
+**Data:** 05/08/2026 · **Branch:** `main` · **último HEAD publicado antes desta leva:** `4a785fd`
 
 > Documento de continuidade. Para retomar: leia a **§7** (pendências) e a **§9** (armadilhas).
 > A fundação é o **`CLAUDE.md`** — leia-o por completo antes de mexer em qualquer coisa.
 
 ---
 
-## 1. ✅ Migrações: todas aplicadas (`0001` → `0044`)
+## 1. ✅ Migrações: todas aplicadas (`0001` → `0046`)
 
 Todas rodadas e confirmadas pelo dono no SQL Editor. As mais recentes:
-- **`0041`** — `perfil.oculto` + helper `perfil_oculto()`; esconde as demandas de um perfil oculto (a conta de teste) de todo mundo, menos do próprio dono.
-- **`0042`** — admin pode definir o **dono** da demanda ao criar; + o gatilho de nova demanda passa o **autor real** (`auth.uid()`).
-- **`0043`** — admin pode **anexar entrada** em demanda de outro dono (fix da 0042).
-- **`0044`** — o **dono** da demanda pode **apagar anexo de entrada** dela (tabela + Storage, este pela pasta) enquanto `nao_iniciado` — 2ª regressão da 0042/0043 (ver §6).
+- **`0042`/`0043`/`0044`** — admin define o **dono** da demanda + os dois fixes de posse que isso exigiu (anexar entrada; dono apaga entrada — ver §6).
+- **`0045`** — **Ficha de pedido de vendas** (F1 da #80): `tipo_demanda.com_ficha` (flag data-driven), tabela `ficha_fechamento` (1:1 com demanda, RLS: ler=quem vê a demanda; criar=dono em `nao_iniciado` OU admin não-terminal, só tipo com ficha; editar=staff não-terminal OU dono em `nao_iniciado`; delete=negado; gatilho impede trocar de demanda) e **`mover_status` com DOIS trilhos**: tipo com ficha pula a revisão de custo (`em_andamento → concluido` direto; entrar em revisão é bloqueado, sair continua podendo).
+- **`0046`** — devolve o aviso **"prazo se aproximando"** que a 0039 tinha derrubado sem querer (achado de revisão adversarial); agora só em `nao_iniciado`/`em_andamento`, alinhado ao "Atrasado" (§8).
 
 > **Lição que se manteve.** O dono roda as migrações; **peça confirmação explícita** de que rodou (não presuma pelo silêncio), sempre diga **o que quebra se não rodar**, e prefira que a ausência degrade **só a tela nova**. Nesta rodada, a `0043` foi um bug que a `0042` criou (ver §6).
 
@@ -33,15 +32,21 @@ App web interno da **EsquadSystem** (esquadrias de alumínio) para gerir **deman
 
 ## 4. Estado atual
 
-- **Fases 0–6 completas** e no ar. Migrações **`0001` → `0044`**, todas aplicadas (§1).
+- **Fases 0–6 completas** e no ar. Migrações **`0001` → `0046`**, todas aplicadas (§1).
 - **Web Push (#14): CONCLUÍDO** — validado nas 3 plataformas (desktop, Android, iOS com PWA).
-- **Nova demanda:** reformada em **cards** (§5) — a última tela que faltava padronizar.
-- **Dashboard: reforma COMPLETA** — Blocos A, B e **C** (contagem híbrida, #77). A **lista** ainda tem a exposição ao corte de ~1000 (#78, aberta — ver §7).
-- **Anexos de entrada:** comprimidos para **≤ 1 MB** (`ALVO_ENTRADA` em `lib/anexos.js`) nos DOIS caminhos (criação e detalhe).
+- **Dashboard: reforma COMPLETA** (A+B+C, #77) e **TODAS as listagens ilimitadas paginadas** (#78/#79 — helper `lib/paginacao.js`, `todasAsLinhas`): lista, RPCs, Relatório, SeletorCliente, Clientes. A classe de bug "corte silencioso de ~1000 do PostgREST" está **encerrada** no app.
+- **Anexos de entrada:** comprimidos para **≤ 1 MB** (`ALVO_ENTRADA` em `lib/anexos.js`) nos DOIS caminhos (criação e detalhe) — #75.
+- **Ficha de pedido de vendas (#80): F1+F2 prontas** — o vendedor preenche a ficha no app ao criar demanda de Fechamento (tela própria, cards por seção do papel), e o fluxo de status pula a revisão. Falta **F3** (detalhe: rótulo/box oculta/edição da ficha) e **F4** (PDF da ficha via `window.print()`). Demandas de teste #36/#37 criadas pela conta oculta na validação.
 - **Conta de teste** (`teste@gmail.com` = 'USUARIO DE TESTE'): **oculta** (0041) — não aparece nas listas/dashboard/relatório dos outros; e fora do relatório (0040).
 - **Fora do versionamento de propósito:** `deno.lock` e `supabase/functions/criar-usuario/` (Edge Function criada, **não deployada** — pendência #16).
 
 ## 5. O que foi feito
+
+### Sessão de 04–05/08/2026 (issues #78/#79 fechadas; #80 em andamento, F1+F2)
+
+**Paginação da lista + 3 telas (#78/#79).** `lib/paginacao.js` (`todasAsLinhas`: páginas de 1000 até acabar; erro em qualquer página falha o todo; teto anti-loop). Aplicado em `Demandas.jsx` (linhas + as 2 RPCs, com desempate `.order('id')`), `Dashboard.jsx` (refatorado p/ o helper), `Relatorio.jsx`, `SeletorCliente.jsx` (o busca-primeiro anti-duplicata dependia de ver TODOS os clientes) e `Clientes.jsx`. Verificado ao vivo (RPC paginada via curl com `limit`/`offset` — que é o que o `.range()` do supabase-js emite; conferido no fonte instalado).
+
+**Ficha de pedido de vendas — F1+F2 (#80).** Banco na `0045` (§1). Front: `transicoesDe()` (trilho por `com_ficha` — fecha a janela de deploy), `NovaDemanda` em modo fechamento (só tipo/prazo/"Informação adicional" opcional/anexos/Proprietário; botão "Preencher ficha"), tela `FichaFechamento` (hero + cards por seção do papel + seletor de cliente busca-primeiro DENTRO da ficha; salva demanda→ficha→anexos; estado lifted na NovaDemanda — voltar não perde nada), `lib/ficha.js` (parsers e subtítulos), `lib/obraPadrao.js` (deduplicado). Decisões do dono: fluxo `não iniciado → em andamento → concluído → enviado`; ficha editável (staff até terminal; dono em não-iniciado); 1º consultor = vendedor dono + até 2 extras; texto padrão quando sem informação adicional. **Bugs pegos pela revisão adversarial antes do commit:** `numeroBr` corrompia decimais de `<input type=number>` (2,5% virava 25 — separado em `numeroInput`); filha-fechamento perdia RT/arquiteto herdados do pai (ficha agora nasce semeada). E2E validado no app real (#36/#37: ficha no banco com valor BR parseado, trilho Iniciar→Concluir sem revisão aceito pelo banco). **Achado extra da revisão da 0045:** a 0039 tinha derrubado o aviso "prazo se aproximando" — restaurado na `0046`.
 
 ### Sessões de 27/07–04/08/2026 (issues #73–#77 fechadas; #78 aberta)
 
@@ -107,7 +112,7 @@ Rede de segurança contra tela branca (`ErrorBoundary` em 2 níveis + `erro_log`
 
 ## 7. ⏳ Pendências
 
-- 📊 **#78 — "Bloco C da lista":** `Demandas.jsx` tem a exposição ao corte de ~1000 **em triplo** (as linhas da lista + `datas_primeira_revisao` + `ultima_atividade`, todas sem filtro/paginação). Preventivo, sem efeito no volume atual. A estratégia da lista em si (paginar vs. janela) é decisão de UX — **discutir antes de implementar**.
+- 📋 **#80 (ficha de fechamento) — F3 e F4:** F3 = detalhe da demanda de fechamento (rótulo "Informação adicional", esconder a box origem/RT/CLUB CASA, **ver/editar a ficha** — a RLS de editar já existe, falta a tela) · F4 = **PDF da ficha** preenchida (réplica HTML do papel + `window.print()`, botão p/ dono + admin/atendente). Consequência já aceita: fechamento sem origem → "Sem origem" no relatório mensal.
 - 🔁 **#29 (migrar demandas):** o **go-forward** (atribuir dono ao criar) está feito (0042/0043). Sobra, **se precisar**, reatribuir demandas **JÁ existentes** para outro dono.
 - 🔒 **Anotado (sem issue):** o ramo `autor_id = auth.uid()` do `anexo_excluir` deixa o vendedor-autor apagar a própria entrada em **qualquer status** via API direta (o front nunca mostra o botão fora de `nao_iniciado`). Pré-existente à 0044; travar só se o dono quiser rigor total.
 - 📝 **Da lista de melhorias:** *não perder formulário pela metade* (a Nova demanda perde tudo se tocar em voltar) e *export/backup dos dados*.
@@ -116,7 +121,7 @@ Rede de segurança contra tela branca (`ErrorBoundary` em 2 níveis + `erro_log`
 - 🧹 Limpeza de anexos de entrada antigos (§14) · 📅 feriados no cálculo de prazo (§8).
 
 ## 8. 🎯 Próximo passo
-A reforma do Dashboard está **completa** (A+B+C). Candidatos: **#78** (Bloco C da lista — começar discutindo a UX da lista), *não perder formulário pela metade*, export/backup, ou o que o dono priorizar.
+**#80 — F3** (detalhe do fechamento: rótulos, box oculta, ver/editar ficha) e depois **F4** (PDF). A issue #80 fecha quando a feature completa estiver no ar.
 
 ## 9. ⚠️ Armadilhas do ambiente (economiza horas)
 
@@ -147,4 +152,4 @@ A reforma do Dashboard está **completa** (A+B+C). Candidatos: **#78** (Bloco C 
 
 ---
 
-_Gerado por Claude Code em 04/08/2026 (HEAD `2f8ce4d`)._
+_Gerado por Claude Code em 05/08/2026 (após `4a785fd`; migrações até `0046`)._

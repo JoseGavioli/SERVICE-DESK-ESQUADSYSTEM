@@ -11,20 +11,22 @@ export default function NdCabecalho({
   aoCancelar,
   naoLidas,
   aoAbrirNotif,
+  titulo, // sobrepoe o titulo padrao (ex.: "Ficha de pedido de vendas", §#80)
 }) {
+  const tituloFinal =
+    titulo ?? (ehFilha ? 'Revisão de demanda' : 'Nova demanda')
+
   if (!comHero) {
     return (
       <h2 className="titulo-filha">
-        {ehFilha ? 'Nova demanda vinculada' : 'Nova demanda'}
+        {titulo ?? (ehFilha ? 'Nova demanda vinculada' : 'Nova demanda')}
       </h2>
     )
   }
 
   return (
     <header className="hero-demandas">
-      <h1 className="hero-titulo">
-        {ehFilha ? 'Revisão de demanda' : 'Nova demanda'}
-      </h1>
+      <h1 className="hero-titulo">{tituloFinal}</h1>
       <div className="hero-acoes">
         <button
           type="button"
