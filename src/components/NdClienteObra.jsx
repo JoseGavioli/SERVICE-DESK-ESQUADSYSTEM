@@ -16,6 +16,7 @@ export default function NdClienteObra({
   aberto,
   aoAlternar,
   faltandoCliente,
+  sempreAberto, // desktop: campos expostos (§#83 B3)
 }) {
   // Sem obra a demanda NAO trava: cai na obra padrao do cliente (achar-ou-criar
   // na NovaDemanda). Dizemos isso aqui para o vendedor saber, ANTES de criar, o
@@ -36,10 +37,12 @@ export default function NdClienteObra({
         preenchido={Boolean(cliente)}
         faltando={faltandoCliente}
         aberto={aberto === 'cliente'}
+        sempreAberto={sempreAberto}
         aoClicar={() => aoAlternar('cliente')}
       >
         <SeletorCliente aoSelecionar={aoEscolherCliente} />
       </CardCampo>
+
 
       <CardCampo
         id="card-obra"
@@ -49,11 +52,27 @@ export default function NdClienteObra({
         preenchido={Boolean(obra)}
         desabilitado={!cliente}
         aberto={aberto === 'obra'}
+        sempreAberto={sempreAberto}
         aoClicar={() => aoAlternar('obra')}
       >
-        {/* So monta o seletor com um cliente em maos: ele busca as obras DELE. */}
-        {cliente && (
-          <SeletorObra cliente={cliente} aoSelecionar={aoEscolherObra} />
+        {/* So monta o seletor com um cliente em maos: ele busca as obras DELE.
+            No modo EXPOSTO (desktop) o card fica lado a lado com o de cliente:
+            sem corpo nenhum ele viraria um toco de 60px ao lado de um card
+            alto (achado da revisao) — entao explicamos a espera.
+            `autoFoco` desligado no exposto: os dois seletores montam juntos e
+            o ultimo ganharia o foco, pulando o campo de cliente. */}
+        {cliente ? (
+          <SeletorObra
+            cliente={cliente}
+            aoSelecionar={aoEscolherObra}
+            autoFoco={!sempreAberto}
+          />
+        ) : (
+          sempreAberto && (
+            <p className="card-campo-espera">
+              Escolha o cliente ao lado para ver as obras dele.
+            </p>
+          )
         )}
       </CardCampo>
     </>

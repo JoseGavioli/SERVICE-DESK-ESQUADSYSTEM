@@ -7,7 +7,7 @@ import Icone from './Icone'
 // tudo, e cria na hora se nao existir (§issue #64).
 const QUANTOS_RECENTES = 5
 
-export default function SeletorObra({ cliente, aoSelecionar }) {
+export default function SeletorObra({ cliente, aoSelecionar, autoFoco = true }) {
   const [obras, setObras] = useState([])
   const [busca, setBusca] = useState('')
   const [erro, setErro] = useState('')
@@ -62,7 +62,7 @@ export default function SeletorObra({ cliente, aoSelecionar }) {
         value={busca}
         onChange={(e) => setBusca(e.target.value)}
         aria-label="Buscar obra"
-        autoFocus
+        autoFocus={autoFoco}
       />
       {erro && <p className="erro">{erro}</p>}
       <p className="escolher-rot">

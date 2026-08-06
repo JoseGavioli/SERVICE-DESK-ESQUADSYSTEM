@@ -13,6 +13,7 @@ export default function NdPrazo({
   aberto,
   aoAlternar,
   aoFechar,
+  sempreAberto, // desktop: calendario sempre a vista (§#83 B3)
 }) {
   return (
     <CardCampo
@@ -23,6 +24,7 @@ export default function NdPrazo({
       preenchido={Boolean(prazo)}
       faltando={faltando}
       aberto={aberto}
+      sempreAberto={sempreAberto}
       aoClicar={aoAlternar}
     >
       <Calendario

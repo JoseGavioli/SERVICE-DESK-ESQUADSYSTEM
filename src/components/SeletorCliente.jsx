@@ -12,7 +12,7 @@ import Icone from './Icone'
 // Digitou -> filtra a lista toda. Nao achou -> cria na hora.
 const QUANTOS_RECENTES = 5
 
-export default function SeletorCliente({ aoSelecionar }) {
+export default function SeletorCliente({ aoSelecionar, autoFoco = true }) {
   const [clientes, setClientes] = useState([])
   const [busca, setBusca] = useState('')
   const [erro, setErro] = useState('')
@@ -76,7 +76,7 @@ export default function SeletorCliente({ aoSelecionar }) {
         value={busca}
         onChange={(e) => setBusca(e.target.value)}
         aria-label="Buscar cliente"
-        autoFocus
+        autoFocus={autoFoco}
       />
       {erro && <p className="erro">{erro}</p>}
       <p className="escolher-rot">

@@ -7,6 +7,7 @@ import {
   montarInsertFicha,
   numeroInput,
 } from '../lib/ficha'
+import { useDesktop } from '../lib/useDesktop'
 import NdCabecalho from './NdCabecalho'
 import NdClienteObra from './NdClienteObra'
 import FichaCards from './FichaCards'
@@ -37,6 +38,7 @@ export default function FichaFechamento({
   naoLidas,
   aoAbrirNotif,
 }) {
+  const desktop = useDesktop() // §#83 B3: secoes expostas
   const [aberto, setAberto] = useState(null)
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
@@ -199,6 +201,7 @@ export default function FichaFechamento({
               }}
               aberto={aberto}
               aoAlternar={alternar}
+              sempreAberto={desktop}
               faltandoCliente={tentou && faltaCliente}
             />
           )}
@@ -209,6 +212,7 @@ export default function FichaFechamento({
             nomeVendedor={nomeVendedor}
             aberto={aberto}
             alternar={alternar}
+            sempreAberto={desktop}
           />
         </div>
 

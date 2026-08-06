@@ -5930,3 +5930,110 @@ button.cad-item:hover {
     grid-column: 1 / -1;
   }
 }
+
+/* ═══ MODO DESKTOP — B3: formulários com campos expostos (§#83) ═══
+   A sanfona existe para caber numa tela de CELULAR. No PC os cards já
+   nascem abertos (CardCampo `sempreAberto`) e o que muda aqui é só o
+   arranjo: coluna mais larga + pares lado a lado. */
+@media (min-width: 900px) {
+  /* Cabeçalho do card exposto vira TÍTULO (não é mais botão). */
+  .app.desktop .card-campo.exposto .card-campo-topo {
+    cursor: default;
+    padding-bottom: 0.35rem;
+  }
+  /* Card à espera de um pré-requisito (ex.: Obra sem cliente escolhido):
+     no exposto ele fica lado a lado com o card alto, e sem corpo viraria um
+     toco de 60px (achado da revisão). */
+  .card-campo-espera {
+    margin: 0;
+    color: var(--texto-suave);
+    font-size: 0.88rem;
+  }
+
+  /* Coluna do formulário: larga o bastante p/ duas colunas de campos, mas
+     longe de esticar de ponta a ponta (formulário largo é ruim de ler). */
+  .app.desktop .nova-demanda {
+    max-width: 880px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .app.desktop .nd-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.7rem;
+    align-items: start;
+  }
+  /* Largura total é o PADRÃO; só os pares abaixo dividem a linha. Antes era
+     o contrário (lista de "full") e, nos modos em que vários cards não
+     montam, sobravam buracos de meia linha (achado da revisão). */
+  .app.desktop .nd-cards > * {
+    grid-column: 1 / -1;
+  }
+  .app.desktop .nd-cards > #card-cliente,
+  .app.desktop .nd-cards > #card-obra,
+  .app.desktop .nd-cards > #card-prazo,
+  .app.desktop .nd-cards > #card-origem,
+  .app.desktop .nd-cards > #card-condicoes,
+  .app.desktop .nd-cards > #card-anexos,
+  .app.desktop .nd-cards > [id^='card-fi-'] {
+    grid-column: auto;
+  }
+  /* FECHAMENTO: origem, condições e cliente/obra não montam — prazo e anexos
+     ficariam sozinhos numa linha. Aqui ninguém pareia. */
+  .app.desktop .nd-cards.nd-fechamento > #card-prazo,
+  .app.desktop .nd-cards.nd-fechamento > #card-anexos {
+    grid-column: 1 / -1;
+  }
+  /* FILHA: sem origem, o prazo perde o par (condições|anexos seguem juntos). */
+  .app.desktop .nd-cards.nd-filha > #card-prazo {
+    grid-column: 1 / -1;
+  }
+
+  /* Opções CURTAS (Tipo/Origem) viram PÍLULAS que quebram em linha — escolha
+     direta, sem a lista vertical que só faz sentido no celular. Vale só para
+     .opcoes-curtas: a MESMA .escolher-lista serve às listas de cliente/obra,
+     onde nomes longos viram pílulas ilegíveis. */
+  .app.desktop .card-campo.exposto .opcoes-curtas {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .app.desktop .card-campo.exposto .opcoes-curtas button {
+    width: auto;
+    border-radius: 999px;
+    padding: 0.5rem 0.9rem;
+  }
+
+  /* MEU PERFIL / ADMINISTRAÇÃO / EQUIPE: cartão central, sem esticar. */
+  .app.desktop .secao-perfil,
+  .app.desktop .secao-admin,
+  .app.desktop .secao-equipe {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  /* A barra fixa alinha a largura com a do formulário (mesmo eixo central,
+     mesmas bordas — antes o botão era 120px mais estreito). */
+  .app.desktop .det-barra-acao .btn-alterar-status {
+    max-width: 880px;
+  }
+  /* Os dados de leitura em duas colunas (o aviso ocupa a linha toda). */
+  .app.desktop .perfil-dados {
+    display: grid;
+    /* minmax(0,...): um e-mail longo é um token sem ponto de quebra e
+       empurraria a coluna (o mínimo automático seria o texto inteiro). */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.2rem 1.6rem;
+    align-items: start;
+  }
+  /* Em duas colunas o filete de cada linha ficaria picotado pelo vão e o da
+     última morreria no meio do card — o respiro do gap basta. */
+  .app.desktop .perfil-dados .info-linha {
+    border-bottom: 0;
+  }
+  .app.desktop .perfil-dados .info-val {
+    overflow-wrap: anywhere;
+  }
+  .app.desktop .perfil-dados > .perfil-aviso-admin {
+    grid-column: 1 / -1;
+  }
+}

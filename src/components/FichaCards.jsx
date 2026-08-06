@@ -41,11 +41,13 @@ export default function FichaCards({
   alternar,
   rtTravada, // edicao: a RT e da demanda e nao muda por aqui (§F3)
   desabilitado, // modo LEITURA (§F3): campos travados, cards ainda ABREM
+  sempreAberto, // desktop: as 8 secoes abertas de uma vez (§#83 B3)
 }) {
   return (
     <>
       <CardCampo
         id="card-fi-pedido"
+        sempreAberto={sempreAberto}
         icone="arquivo"
         titulo="Pedido"
         subtitulo={subPedido(ficha)}
@@ -62,6 +64,7 @@ export default function FichaCards({
 
       <CardCampo
         id="card-fi-consultores"
+        sempreAberto={sempreAberto}
         icone="percentual"
         titulo="Consultores e comissão"
         subtitulo={subConsultores(ficha, nomeVendedor)}
@@ -80,6 +83,7 @@ export default function FichaCards({
 
       <CardCampo
         id="card-fi-cliente"
+        sempreAberto={sempreAberto}
         icone="perfil"
         titulo="Dados do cliente"
         subtitulo={subDadosCliente(ficha)}
@@ -97,6 +101,7 @@ export default function FichaCards({
 
       <CardCampo
         id="card-fi-rt"
+        sempreAberto={sempreAberto}
         icone="calculadora"
         titulo="Arquitetura e Engenharia"
         subtitulo={subRt(ficha)}
@@ -118,6 +123,7 @@ export default function FichaCards({
 
       <CardCampo
         id="card-fi-obra"
+        sempreAberto={sempreAberto}
         icone="origem"
         titulo="Dados da obra"
         subtitulo={subDadosObra(ficha)}
@@ -132,6 +138,7 @@ export default function FichaCards({
 
       <CardCampo
         id="card-fi-medicao"
+        sempreAberto={sempreAberto}
         icone="lista"
         titulo="Medição p/ contramarco"
         subtitulo={
@@ -155,6 +162,7 @@ export default function FichaCards({
 
       <CardCampo
         id="card-fi-particularidades"
+        sempreAberto={sempreAberto}
         icone="aviso"
         titulo="Particularidades da obra"
         subtitulo={
@@ -199,6 +207,7 @@ export default function FichaCards({
 
       <CardCampo
         id="card-fi-vigencia"
+        sempreAberto={sempreAberto}
         icone="relogio"
         titulo="Vigência do contrato"
         subtitulo={subVigencia(ficha)}

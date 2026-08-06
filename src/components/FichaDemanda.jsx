@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { fichaParaEstado, fichaVazia, hojeIsoLocal, montarInsertFicha } from '../lib/ficha'
+import { useDesktop } from '../lib/useDesktop'
 import NdCabecalho from './NdCabecalho'
 import FichaCards from './FichaCards'
 import FichaPdf from './FichaPdf'
@@ -32,6 +33,7 @@ export default function FichaDemanda({
   const [erro, setErro] = useState('')
   const [salvo, setSalvo] = useState(false) // feedback "Ficha salva"
   const [vendoPdf, setVendoPdf] = useState(false) // pre-visualizacao (§F4)
+  const desktop = useDesktop() // §#83 B3: secoes expostas
 
   const terminal = demanda.status === 'enviado' || demanda.status === 'cancelada'
   const ehStaff = perfil.papel === 'admin' || perfil.papel === 'atendente'
@@ -244,6 +246,7 @@ export default function FichaDemanda({
             alternar={alternar}
             rtTravada
             desabilitado={!podeMexer}
+            sempreAberto={desktop}
           />
         </div>
 

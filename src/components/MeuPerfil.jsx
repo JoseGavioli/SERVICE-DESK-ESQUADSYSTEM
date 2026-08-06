@@ -202,8 +202,9 @@ export default function MeuPerfil({ perfil, email, naoLidas, aoAbrirNotif }) {
         )}
       </div>
 
-      {/* Dados so-leitura (nome, telefone, email) */}
-      <div className="det-card">
+      {/* Dados so-leitura (nome, telefone, email). A classe extra e o gancho
+          do desktop (§#83 B3): la estas linhas viram duas colunas. */}
+      <div className="det-card perfil-dados">
         <div className="info-linha">
           <span className="info-rot">Nome</span>
           <span className="info-val">{perfil.nome_completo || '—'}</span>

@@ -9,6 +9,7 @@ import {
   resumir,
 } from '../lib/novaDemanda'
 import { fichaVazia, hojeIsoLocal } from '../lib/ficha'
+import { useDesktop } from '../lib/useDesktop'
 import {
   carregarRascunho,
   limparRascunho,
@@ -50,6 +51,9 @@ export default function NovaDemanda({
   pedidoVoltarForm, // voltar do Android repassado pelo Demandas (§#82)
 }) {
   const ehFilha = Boolean(obraFixa)
+  // Desktop (§#83 B3): os cards vem TODOS abertos — a sanfona existe p/ caber
+  // numa tela de celular; no PC esconder atras de clique so custa cliques.
+  const desktop = useDesktop()
   // Só o admin pode escolher OUTRO dono para a demanda (§#29). A RLS (0042) é
   // quem garante isso de fato — aqui é só a interface.
   const ehAdmin = perfil?.papel === 'admin'
@@ -394,6 +398,7 @@ export default function NovaDemanda({
   const cardDescricao = (
     <CardCampo
       id="card-descricao"
+      sempreAberto={desktop}
       icone="arquivo"
       titulo={ehFechamento ? 'Informação adicional' : 'Descrição'}
       selo="não editável depois"
@@ -414,7 +419,9 @@ export default function NovaDemanda({
         onChange={(e) => setDescricao(e.target.value)}
         rows={5}
         aria-label={ehFechamento ? 'Informação adicional' : 'Descrição da demanda'}
-        autoFocus
+        // No desktop os cards ja nascem abertos: focar aqui jogaria a pagina
+        // no meio do formulario assim que ele abrisse.
+        autoFocus={!desktop}
       />
       {/* §9: a descricao congela na criacao. Avisamos ANTES de escrever —
           que e quando ainda da para caprichar. */}
@@ -490,7 +497,14 @@ export default function NovaDemanda({
           aoAbrirNotif={aoAbrirNotif}
         />
 
-        <div className="nd-cards">
+        {/* A classe de MODO diz ao CSS do desktop quais cards pareiam: no
+            fechamento e na filha varios cards nao montam, e os pares do modo
+            normal deixariam buracos de meia linha (achado da revisao). */}
+        <div
+          className={`nd-cards${ehFechamento ? ' nd-fechamento' : ''}${
+            ehFilha ? ' nd-filha' : ''
+          }`}
+        >
           {/* Rascunho encontrado (§#82): oferece continuar de onde parou. */}
           {rascunhoPendente && (
             <div className="nd-rascunho" role="status">
@@ -547,6 +561,7 @@ export default function NovaDemanda({
                 }}
                 aberto={aberto}
                 aoAlternar={alternar}
+                sempreAberto={desktop}
                 faltandoCliente={marcado('cliente')}
               />
             )
@@ -554,6 +569,7 @@ export default function NovaDemanda({
 
           <CardCampo
             id="card-tipo"
+            sempreAberto={desktop}
             icone="lista"
             titulo="Tipo"
             subtitulo={nomeTipo ?? 'O que você está pedindo?'}
@@ -581,6 +597,7 @@ export default function NovaDemanda({
             aberto={aberto === 'prazo'}
             aoAlternar={() => alternar('prazo')}
             aoFechar={() => setAberto(null)}
+            sempreAberto={desktop}
           />
 
           {/* Origem: só na demanda normal. Na filha ela é herdada do pai
@@ -589,6 +606,7 @@ export default function NovaDemanda({
           {!ehFilha && !ehFechamento && (
             <CardCampo
               id="card-origem"
+              sempreAberto={desktop}
               icone="origem"
               titulo="Origem"
               subtitulo={origem || 'De onde veio este cliente?'}
@@ -622,6 +640,7 @@ export default function NovaDemanda({
           {!ehFechamento && (
             <CardCampo
               id="card-condicoes"
+              sempreAberto={desktop}
               icone="percentual"
               titulo="Condições comerciais"
               subtitulo={subCondicoes()}
@@ -643,6 +662,7 @@ export default function NovaDemanda({
 
           <CardCampo
             id="card-anexos"
+            sempreAberto={desktop}
             icone="clipe"
             titulo="Anexos"
             subtitulo={
@@ -669,6 +689,7 @@ export default function NovaDemanda({
           {ehAdmin && (
             <CardCampo
               id="card-proprietario"
+              sempreAberto={desktop}
               icone="perfil"
               titulo="Proprietário"
               subtitulo={
@@ -679,6 +700,7 @@ export default function NovaDemanda({
               aoClicar={() => alternar('proprietario')}
             >
               <NdOpcoes
+                curtas={false}
                 opcoes={[
                   { id: '', nome: 'Você (fica em seu nome)' },
                   ...donos.map((d) => ({ id: d.id, nome: d.nome_completo })),

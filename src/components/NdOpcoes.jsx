@@ -7,9 +7,13 @@ import Icone from './Icone'
 //
 // `opcoes` = [{ id, nome }]. Comparamos os ids como TEXTO porque o tipo vem do
 // banco como numero e a origem e uma string — assim os dois usam o mesmo componente.
-export default function NdOpcoes({ opcoes, valor, aoEscolher }) {
+export default function NdOpcoes({ opcoes, valor, aoEscolher, curtas = true }) {
   return (
-    <ul className="escolher-lista">
+    /* `opcoes-curtas` marca a lista de rotulos CURTOS (tipo, origem): so ela
+       vira pilulas horizontais no desktop (§#83 B3). Fica de fora quem tem
+       rotulo LONGO — o SeletorCliente/SeletorObra (que usam a mesma
+       .escolher-lista) e o card Proprietario, com nomes completos. */
+    <ul className={`escolher-lista${curtas ? ' opcoes-curtas' : ''}`}>
       {opcoes.map((o) => {
         const escolhida = String(o.id) === String(valor)
         return (
