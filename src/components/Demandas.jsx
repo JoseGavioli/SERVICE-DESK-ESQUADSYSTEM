@@ -15,6 +15,7 @@ import Avatar from './Avatar'
 import Icone from './Icone'
 import { haQuantoTempo } from '../lib/tempo'
 import { todasAsLinhas } from '../lib/paginacao'
+import { useDesktop } from '../lib/useDesktop'
 
 // Rank de urgencia (0 = mais critico) para ordenar a fila.
 const RANK_URGENCIA = Object.fromEntries(
@@ -73,6 +74,10 @@ export default function Demandas({
   const [recolhidos, setRecolhidos] = useState(new Set())
   const [f, setF] = useState(FILTROS_VAZIOS)
   const [buscaAberta, setBuscaAberta] = useState(false) // barra de busca (lupa)
+  // Desktop (§#83 B2): busca+Filtrar SEMPRE a vista (a lupa que esconde e
+  // solucao de celular) e os recortes de status saem daqui (vivem no
+  // sub-menu do menu lateral). So apresentacao — o estado `f` e o mesmo.
+  const desktop = useDesktop()
   // Voltar do Android repassado ao form (§#82): quem fecha e a NovaDemanda,
   // com a trava de "descartar?" — fechar direto daqui perderia o digitado.
   const [pedidoVoltarForm, setPedidoVoltarForm] = useState(0)
@@ -160,6 +165,16 @@ export default function Demandas({
   useEffect(() => {
     carregar()
   }, [])
+
+  // Cruzou o breakpoint (§#83 B2): ENTRANDO no desktop, zera o buscaAberta
+  // orfao (a lupa que o alternaria nem renderiza la — ele consumiria um
+  // "voltar" fantasma); SAINDO do desktop com texto digitado, ABRE a barra —
+  // senao o texto viraria filtro invisivel (a familia do filtro preso, #69).
+  useEffect(() => {
+    if (desktop) setBuscaAberta(false)
+    else if (f.busca.trim()) setBuscaAberta(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [desktop])
 
   // Veio da Inicio clicando numa notificacao: abre a demanda direto.
   useEffect(() => {
@@ -291,6 +306,26 @@ export default function Demandas({
   const qtdAtencao = demandas.filter(mereceAtencao).length
   // Quantas com cancelamento SOLICITADO (chip "Cancelamentos", §Bloco B).
   const qtdCancelamentos = demandas.filter((d) => d.cancelamento_solicitado).length
+
+  // O chip "Cancelamentos" e um so, usado em DOIS lugares: no celular dentro
+  // da fileira de chips (apos a Atencao, como sempre foi) e no desktop
+  // sozinho (os outros recortes moraram p/ o menu lateral, §#83 B2).
+  const chipCancelamentos = qtdCancelamentos > 0 && (
+    <button
+      type="button"
+      className={`chip-status ${f.soCancelamentoSolicitado ? 'ativo' : ''}`}
+      onClick={() =>
+        setF((prev) => ({
+          ...prev,
+          soCancelamentoSolicitado: !prev.soCancelamentoSolicitado,
+        }))
+      }
+      aria-pressed={f.soCancelamentoSolicitado}
+    >
+      <Icone nome="cancelado" size={14} /> Cancelamentos
+      <span className="chip-contador">{qtdCancelamentos}</span>
+    </button>
+  )
 
   function calcularLista() {
     const termo = f.busca.trim().toLowerCase()
@@ -565,15 +600,18 @@ export default function Demandas({
       <header className="hero-demandas">
         <h1 className="hero-titulo">Orçamentos e Revisões</h1>
         <div className="hero-acoes">
-          <button
-            type="button"
-            className={`btn-circular ${buscaAberta ? 'ativo' : ''}`}
-            onClick={alternarBusca}
-            aria-label="Buscar"
-            aria-pressed={buscaAberta}
-          >
-            <Icone nome="lupa" size={20} />
-          </button>
+          {/* Desktop: a busca ja esta sempre a vista — a lupa e do celular. */}
+          {!desktop && (
+            <button
+              type="button"
+              className={`btn-circular ${buscaAberta ? 'ativo' : ''}`}
+              onClick={alternarBusca}
+              aria-label="Buscar"
+              aria-pressed={buscaAberta}
+            >
+              <Icone nome="lupa" size={20} />
+            </button>
+          )}
           <button
             type="button"
             className="btn-circular"
@@ -591,63 +629,55 @@ export default function Demandas({
         Olá, <strong>{perfil.nome_completo}</strong> 👋
       </p>
 
+      {/* No DESKTOP (§#83 B2) os recortes de status vivem no sub-menu do menu
+          lateral — aqui sobra so o chip "Cancelamentos" (nao tem equivalente
+          la, e esconde-lo recriaria o filtro preso do #69). No celular, tudo
+          EXATAMENTE como sempre — inclusive a posicao do chip, logo apos a
+          Atencao. */}
       <div className="chips-status">
-        {ABAS_STATUS.map((a, i) => (
-          <Fragment key={a.id}>
-            <button
-              type="button"
-              className={`chip-status ${abaAtiva === a.id ? 'ativo' : ''}`}
-              onClick={() => selecionarAba(a.id)}
-            >
-              {a.rotulo}
-            </button>
-            {/* "Atenção" entra logo apos "Todas", quando ha demandas na flag (#2). */}
-            {i === 0 && qtdAtencao > 0 && (
+        {!desktop &&
+          ABAS_STATUS.map((a, i) => (
+            <Fragment key={a.id}>
               <button
                 type="button"
-                className={`chip-status chip-atencao ${f.soAtencao ? 'ativo' : ''}`}
-                onClick={() =>
-                  setF((prev) => ({ ...prev, soAtencao: !prev.soAtencao }))
-                }
-                aria-pressed={f.soAtencao}
+                className={`chip-status ${abaAtiva === a.id ? 'ativo' : ''}`}
+                onClick={() => selecionarAba(a.id)}
               >
-                <Icone nome="aviso" size={14} /> Atenção
-                <span className="chip-contador">{qtdAtencao}</span>
+                {a.rotulo}
               </button>
-            )}
-            {/* "Cancelamentos" (§Bloco B): mesmo padrão da Atenção. O atalho da
-                dashboard ("Cancelamentos a decidir") acende este chip; tocar de
-                novo desliga o filtro — assim ele nunca fica preso. */}
-            {i === 0 && qtdCancelamentos > 0 && (
-              <button
-                type="button"
-                className={`chip-status ${f.soCancelamentoSolicitado ? 'ativo' : ''}`}
-                onClick={() =>
-                  setF((prev) => ({
-                    ...prev,
-                    soCancelamentoSolicitado: !prev.soCancelamentoSolicitado,
-                  }))
-                }
-                aria-pressed={f.soCancelamentoSolicitado}
-              >
-                <Icone nome="cancelado" size={14} /> Cancelamentos
-                <span className="chip-contador">{qtdCancelamentos}</span>
-              </button>
-            )}
-          </Fragment>
-        ))}
+              {/* "Atenção" entra logo apos "Todas", quando ha demandas na flag (#2). */}
+              {i === 0 && qtdAtencao > 0 && (
+                <button
+                  type="button"
+                  className={`chip-status chip-atencao ${f.soAtencao ? 'ativo' : ''}`}
+                  onClick={() =>
+                    setF((prev) => ({ ...prev, soAtencao: !prev.soAtencao }))
+                  }
+                  aria-pressed={f.soAtencao}
+                >
+                  <Icone nome="aviso" size={14} /> Atenção
+                  <span className="chip-contador">{qtdAtencao}</span>
+                </button>
+              )}
+              {/* "Cancelamentos" (§Bloco B): o atalho da dashboard acende este
+                  chip; tocar de novo desliga — assim nunca fica preso. */}
+              {i === 0 && chipCancelamentos}
+            </Fragment>
+          ))}
+        {desktop && chipCancelamentos}
       </div>
 
-      {/* Busca + Filtrar avancado aparecem JUNTOS, so ao tocar na lupa (#1). */}
-      {buscaAberta && (
-        <>
+      {/* Busca + Filtrar avancado: no celular aparecem JUNTOS ao tocar na
+          lupa (#1); no desktop ficam SEMPRE a vista (§#83 B2). */}
+      {(desktop || buscaAberta) && (
+        <div className={desktop ? 'linha-busca-desktop' : undefined}>
           <input
             type="search"
             className="busca busca-solta"
             placeholder="Buscar (cliente, obra, descrição)…"
             value={f.busca}
             onChange={(e) => aoBuscar(e.target.value)}
-            autoFocus
+            autoFocus={!desktop}
           />
           <FiltrosDemandas
             f={f}
@@ -656,7 +686,7 @@ export default function Demandas({
             aoRemover={aoRemoverFiltro}
             aoLimpar={aoLimparFiltros}
           />
-        </>
+        </div>
       )}
 
       {erro && <p className="erro">{erro}</p>}

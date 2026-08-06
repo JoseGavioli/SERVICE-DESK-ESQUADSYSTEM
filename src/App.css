@@ -5847,3 +5847,86 @@ button.cad-item:hover {
     opacity: 0.65;
   }
 }
+
+/* ═══ MODO DESKTOP — B2: telas de consulta (§#83) ════════════════ */
+@media (min-width: 900px) {
+  /* Badges dos recortes do sub-menu (Atencao/Em aberto). */
+  .md-num {
+    margin-left: auto;
+    font-size: 0.68rem;
+    font-weight: 800;
+    background: rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    padding: 1px 7px;
+  }
+  .md-num.perigo {
+    background: var(--marca-red);
+  }
+  .md-subitem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  /* LISTA: busca + Filtrar numa linha; sem chips vazios ocupando espaco. */
+  .app.desktop .linha-busca-desktop {
+    display: flex;
+    flex-wrap: wrap; /* muitas tags de filtro quebram linha em vez de espremer a busca */
+    gap: 10px;
+    align-items: flex-start;
+    margin-bottom: 4px;
+  }
+  .app.desktop .linha-busca-desktop .busca-solta {
+    flex: 1;
+    min-width: 260px;
+    margin-bottom: 0;
+  }
+  .app.desktop .linha-busca-desktop .filtros {
+    margin: 0; /* a margem padrao (0.85rem) desalinhava o Filtrar do campo */
+  }
+  .app.desktop .chips-status:empty {
+    display: none;
+  }
+
+  /* CLIENTES: cards em duas colunas (acordeao de obras abre dentro da
+     celula). ESCOPADO na tela de Clientes: .lista-cad tambem existe na
+     Equipe (que fica como esta) e nas OBRAS aninhadas — a lista de obras,
+     por estar DENTRO da celula, volta a 1 coluna (regra de baixo). */
+  .app.desktop .secao-clientes .lista-cad {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    align-items: start;
+  }
+  .app.desktop .secao-clientes .lista-cad .lista-cad {
+    grid-template-columns: 1fr;
+  }
+
+  /* DASHBOARD em grade: manchete (topo/KPIs/atencao) em largura total, e os
+     widgets pareados em 2 colunas. So arruma — os componentes sao os mesmos. */
+  .app.desktop .secao-dashboard {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+  .app.desktop .secao-dashboard > * {
+    margin-top: 0;
+    margin-bottom: 0;
+    min-width: 0;
+  }
+  .app.desktop .secao-dashboard > .dash-topo,
+  .app.desktop .secao-dashboard > .box-relatorio,
+  .app.desktop .secao-dashboard > .dash-carregando,
+  .app.desktop .secao-dashboard > .dash-kpis,
+  .app.desktop .secao-dashboard > .atencao-lista,
+  .app.desktop .secao-dashboard > .box-tudo-ok,
+  .app.desktop .secao-dashboard > .chip-decidir,
+  .app.desktop .secao-dashboard > .secao-rotulo,
+  .app.desktop .secao-dashboard > .anel-grade,
+  .app.desktop .secao-dashboard > .dash-vazio,
+  .app.desktop .secao-dashboard > .card-novidades {
+    grid-column: 1 / -1;
+  }
+}

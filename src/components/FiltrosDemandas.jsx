@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Icone from './Icone'
 import { URGENCIA_NIVEIS } from '../lib/urgencia'
 import { STATUS_ROTULO } from '../lib/status'
@@ -29,6 +29,20 @@ export default function FiltrosDemandas({
 }) {
   const [aberto, setAberto] = useState(false)
   const [rascunho, setRascunho] = useState(RASCUNHO_VAZIO)
+
+  // O filtro APLICADO mudou por fora com a box aberta (recorte do menu
+  // lateral desktop, chips)? Re-fotografa o rascunho — aplicar um rascunho
+  // velho por cima do recorte recem-escolhido seria silencioso (§#83 B2).
+  useEffect(() => {
+    if (!aberto) return
+    setRascunho({
+      status: f.status,
+      urgencia: f.urgencia,
+      vendedor: f.vendedor,
+      ordenacao: f.ordenacao,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [f.status, f.urgencia, f.vendedor, f.ordenacao])
 
   // Ao abrir, o rascunho parte do que ja esta aplicado.
   function abrir() {

@@ -1,5 +1,6 @@
 import Avatar from './Avatar'
 import Icone from './Icone'
+import { useContadoresLista } from '../lib/useContadoresLista'
 
 // Menu lateral do MODO DESKTOP (§issue #83, B1). Substitui o bottom-nav e o
 // menu "Mais" quando a tela e larga (useDesktop): tudo exposto de uma vez —
@@ -18,11 +19,12 @@ const SECAO_RAIZ = {
 }
 
 // Recortes do sub-menu do Inicio = os chips da lista de hoje, com os MESMOS
-// filtros (e os mesmos que o Dashboard ja manda para a lista).
+// filtros (e os mesmos que o Dashboard ja manda para a lista). `contador`
+// aponta qual numero do useContadoresLista o recorte exibe (§B2).
 const RECORTES = [
   { rotulo: 'Todas', filtro: {} },
-  { rotulo: 'Atenção', filtro: { soAtencao: true } },
-  { rotulo: 'Em aberto', filtro: { soAtivas: true } },
+  { rotulo: 'Atenção', filtro: { soAtencao: true }, contador: 'atencao', perigo: true },
+  { rotulo: 'Em aberto', filtro: { soAtivas: true }, contador: 'emAberto' },
   { rotulo: 'Enviados', filtro: { status: 'enviado', ordenacao: 'recentes' } },
   { rotulo: 'Cancelados', filtro: { status: 'cancelada' } },
 ]
@@ -58,6 +60,9 @@ export default function MenuDesktop({
   aoSair,
 }) {
   const raiz = SECAO_RAIZ[secao] ?? secao
+  // Numeros dos recortes (Atencao/Em aberto), em tempo real (§B2). Enquanto
+  // carregam (null), o badge simplesmente nao aparece.
+  const contadores = useContadoresLista(perfil)
 
   return (
     <aside className="menu-desktop">
@@ -75,16 +80,22 @@ export default function MenuDesktop({
         Início
       </Item>
       <div className="md-subnav">
-        {RECORTES.map((r) => (
-          <button
-            key={r.rotulo}
-            type="button"
-            className="md-subitem"
-            onClick={() => aoAbrirComFiltro(r.filtro)}
-          >
-            {r.rotulo}
-          </button>
-        ))}
+        {RECORTES.map((r) => {
+          const n = r.contador ? contadores[r.contador] : null
+          return (
+            <button
+              key={r.rotulo}
+              type="button"
+              className="md-subitem"
+              onClick={() => aoAbrirComFiltro(r.filtro)}
+            >
+              {r.rotulo}
+              {n > 0 && (
+                <span className={`md-num${r.perigo ? ' perigo' : ''}`}>{n}</span>
+              )}
+            </button>
+          )
+        })}
       </div>
       <Item alvo="dashboard" icone="painel" raiz={raiz} aoNavegar={aoNavegar}>
         Dashboard

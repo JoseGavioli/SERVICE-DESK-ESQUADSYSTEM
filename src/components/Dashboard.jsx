@@ -399,7 +399,9 @@ export default function Dashboard({
               quando não há fila). Com fila: atenção — ou "tudo em dia" — + a box
               "em aberto". §Bloco A */}
           {dados.emAberto === 0 ? (
-            <div className="card-resumo">
+            /* dash-vazio: no grid do desktop (§#83 B2) ocupa a largura toda —
+               "tudo em dia" de meia largura parecia tela quebrada. */
+            <div className="card-resumo dash-vazio">
               <EstadoVazio
                 nome="check"
                 titulo="Nenhuma demanda em aberto"
@@ -515,7 +517,9 @@ export default function Dashboard({
               pedi", reusando a fonte única de notificações (§Bloco B). Fica fora
               do ramo "em aberto" para aparecer mesmo sem fila aberta. */}
           {!ehStaff && notificacoes.length > 0 && (
-            <div className="card-resumo">
+            /* card-novidades: largura total no grid do desktop (§#83 B2) —
+               em meia largura sobrava um buraco no miolo da grade. */
+            <div className="card-resumo card-novidades">
               <span className="box-titulo">Novidades nas suas demandas</span>
               <ul className="novidades">
                 {notificacoes.slice(0, 5).map((n) => (
