@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { STATUS_ROTULO } from '../lib/status'
 import { diasUteisDesde } from '../lib/urgencia'
@@ -29,6 +29,7 @@ export default function DetalheDemanda({
   aoVoltar,
   aoAbrir,
   aoVisto,
+  pedidoVoltar, // voltar do Android repassado pelo Demandas (§#82)
   naoLidas,
   aoAbrirNotif,
 }) {
@@ -41,6 +42,20 @@ export default function DetalheDemanda({
   // Fechamento (§#80/F3): resumo da ficha p/ a box + tela de ver/editar.
   const [fichaResumo, setFichaResumo] = useState(null)
   const [vendoFicha, setVendoFicha] = useState(false)
+  // Voltar do Android (§#82): desce UM nivel por vez — form da filha (com a
+  // trava de descarte, repassado a NovaDemanda), tela da ficha, e so entao o
+  // detalhe fecha. O ref guarda o valor do mount (o contador so cresce no
+  // pai; sem o ref, reabrir o detalhe apos um voltar fecharia sozinho).
+  const [pedidoVoltarFilha, setPedidoVoltarFilha] = useState(0)
+  const voltarVisto = useRef(pedidoVoltar)
+  useEffect(() => {
+    if (pedidoVoltar === voltarVisto.current) return
+    voltarVisto.current = pedidoVoltar
+    if (criandoFilha) setPedidoVoltarFilha((v) => v + 1)
+    else if (vendoFicha) setVendoFicha(false)
+    else aoVoltar()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pedidoVoltar])
 
   async function carregar() {
     const { data, error } = await supabase
@@ -175,6 +190,7 @@ export default function DetalheDemanda({
         }}
         naoLidas={naoLidas}
         aoAbrirNotif={aoAbrirNotif}
+        pedidoVoltarForm={pedidoVoltarFilha}
         aoCriar={(novoId) => {
           setCriandoFilha(false)
           aoAbrir(novoId) // abre a filha recém-criada

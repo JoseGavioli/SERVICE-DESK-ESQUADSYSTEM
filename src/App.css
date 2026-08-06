@@ -5637,3 +5637,29 @@ button.cad-item:hover {
     margin: 10mm;
   }
 }
+
+/* ── Rascunho da Nova demanda (§issue #82) ──────────────────────── */
+.nd-rascunho {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface-2);
+  border: 1px dashed var(--borda-forte);
+  border-radius: var(--raio-sm, 10px);
+  padding: 10px 12px;
+  color: var(--texto);
+}
+.nd-rascunho-texto {
+  flex: 1;
+  font-size: 0.88rem;
+}
+.nd-rascunho-acoes {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: stretch;
+}
+.nd-rascunho-acoes button {
+  font-size: 0.85rem;
+  padding: 6px 12px;
+}

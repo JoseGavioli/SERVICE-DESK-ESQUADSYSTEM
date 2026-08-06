@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { enviarAnexo } from '../lib/anexos'
 import { obterOuCriarObraPadrao } from '../lib/obraPadrao'
@@ -9,6 +9,12 @@ import {
   resumir,
 } from '../lib/novaDemanda'
 import { fichaVazia, hojeIsoLocal } from '../lib/ficha'
+import {
+  carregarRascunho,
+  limparRascunho,
+  salvarRascunho,
+} from '../lib/rascunho'
+import { haQuantoTempo } from '../lib/tempo'
 import CardCampo from './CardCampo'
 import FichaFechamento from './FichaFechamento'
 import NdCabecalho from './NdCabecalho'
@@ -41,6 +47,7 @@ export default function NovaDemanda({
   demandaPai,
   naoLidas,
   aoAbrirNotif,
+  pedidoVoltarForm, // voltar do Android repassado pelo Demandas (§#82)
 }) {
   const ehFilha = Boolean(obraFixa)
   // Só o admin pode escolher OUTRO dono para a demanda (§#29). A RLS (0042) é
@@ -90,6 +97,12 @@ export default function NovaDemanda({
         }
       : {}),
   }))
+  // Rascunho (§#82): so no form PRINCIPAL — a filha herda da pai e fica fora.
+  // fichaTocada marca que o vendedor mexeu na ficha (p/ sujo e restauracao).
+  const [rascunhoPendente, setRascunhoPendente] = useState(() =>
+    ehFilha ? null : carregarRascunho(perfil.id),
+  )
+  const [fichaTocada, setFichaTocada] = useState(false)
 
   useEffect(() => {
     async function carregarTipos() {
@@ -119,6 +132,114 @@ export default function NovaDemanda({
     }
     carregarDonos()
   }, [ehAdmin])
+
+  // O formulario esta "SUJO"? (algo digitado alem do estado inicial/herdado).
+  // Decide a trava de saida e se o rascunho e salvo. Na filha, origem e
+  // condicoes ja nascem preenchidas (heranca) — nao contam como sujeira.
+  const sujo = Boolean(
+    tipoId ||
+      descricao.trim() ||
+      prazo ||
+      arquivos.length ||
+      fichaTocada ||
+      (!ehFilha &&
+        (origem || rt || arquiteto.trim() || cliente || obra || proprietario)),
+  )
+
+  // Trava de saida (§#82): sair com o form sujo PERGUNTA antes. Confirmou o
+  // descarte -> o rascunho morre junto (senao ele ressuscitaria na proxima
+  // abertura exatamente o que o vendedor acabou de jogar fora).
+  function cancelarComGuarda() {
+    if (sujo && !window.confirm('Descartar o que você preencheu?')) return
+    if (!ehFilha) limparRascunho(perfil.id)
+    aoCancelar()
+  }
+
+  // Voltar do ANDROID (§#40): o Demandas repassa o sinal em vez de fechar o
+  // form direto — a mesma trava vale para os dois caminhos. Se a tela da
+  // FICHA estiver aberta, o voltar desce UM nivel (ficha -> form), sem perder.
+  //
+  // O ref guarda o valor do MOUNT: o contador so cresce la no pai, entao um
+  // form reaberto MONTA com o valor antigo (truthy) — sem o ref, o effect
+  // (que roda no mount) fecharia o form recem-aberto sozinho E apagaria o
+  // rascunho (achado bloqueante da revisao). So agimos quando MUDA.
+  const voltarVisto = useRef(pedidoVoltarForm)
+  useEffect(() => {
+    if (pedidoVoltarForm === voltarVisto.current) return
+    voltarVisto.current = pedidoVoltarForm
+    if (preenchendoFicha) setPreenchendoFicha(false)
+    else cancelarComGuarda()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pedidoVoltarForm])
+
+  // Rascunho restaurado pode trazer tipoId de tipo DESATIVADO nesse meio
+  // tempo (a lista so traz ativos): sem isto o card parecia vazio mas
+  // validava, e a demanda nasceria com tipo inativo — e com o FLUXO errado
+  // se o tipo era o com_ficha (achado da revisao). Tipo sumiu -> campo zera.
+  useEffect(() => {
+    if (!tipos.length || !tipoId) return
+    if (!tipos.some((t) => String(t.id) === String(tipoId))) setTipoId('')
+  }, [tipos, tipoId])
+
+  // Salva o rascunho ~1s depois da ultima mudanca (debounce): nada de uma
+  // escrita por tecla, e fechar o app no meio preserva o grosso. Anexos NAO
+  // entram (File nao serializa) — o banner de restauracao avisa. Com o
+  // banner PENDENTE nao salva: sobrescreveria no disco o rascunho antigo
+  // antes de o vendedor decidir continuar ou nao (achado da revisao).
+  useEffect(() => {
+    if (ehFilha || !sujo || rascunhoPendente) return
+    const timer = setTimeout(() => {
+      salvarRascunho(perfil.id, {
+        tipoId,
+        descricao,
+        prazo,
+        origem,
+        rt,
+        rtPercentual,
+        arquiteto,
+        cliente,
+        obra,
+        proprietario,
+        ficha,
+        fichaTocada,
+      })
+    }, 1000)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    tipoId,
+    descricao,
+    prazo,
+    origem,
+    rt,
+    rtPercentual,
+    arquiteto,
+    cliente,
+    obra,
+    proprietario,
+    ficha,
+    fichaTocada,
+    rascunhoPendente,
+  ])
+
+  // "Continuar de onde parou": despeja o rascunho de volta nos estados. A
+  // ficha e MESCLADA sobre a vazia (campo novo no codigo nao some do estado).
+  function restaurar() {
+    const d = rascunhoPendente?.dados ?? {}
+    setTipoId(d.tipoId ?? '')
+    setDescricao(d.descricao ?? '')
+    setPrazo(d.prazo ?? '')
+    setOrigem(d.origem ?? '')
+    setRt(Boolean(d.rt))
+    setRtPercentual(d.rtPercentual ?? '')
+    setArquiteto(d.arquiteto ?? '')
+    setCliente(d.cliente ?? null)
+    setObra(d.obra ?? null)
+    setProprietario(d.proprietario ?? null)
+    if (d.ficha) setFicha({ ...fichaVazia(hojeIsoLocal()), ...d.ficha })
+    setFichaTocada(Boolean(d.fichaTocada))
+    setRascunhoPendente(null)
+  }
 
   function alternar(id) {
     setAberto((atual) => (atual === id ? null : id))
@@ -239,6 +360,9 @@ export default function NovaDemanda({
         'Demanda criada, mas um ou mais anexos falharam. Você pode anexá-los abrindo o detalhe da demanda.',
       )
     }
+    // Criada com sucesso: o rascunho cumpriu o papel. So no form principal —
+    // a filha nunca salvou rascunho (limpar aqui apagaria um alheio).
+    if (!ehFilha) limparRascunho(perfil.id)
     aoCriar(data.id) // devolve o id para quem chamou abrir a demanda nova
   }
 
@@ -326,12 +450,21 @@ export default function NovaDemanda({
         obra={obra}
         aoEscolherObra={setObra}
         ficha={ficha}
-        aoMudarFicha={setFicha}
+        aoMudarFicha={(f) => {
+          setFichaTocada(true) // mexeu na ficha: conta como form sujo (§#82)
+          setFicha(f)
+        }}
         ehFilha={ehFilha}
         obraFixa={obraFixa}
         demandaPai={demandaPai}
         aoVoltar={() => setPreenchendoFicha(false)}
-        aoCriar={aoCriar}
+        aoCriar={(id) => {
+          // Criada com sucesso pela ficha: o rascunho cumpriu o papel (§#82).
+          // So no form principal — a filha nunca salvou rascunho, e limpar
+          // aqui apagaria um rascunho ALHEIO do form principal.
+          if (!ehFilha) limparRascunho(perfil.id)
+          aoCriar(id)
+        }}
         naoLidas={naoLidas}
         aoAbrirNotif={aoAbrirNotif}
       />
@@ -352,12 +485,38 @@ export default function NovaDemanda({
         <NdCabecalho
           comHero={comHero}
           ehFilha={ehFilha}
-          aoCancelar={aoCancelar}
+          aoCancelar={cancelarComGuarda}
           naoLidas={naoLidas}
           aoAbrirNotif={aoAbrirNotif}
         />
 
         <div className="nd-cards">
+          {/* Rascunho encontrado (§#82): oferece continuar de onde parou. */}
+          {rascunhoPendente && (
+            <div className="nd-rascunho" role="status">
+              <Icone nome="relogio" size={18} />
+              <span className="nd-rascunho-texto">
+                Você tem um rascunho de{' '}
+                <strong>{haQuantoTempo(rascunhoPendente.salvoEm)}</strong>.
+                Anexos precisam ser escolhidos de novo.
+              </span>
+              <span className="nd-rascunho-acoes">
+                <button type="button" onClick={restaurar}>
+                  Continuar
+                </button>
+                <button
+                  type="button"
+                  className="link"
+                  onClick={() => {
+                    limparRascunho(perfil.id)
+                    setRascunhoPendente(null)
+                  }}
+                >
+                  Descartar
+                </button>
+              </span>
+            </div>
+          )}
           {ehFilha ? (
             /* Card no TOPO: qual demanda está sendo vinculada (§11). */
             <div className="nd-vinculada">
@@ -564,7 +723,7 @@ export default function NovaDemanda({
           <button type="submit" form="form-nova-demanda" disabled={salvando}>
             {textoBotao}
           </button>
-          <button type="button" className="link" onClick={aoCancelar}>
+          <button type="button" className="link" onClick={cancelarComGuarda}>
             Cancelar
           </button>
         </div>

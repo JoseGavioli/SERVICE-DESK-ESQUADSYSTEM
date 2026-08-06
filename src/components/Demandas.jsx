@@ -73,6 +73,13 @@ export default function Demandas({
   const [recolhidos, setRecolhidos] = useState(new Set())
   const [f, setF] = useState(FILTROS_VAZIOS)
   const [buscaAberta, setBuscaAberta] = useState(false) // barra de busca (lupa)
+  // Voltar do Android repassado ao form (§#82): quem fecha e a NovaDemanda,
+  // com a trava de "descartar?" — fechar direto daqui perderia o digitado.
+  const [pedidoVoltarForm, setPedidoVoltarForm] = useState(0)
+  // Idem para o DETALHE (§#82): ele decide se fecha a si mesmo ou so desce um
+  // nivel (form da filha com trava / tela da ficha) — fechar daqui por cima
+  // descartava a filha digitada sem perguntar.
+  const [pedidoVoltarDetalhe, setPedidoVoltarDetalhe] = useState(0)
   // Mapa demanda_id -> data da 1a entrada em "revisao de custo" (para o atraso).
   const [datasRevisao, setDatasRevisao] = useState({})
   const [atividade, setAtividade] = useState({}) // demanda_id -> ultima mexida
@@ -205,8 +212,10 @@ export default function Demandas({
   // (detalhe -> form de nova demanda -> busca). So age quando o sinal muda.
   useEffect(() => {
     if (!pedidoVoltar) return
-    if (detalheId != null) setDetalheId(null)
-    else if (criando) setCriando(false)
+    // Detalhe/form abertos: NAO fecha daqui — repassa p/ dentro, que aplica a
+    // trava de descarte (§#82) e desce UM nivel por vez (filha/ficha).
+    if (detalheId != null) setPedidoVoltarDetalhe((v) => v + 1)
+    else if (criando) setPedidoVoltarForm((v) => v + 1)
     else if (buscaAberta) setBuscaAberta(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pedidoVoltar])
@@ -407,6 +416,7 @@ export default function Demandas({
         aoCancelar={() => setCriando(false)}
         naoLidas={naoLidas}
         aoAbrirNotif={aoAbrirNotif}
+        pedidoVoltarForm={pedidoVoltarForm}
       />
     )
   }
@@ -427,6 +437,7 @@ export default function Demandas({
           setDetalheId(id)
         }}
         aoVisto={() => marcarLidaDemanda(detalheId)}
+        pedidoVoltar={pedidoVoltarDetalhe}
         naoLidas={naoLidas}
         aoAbrirNotif={aoAbrirNotif}
       />

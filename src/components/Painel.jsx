@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { limparRascunho } from '../lib/rascunho'
 import Dashboard from './Dashboard'
 import Demandas from './Demandas'
 import Clientes from './Clientes'
@@ -180,6 +181,10 @@ export default function Painel({ sessao }) {
   }, [])
 
   async function sair() {
+    // Sair LIMPA o rascunho da Nova demanda (§#82): ele pode conter CPF e
+    // dados bancarios da ficha — nao deve sobreviver no aparelho a um
+    // logout explicito (aparelho emprestado/compartilhado).
+    if (perfil?.id) limparRascunho(perfil.id)
     await supabase.auth.signOut()
   }
 
