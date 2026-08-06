@@ -10,6 +10,7 @@ import Erros from './Erros'
 import Relatorio from './Relatorio'
 import Administracao from './Administracao'
 import MenuLateral from './MenuLateral'
+import MenuDesktop from './MenuDesktop'
 import ErrorBoundary from './ErrorBoundary'
 import { registrarErro } from '../lib/erros'
 import BottomNav from './BottomNav'
@@ -18,6 +19,7 @@ import ToastNotificacao from './ToastNotificacao'
 import Icone from './Icone'
 import { useNotificacoes } from '../lib/useNotificacoes'
 import { useBotaoVoltar } from '../lib/useBotaoVoltar'
+import { useDesktop } from '../lib/useDesktop'
 import { usePresenca } from '../lib/usePresenca'
 import { sincronizarPush } from '../lib/webpush'
 
@@ -61,6 +63,16 @@ export default function Painel({ sessao }) {
   const [buscaAberta, setBuscaAberta] = useState(false) // barra de busca da lista (§#40)
   const [pedidoVoltar, setPedidoVoltar] = useState(0) // sinal p/ o Demandas fechar o topo
   const [avisoSair, setAvisoSair] = useState(false) // "toque de novo para sair" (§#40)
+  // Modo desktop (§#83): tela larga troca bottom-nav + menu "Mais" pelo menu
+  // lateral. So decide QUAL casca monta — as telas sao as mesmas.
+  const desktop = useDesktop()
+
+  // Cruzou para o desktop com o menu "Mais" aberto? Fecha-o: orfao, ele
+  // consumiria um "voltar" invisivel e reapareceria sozinho ao estreitar
+  // (achado da revisao do B1).
+  useEffect(() => {
+    if (desktop) setMenuAberto(false)
+  }, [desktop])
   const {
     notificacoes,
     naoLidas,
@@ -222,7 +234,30 @@ export default function Painel({ sessao }) {
     secao === 'dashboard'
 
   return (
-    <div className="app">
+    <div className={`app${desktop ? ' desktop' : ''}`}>
+      {/* Menu lateral do desktop (§#83): navegacao + recortes + conta, tudo
+          exposto. No celular quem faz esse papel e o bottom-nav + "Mais". */}
+      {desktop && (
+        <MenuDesktop
+          perfil={perfil}
+          secao={secao}
+          aoNavegar={(s) => {
+            // Ja na Inicio com detalhe/form/busca por cima: "Inicio" desce UM
+            // nivel (com a trava de descarte do form, §#82) em vez de ser um
+            // clique morto (achado da revisao do B1).
+            if (s === 'inicio' && secao === 'inicio' && demandasSobrepoe) {
+              setPedidoVoltar((v) => v + 1)
+              return
+            }
+            setSecao(s)
+          }}
+          aoAbrirComFiltro={abrirDemandasComFiltro}
+          aoNovaDemanda={abrirNovaDemanda}
+          aoSair={sair}
+        />
+      )}
+
+      <div className="app-conteudo">
       {/* Inicio, Clientes e Equipe tem "hero" (titulo grande + acoes) dentro do
           proprio componente; nas demais telas fica esta barra enxuta. */}
       {!telaComHero && (
@@ -241,17 +276,19 @@ export default function Painel({ sessao }) {
         </header>
       )}
 
-      <MenuLateral
-        aberto={menuAberto}
-        aoFechar={() => setMenuAberto(false)}
-        perfil={perfil}
-        secao={secao}
-        aoNavegar={(s) => {
-          setSecao(s)
-          setMenuAberto(false)
-        }}
-        aoSair={sair}
-      />
+      {!desktop && (
+        <MenuLateral
+          aberto={menuAberto}
+          aoFechar={() => setMenuAberto(false)}
+          perfil={perfil}
+          secao={secao}
+          aoNavegar={(s) => {
+            setSecao(s)
+            setMenuAberto(false)
+          }}
+          aoSair={sair}
+        />
+      )}
 
       <Notificacoes
         aberto={notifAberto}
@@ -392,21 +429,23 @@ export default function Painel({ sessao }) {
       {/* Escondemos o bottom-nav (e o FAB) quando ele conflitaria com uma
           barra fixa de rodape: (a) staff no detalhe (barra "Alterar status");
           (b) form de nova demanda aberto (barra "Criar demanda" — senao o FAB
-          "+" espia por cima dela). */}
-      {!((perfil.papel !== 'vendedor' && detalheAberto) || criandoAberto) && (
-        <BottomNav
-          secao={secao}
-          aoNavegar={(s) => {
-            setSecao(s)
-            setMenuAberto(false)
-          }}
-          aoMais={() => setMenuAberto((v) => !v)}
-          menuAberto={menuAberto}
-          aoNova={abrirNovaDemanda}
-          mostrarFab={secao === 'inicio' || secao === 'dashboard'}
-          novidadesCount={demandasComNovidade.size}
-        />
-      )}
+          "+" espia por cima dela). No desktop ele nem monta (§#83). */}
+      {!desktop &&
+        !((perfil.papel !== 'vendedor' && detalheAberto) || criandoAberto) && (
+          <BottomNav
+            secao={secao}
+            aoNavegar={(s) => {
+              setSecao(s)
+              setMenuAberto(false)
+            }}
+            aoMais={() => setMenuAberto((v) => !v)}
+            menuAberto={menuAberto}
+            aoNova={abrirNovaDemanda}
+            mostrarFab={secao === 'inicio' || secao === 'dashboard'}
+            novidadesCount={demandasComNovidade.size}
+          />
+        )}
+      </div>
     </div>
   )
 }

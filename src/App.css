@@ -5663,3 +5663,187 @@ button.cad-item:hover {
   font-size: 0.85rem;
   padding: 6px 12px;
 }
+
+/* ═══ MODO DESKTOP (§issue #83, B1) — só telas ≥ 900px ═══════════
+   O celular fica INTOCADO: tudo aqui vive dentro do media query e sob a
+   classe .app.desktop (que o Painel só põe quando o hook useDesktop diz).
+   A dupla proteção é proposital: JS decide QUAIS componentes montam,
+   CSS decide o layout. */
+@media (min-width: 900px) {
+  .app.desktop {
+    display: grid;
+    grid-template-columns: 236px minmax(0, 1fr);
+    min-height: 100dvh;
+  }
+  .app.desktop .app-conteudo {
+    min-width: 0;
+  }
+  /* Conteúdo em coluna central com teto de largura (mata o "esticado"). */
+  .app.desktop .conteudo {
+    max-width: 1060px;
+    margin: 0 auto;
+    padding-left: 28px;
+    padding-right: 28px;
+    width: 100%;
+  }
+  /* Barras fixas de rodapé (Alterar status / Criar demanda): começam
+     depois do menu lateral em vez de cobrir a tela inteira. */
+  .app.desktop .det-barra-acao {
+    left: 236px;
+    width: auto;
+    right: 0;
+  }
+
+  /* ── o menu lateral em si ── */
+  .menu-desktop {
+    background: var(--marca-navy);
+    color: #fff;
+    padding: 22px 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    overflow-y: auto;
+  }
+  .md-marca {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 10px 16px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  }
+  .md-logo {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+  }
+  .md-nome {
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    font-size: 0.94rem;
+  }
+  .md-nome span {
+    color: #ff8a8f;
+  }
+  .md-sub {
+    font-size: 0.68rem;
+    opacity: 0.65;
+    letter-spacing: 0.04em;
+  }
+  .md-item {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 10px;
+    background: none;
+    color: rgba(255, 255, 255, 0.8);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.2;
+    cursor: pointer;
+    text-align: left;
+  }
+  .md-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+  }
+  .md-item.ativo {
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+  }
+  .md-item.discreto {
+    color: rgba(255, 255, 255, 0.55);
+  }
+  .md-subnav {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    margin: 2px 0 4px 21px;
+    padding-left: 9px;
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  .md-subitem {
+    border: none;
+    background: none;
+    text-align: left;
+    padding: 6px 10px;
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.66);
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.2;
+    cursor: pointer;
+  }
+  .md-subitem:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+  }
+  .md-sep {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.14);
+    margin: 10px 10px;
+  }
+  .md-nova {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--marca-red);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 12px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(203, 32, 39, 0.35);
+  }
+  .md-rodape {
+    margin-top: auto;
+    padding: 12px 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .md-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    /* fallback de INICIAIS (sem foto): mesmo padrao dos avatares irmaos */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.72rem;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .md-quem {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+    min-width: 0;
+  }
+  .md-quem strong {
+    font-size: 0.84rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .md-quem span {
+    font-size: 0.72rem;
+    opacity: 0.65;
+  }
+}

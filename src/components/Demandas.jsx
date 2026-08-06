@@ -173,6 +173,10 @@ export default function Demandas({
   useEffect(() => {
     if (filtroInicial) {
       setDetalheId(null)
+      // Form de nova demanda aberto (so alcancavel pelo menu do DESKTOP,
+      // §#83): pede o fechamento COM a trava de descarte (§#82) — senao o
+      // filtro mudaria por baixo e o clique pareceria morto.
+      if (criando) setPedidoVoltarForm((v) => v + 1)
       setF({ ...FILTROS_VAZIOS, ...filtroInicial })
       aoConsumirFiltro?.()
     }
