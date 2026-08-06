@@ -59,6 +59,7 @@ export default function Demandas({
   aoConsumirFiltro,
   criarInicial,
   aoConsumirCriar,
+  tiposComFicha, // tipos que tem porta propria no menu (§#85)
   naoLidas,
   aoAbrirNotif,
   aoDetalhe,
@@ -70,6 +71,13 @@ export default function Demandas({
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
   const [criando, setCriando] = useState(false)
+  // Tipo pre-escolhido no menu do botao "Nova demanda" (§#85); null = nenhum.
+  const [tipoInicial, setTipoInicial] = useState(null)
+  // Conta as ABERTURAS do formulario. Vira `key` do <NovaDemanda>: sem ela, um
+  // segundo pedido com o form JA aberto so trocaria a prop `tipoInicial` — e
+  // como o `tipoId` dele nasce dessa prop uma unica vez (no useState), o form
+  // ficaria com o tipo velho enquanto o resto da tela ja seria do novo.
+  const [aberturaForm, setAberturaForm] = useState(0)
   const [detalheId, setDetalheId] = useState(null)
   const [recolhidos, setRecolhidos] = useState(new Set())
   const [f, setF] = useState(FILTROS_VAZIOS)
@@ -243,9 +251,12 @@ export default function Demandas({
     }
   }, [filtroInicial])
 
-  // Veio da Inicio clicando em "incluir nova demanda": abre o form.
+  // Veio do botao "Nova demanda": abre o form no caminho que o menu escolheu
+  // (§#85) — `tipoId` nulo e o "Orcamento" (o form pergunta o tipo la dentro).
   useEffect(() => {
     if (criarInicial) {
+      setTipoInicial(criarInicial.tipoId ?? null)
+      setAberturaForm((n) => n + 1)
       setCriando(true)
       aoConsumirCriar?.()
     }
@@ -492,6 +503,7 @@ export default function Demandas({
   if (criando) {
     return (
       <NovaDemanda
+        key={aberturaForm}
         perfil={perfil}
         aoCriar={(novoId) => {
           setCriando(false)
@@ -499,6 +511,8 @@ export default function Demandas({
           setDetalheId(novoId)
         }}
         aoCancelar={() => setCriando(false)}
+        tipoInicial={tipoInicial}
+        tiposComFicha={tiposComFicha}
         naoLidas={naoLidas}
         aoAbrirNotif={aoAbrirNotif}
         pedidoVoltarForm={pedidoVoltarForm}

@@ -1,4 +1,5 @@
 import Icone from './Icone'
+import MenuNovaDemanda from './MenuNovaDemanda'
 
 // Barra de navegacao fixa no rodape (estilo app). Abas principais + um FAB
 // VERMELHO no centro ("+", nova demanda) que salta acima da barra. "Mais" abre
@@ -17,6 +18,10 @@ export default function BottomNav({
   aoNova,
   mostrarFab,
   novidadesCount,
+  // Menu do "+" (§#85): o FAB pergunta o caminho antes de abrir o form.
+  menuNovaAberto,
+  tiposComFicha,
+  aoEscolherNova,
 }) {
   function item(a) {
     return (
@@ -62,14 +67,28 @@ export default function BottomNav({
         <button
           type="button"
           className="bottom-nav-fab"
+          data-abre-menu-nova=""
           onClick={aoNova}
           aria-label="Nova demanda"
           title="Nova demanda"
+          aria-haspopup="menu"
+          aria-expanded={Boolean(menuNovaAberto)}
         >
           <span className="bottom-nav-fab-btn">
             <Icone nome="mais" size={35} />
           </span>
         </button>
+      )}
+
+      {/* O menu sobe do FAB. Fica DENTRO do nav para herdar a ancoragem dele
+          (fixa no rodape) — e para o "clicou fora?" ser uma pergunta so. */}
+      {mostrarFab && menuNovaAberto && (
+        <MenuNovaDemanda
+          lugar="fab"
+          tiposComFicha={tiposComFicha}
+          aoEscolher={aoEscolherNova}
+          aoFechar={aoNova}
+        />
       )}
     </nav>
   )

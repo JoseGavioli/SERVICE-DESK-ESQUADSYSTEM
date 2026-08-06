@@ -46,6 +46,8 @@ export default function NovaDemanda({
   obraFixa,
   demandaPaiId,
   demandaPai,
+  tipoInicial, // tipo vindo do menu do botao "Nova demanda" (§#85)
+  tiposComFicha = [], // os tipos que TEM porta propria naquele menu
   naoLidas,
   aoAbrirNotif,
   pedidoVoltarForm, // voltar do Android repassado pelo Demandas (§#82)
@@ -62,7 +64,9 @@ export default function NovaDemanda({
   const [cliente, setCliente] = useState(null)
   const [obra, setObra] = useState(obraFixa ?? null)
   const [tipos, setTipos] = useState([])
-  const [tipoId, setTipoId] = useState('')
+  // Vem escolhido quando o usuario entrou pelo menu num tipo COM FICHA; no
+  // "Orcamento" (e na filha) nasce vazio e o card "Tipo" pergunta.
+  const [tipoId, setTipoId] = useState(tipoInicial ? String(tipoInicial) : '')
   const [descricao, setDescricao] = useState('')
   const [prazo, setPrazo] = useState('')
   // Na FILHA, origem e condições comerciais herdam do pai (a origem fica
@@ -140,8 +144,13 @@ export default function NovaDemanda({
   // O formulario esta "SUJO"? (algo digitado alem do estado inicial/herdado).
   // Decide a trava de saida e se o rascunho e salvo. Na filha, origem e
   // condicoes ja nascem preenchidas (heranca) — nao contam como sujeira.
+  // O tipo que veio PRONTO da porta (§#85) nao conta como sujeira — igual a
+  // origem/condicoes herdadas na filha. Sem isto, entrar por "Fechamento" e
+  // sair na hora ja perguntava "Descartar o que voce preencheu?" sem que
+  // ninguem tivesse preenchido nada.
+  const tipoDaPorta = tipoInicial ? String(tipoInicial) : ''
   const sujo = Boolean(
-    tipoId ||
+    String(tipoId) !== tipoDaPorta ||
       descricao.trim() ||
       prazo ||
       arquivos.length ||
@@ -269,7 +278,13 @@ export default function NovaDemanda({
   // "Informacao adicional" (opcional) + anexos, e o botao vira "Preencher
   // ficha" — cliente, origem e condicoes passam para a tela da ficha.
   const tipoEscolhido = tipos.find((t) => String(t.id) === String(tipoId))
-  const ehFechamento = Boolean(tipoEscolhido?.com_ficha)
+  // Enquanto os tipos nao chegam (ou se a consulta falhar), `tipoEscolhido` e
+  // undefined e o form cairia no modo ORCAMENTO — com o botao "Criar demanda"
+  // criando um Fechamento SEM ficha. Quem entrou pela porta de um tipo com
+  // ficha continua em modo ficha ate a lista responder.
+  const ehFechamento =
+    Boolean(tipoEscolhido?.com_ficha) ||
+    (Boolean(tipoInicial) && !ehFilha && !tipoEscolhido)
 
   const faltantes = calcularFaltantes({
     ehFilha,
@@ -373,9 +388,28 @@ export default function NovaDemanda({
   const nomeTipo = tipos.find((t) => String(t.id) === String(tipoId))?.nome
   // Na filha, "Orçamento novo" não faz sentido — a filha é continuação de uma
   // demanda JÁ enviada (revisão, fechamento, adendo...). §11.
+  // Na FILHA, "Orçamento novo" nao faz sentido (ela e continuacao de uma obra
+  // ja orcada, §11) — mas os tipos COM FICHA continuam la: a filha nao passa
+  // pelo menu do botao, e tira-los mataria o caminho de fechar uma obra ja
+  // orcada. No form PRINCIPAL eles saem da lista: a porta deles agora e o
+  // menu (§#85), e deixa-los aqui daria duas entradas para a mesma coisa —
+  // uma delas sem o tipo travado.
+  // O card "Tipo" trava quando o form ESTA em modo ficha — nao quando "veio da
+  // porta". A diferenca importa: assim ele acompanha o tipo ATUAL. Se o
+  // vendedor entrar por "Fechamento" e restaurar um rascunho de orcamento, o
+  // form volta a ser um orcamento comum, com a lista de tipos de volta; e o
+  // caminho inverso trava sozinho. Amarrado a `tipoInicial`, o card ficava
+  // travado num valor que ja nao era o do formulario.
+  const tipoTravado = ehFechamento && !ehFilha
+
+  // Esconde da lista exatamente o que o MENU oferece — a lista de la e a
+  // fonte, nao a flag lida aqui. Se aquela consulta falhar, o menu fica sem a
+  // porta do Fechamento; usar a flag local esconderia o tipo aqui tambem e
+  // nao sobraria caminho nenhum para criar um (achado da revisao).
+  const comPortaPropria = new Set(tiposComFicha.map((t) => String(t.id)))
   const tiposDisponiveis = ehFilha
     ? tipos.filter((t) => t.nome !== 'Orçamento novo')
-    : tipos
+    : tipos.filter((t) => !comPortaPropria.has(String(t.id)))
 
   function subCondicoes() {
     const partes = []
@@ -567,25 +601,37 @@ export default function NovaDemanda({
             )
           )}
 
+          {/* Tipo TRAVADO quando veio do menu do botao (§#85): quem escolheu
+              "Fechamento" na porta ja respondeu esta pergunta, e a lista aqui
+              nem mostra os tipos com ficha — abri-la seria oferecer uma lista
+              onde o valor atual nao esta. Mesma ideia da obra travada na
+              demanda-filha. Para trocar de caminho, sai e escolhe no menu. */}
           <CardCampo
             id="card-tipo"
-            sempreAberto={desktop}
+            /* Travado -> `sempreAberto`: e o modo em que o CardCampo desenha o
+               cabecalho como TITULO em vez de <button>. Sem isso sobraria um
+               botao que nao faz nada — o proprio componente avisa que isso
+               anuncia um clicavel falso para o leitor de tela. Como o corpo
+               vem vazio, o card fica so mostrando o tipo escolhido. */
+            sempreAberto={desktop || tipoTravado}
             icone="lista"
             titulo="Tipo"
             subtitulo={nomeTipo ?? 'O que você está pedindo?'}
             preenchido={Boolean(nomeTipo)}
             faltando={marcado('tipo')}
-            aberto={aberto === 'tipo'}
-            aoClicar={() => alternar('tipo')}
+            aberto={!tipoTravado && aberto === 'tipo'}
+            aoClicar={tipoTravado ? undefined : () => alternar('tipo')}
           >
-            <NdOpcoes
-              opcoes={tiposDisponiveis}
-              valor={tipoId}
-              aoEscolher={(id) => {
-                setTipoId(String(id))
-                setAberto(null)
-              }}
-            />
+            {!tipoTravado && (
+              <NdOpcoes
+                opcoes={tiposDisponiveis}
+                valor={tipoId}
+                aoEscolher={(id) => {
+                  setTipoId(String(id))
+                  setAberto(null)
+                }}
+              />
+            )}
           </CardCampo>
 
           {!ehFechamento && cardDescricao}

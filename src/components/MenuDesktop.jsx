@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import Avatar from './Avatar'
 import Icone from './Icone'
 import { useContadoresLista } from '../lib/useContadoresLista'
+import MenuNovaDemanda from './MenuNovaDemanda'
 
 // Menu lateral do MODO DESKTOP (§issue #83, B1). Substitui o bottom-nav e o
 // menu "Mais" quando a tela e larga (useDesktop): tudo exposto de uma vez —
@@ -63,6 +64,11 @@ export default function MenuDesktop({
   aoAbrirComFiltro,
   aoNovaDemanda,
   aoSair,
+  // Menu do "Nova demanda" (§#85) — mesmo componente do FAB do celular.
+  menuNovaAberto,
+  tiposComFicha,
+  aoEscolherNova,
+  formAberto, // form de nova demanda na tela (§#85)
 }) {
   const raiz = SECAO_RAIZ[secao] ?? secao
   // Numeros dos recortes (Atencao/Em aberto), em tempo real (§B2). Enquanto
@@ -106,12 +112,8 @@ export default function MenuDesktop({
           celular. */}
       <div className="md-marca">
         <img src="/logo-icone.svg" alt="" className="md-logo" />
-        <div>
-          <div className="md-nome">
-            Service<span>Desk</span>
-          </div>
-          <div className="md-sub">EsquadSystem</div>
-        </div>
+        <strong className="md-nome">Service Desk - EsquadSystem</strong>
+        <span className="md-sub">Orçamentos &amp; Revisões</span>
       </div>
 
       <Item alvo="inicio" icone="casa" raiz={raiz} aoNavegar={aoNavegar}>
@@ -142,9 +144,33 @@ export default function MenuDesktop({
         Clientes
       </Item>
 
-      <button type="button" className="md-nova" onClick={aoNovaDemanda}>
-        <Icone nome="mais" size={18} /> Nova demanda
-      </button>
+      {/* Ancora do menu: ele abre PARA CIMA, encostado no botao. */}
+      <div className="md-nova-caixa">
+        {menuNovaAberto && (
+          <MenuNovaDemanda
+            lugar="lateral"
+            tiposComFicha={tiposComFicha}
+            aoEscolher={aoEscolherNova}
+            aoFechar={aoNovaDemanda}
+          />
+        )}
+        {/* Com o formulario ABERTO o botao para de responder. No celular isso
+            ja acontece de graca (o bottom-nav inteiro sai de cena); aqui a
+            barra continua na tela, e sem esta trava dava para pedir outro
+            caminho por cima de um formulario ja preenchido — que seria
+            descartado sem ninguem perguntar (§#82). Fecha o form primeiro. */}
+        <button
+          type="button"
+          className="md-nova"
+          data-abre-menu-nova=""
+          onClick={aoNovaDemanda}
+          disabled={formAberto}
+          aria-haspopup="menu"
+          aria-expanded={Boolean(menuNovaAberto)}
+        >
+          <Icone nome="mais" size={18} /> Nova demanda
+        </button>
+      </div>
 
       {/* Area da CONTA: perfil, administracao e sair sairam da navegacao e
           viraram um menu do proprio usuario (pedido do dono). Sao acoes

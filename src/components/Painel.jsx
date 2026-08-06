@@ -20,6 +20,7 @@ import Icone from './Icone'
 import { useNotificacoes } from '../lib/useNotificacoes'
 import { useBotaoVoltar } from '../lib/useBotaoVoltar'
 import { useDesktop } from '../lib/useDesktop'
+import { useTiposComFicha } from '../lib/useTiposComFicha'
 import { usePresenca } from '../lib/usePresenca'
 import { sincronizarPush } from '../lib/webpush'
 
@@ -57,7 +58,14 @@ export default function Painel({ sessao }) {
   const [notifAberto, setNotifAberto] = useState(false) // drawer do sino (notificacoes)
   const [demandaInicial, setDemandaInicial] = useState(null) // demanda a abrir ao ir p/ Demandas
   const [filtroInicial, setFiltroInicial] = useState(null) // filtro a aplicar ao ir p/ Demandas
-  const [criarInicial, setCriarInicial] = useState(false) // abrir o form de nova demanda
+  // Abrir o form de nova demanda. Deixou de ser boolean (§#85): agora carrega
+  // QUAL caminho o menu escolheu — `{ tipoId }`, com `tipoId` nulo no
+  // "Orcamento" (o form pergunta o tipo la dentro) e preenchido no tipo com
+  // ficha. `null` = nao ha pedido de abertura.
+  const [criarInicial, setCriarInicial] = useState(null)
+  // Menu do botao "Nova demanda": 'fab' (celular) | 'lateral' (desktop) | null.
+  const [menuNovaEm, setMenuNovaEm] = useState(null)
+  const tiposComFicha = useTiposComFicha()
   const [detalheAberto, setDetalheAberto] = useState(false) // detalhe de demanda aberto
   const [criandoAberto, setCriandoAberto] = useState(false) // form de nova demanda aberto
   const [buscaAberta, setBuscaAberta] = useState(false) // barra de busca da lista (§#40)
@@ -122,11 +130,24 @@ export default function Painel({ sessao }) {
     setSecao('inicio')
   }
 
-  // Dashboard: vai para a lista (Inicio) ja abrindo o form de nova demanda.
-  function abrirNovaDemanda() {
-    setCriarInicial(true)
+  // Vai para a lista (Inicio) ja abrindo o form de nova demanda, no caminho
+  // que o menu escolheu (§#85).
+  function abrirNovaDemanda(tipoId = null) {
+    setMenuNovaEm(null)
+    setCriarInicial({ tipoId })
     setSecao('inicio')
   }
+
+  // O menu do "+" e EFEMERO (§#85): qualquer troca de tela o fecha. Sem isto
+  // ele sobreviveria escondido — o BottomNav so o desenha junto com o FAB, e
+  // ao voltar para a Inicio (onde o FAB reaparece) o menu voltaria sozinho,
+  // sem ninguem ter pedido.
+  // `desktop` entra na lista porque o menu vive em DOIS lugares (FAB e barra):
+  // cruzar o corte de 900px trocaria o dono do menu e ele voltaria sozinho no
+  // outro canto.
+  useEffect(() => {
+    setMenuNovaEm(null)
+  }, [secao, detalheAberto, criandoAberto, desktop])
 
   // ── Botao "voltar" do celular (§issue #40) ──────────────────────
   // O Demandas "sobrepoe" a Inicio quando ha um detalhe, o form de nova
@@ -135,10 +156,20 @@ export default function Painel({ sessao }) {
   // (detalhe/form/busca do Demandas) -> outra secao -> raiz.
   const demandasSobrepoe = detalheAberto || criandoAberto || buscaAberta
   function podeVoltar() {
-    return menuAberto || notifAberto || demandasSobrepoe || secao !== 'inicio'
+    // O menu do "+" (§#85) entra na pilha: sem ele aqui, abrir o menu e tocar
+    // em voltar cairia direto no "toque de novo para sair" — com o menu ainda
+    // na tela. Ele e o mais raso (abriu por ultimo), entao fecha primeiro.
+    return (
+      menuNovaEm ||
+      menuAberto ||
+      notifAberto ||
+      demandasSobrepoe ||
+      secao !== 'inicio'
+    )
   }
   function voltarUmNivel() {
-    if (menuAberto) setMenuAberto(false)
+    if (menuNovaEm) setMenuNovaEm(null)
+    else if (menuAberto) setMenuAberto(false)
     else if (notifAberto) setNotifAberto(false)
     else if (demandasSobrepoe) setPedidoVoltar((v) => v + 1)
     // Sub-tela (Equipe/Erros) volta para a Administracao; o resto, para a Inicio.
@@ -252,7 +283,13 @@ export default function Painel({ sessao }) {
             setSecao(s)
           }}
           aoAbrirComFiltro={abrirDemandasComFiltro}
-          aoNovaDemanda={abrirNovaDemanda}
+          aoNovaDemanda={() =>
+            setMenuNovaEm((v) => (v === 'lateral' ? null : 'lateral'))
+          }
+          menuNovaAberto={menuNovaEm === 'lateral'}
+          formAberto={criandoAberto}
+          tiposComFicha={tiposComFicha}
+          aoEscolherNova={abrirNovaDemanda}
           aoSair={sair}
         />
       )}
@@ -326,7 +363,8 @@ export default function Painel({ sessao }) {
             filtroInicial={filtroInicial}
             aoConsumirFiltro={() => setFiltroInicial(null)}
             criarInicial={criarInicial}
-            aoConsumirCriar={() => setCriarInicial(false)}
+            tiposComFicha={tiposComFicha}
+            aoConsumirCriar={() => setCriarInicial(null)}
             naoLidas={naoLidas}
             aoAbrirNotif={() => setNotifAberto(true)}
             aoDetalhe={setDetalheAberto}
@@ -440,7 +478,10 @@ export default function Painel({ sessao }) {
             }}
             aoMais={() => setMenuAberto((v) => !v)}
             menuAberto={menuAberto}
-            aoNova={abrirNovaDemanda}
+            aoNova={() => setMenuNovaEm((v) => (v === 'fab' ? null : 'fab'))}
+            menuNovaAberto={menuNovaEm === 'fab'}
+            tiposComFicha={tiposComFicha}
+            aoEscolherNova={abrirNovaDemanda}
             mostrarFab={secao === 'inicio' || secao === 'dashboard'}
             novidadesCount={demandasComNovidade.size}
           />

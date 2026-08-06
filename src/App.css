@@ -5698,7 +5698,7 @@ button.cad-item:hover {
   .menu-desktop {
     background: var(--marca-navy);
     color: #fff;
-    padding: 22px 14px 16px;
+    padding: 2px 14px 16px;
     display: flex;
     flex-direction: column;
     gap: 3px;
@@ -5707,17 +5707,21 @@ button.cad-item:hover {
     height: 100dvh;
     overflow-y: auto;
   }
+  /* Marca EMPILHADA e centrada, igual à do login e à do menu do celular:
+     losango em cima, nome do app, subtítulo. */
   .md-marca {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 10px;
-    padding: 0 10px 16px;
+    text-align: center;
+    gap: 2px;
+    padding: 4px 1px 16px;
     margin-bottom: 10px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.14);
   }
   .md-logo {
-    width: 30px;
-    height: 30px;
+    width: 60px;
+    height: 80px;
     flex-shrink: 0;
     /* O SVG do losango tem um fill unico, o proprio navy da marca — sobre o
        menu (navy tambem) ele praticamente sumia. O filtro o pinta de branco,
@@ -5725,17 +5729,13 @@ button.cad-item:hover {
     filter: brightness(0) invert(1);
   }
   .md-nome {
-    font-weight: 800;
-    letter-spacing: 0.03em;
-    font-size: 0.94rem;
-  }
-  .md-nome span {
-    color: #ff8a8f;
+    font-weight: 700;
+    font-size: 0.9rem;
+    line-height: 1;
   }
   .md-sub {
-    font-size: 0.68rem;
+    font-size: 0.8rem;
     opacity: 0.65;
-    letter-spacing: 0.04em;
   }
   .md-item {
     display: flex;
@@ -5787,7 +5787,11 @@ button.cad-item:hover {
     color: #fff;
   }
   .md-nova {
-    margin-top: 14px;
+    margin-top: 10px;
+    /* Mesma largura dos .md-item: a caixa que o envolve (ancora do menu) e
+       block, mas o botao precisa ESTICAR ate as bordas dela — senao ele
+       encolhe no conteudo e fica mais estreito que o resto do menu. */
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -6322,4 +6326,77 @@ button.cad-item:hover {
   padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
 }
 
+/* ═══ Menu do botão "Nova demanda" (§#85, fase 1) ═══════════════════
+   O botão pergunta o CAMINHO antes de abrir o formulário: "Orçamento" (o
+   form de sempre) ou um tipo COM FICHA (hoje o Fechamento). Mesmo componente
+   nos dois lugares; muda só a ancoragem. */
+.menu-nova {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.28);
+  z-index: 60;
+}
+.menu-nova-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  color: var(--texto);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.menu-nova-item:hover {
+  background: var(--surface-2);
+}
+.menu-nova-item svg {
+  flex-shrink: 0;
+  color: var(--primaria);
+}
+.menu-nova-item span {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.menu-nova-item strong {
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+.menu-nova-item small {
+  font-size: 0.75rem;
+  color: var(--texto-suave);
+}
 
+/* CELULAR: sobe do FAB. Cuidado — o FAB SALTA acima da barra (~14px), então
+   ancorar no topo do nav deixaria o menu por trás dele. A folga cobre o salto
+   e ainda dá respiro. A largura é limitada para não encostar nas bordas. */
+.menu-nova-fab {
+  position: absolute;
+  bottom: calc(100% + 26px);
+  left: 50%;
+  transform: translateX(-50%);
+  /* Mesma largura dos cards da lista da Início: eles vivem no `.conteudo`,
+     que tem 1rem de padding lateral e teto de 760px. Repetimos a conta em vez
+     de herdar porque o menu mora no `.bottom-nav` (fixo, largura da tela) e
+     não dentro do `.conteudo`. Mexeu num, confira o outro. */
+  width: min(calc(100vw - 32px), 760px);
+}
+
+/* DESKTOP: encosta no botão vermelho, dentro da barra. */
+.menu-nova-lateral {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+}
+.md-nova-caixa {
+  position: relative;
+}
