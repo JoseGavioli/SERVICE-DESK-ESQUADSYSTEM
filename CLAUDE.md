@@ -367,8 +367,7 @@ Cada fase é pequena o bastante para eu ler, entender e aprovar antes da próxim
 3. **Tela admin de tipos de demanda** (issue #18) — hoje os 6 tipos são semeados no banco. Também vai para a **Administração**.
 4. **Feriados no cálculo de prazo** (§8) — hoje só pula sábado/domingo.
 5. **Limpeza de anexos de entrada antigos** (§14) — os de saída são permanentes.
-6. **Não perder formulário pela metade** — a "Nova demanda" descarta tudo se tocar em voltar sem querer.
-7. **Export/backup dos dados** — rede de segurança para um app com uso real.
+6. **Export/backup dos dados** — rede de segurança para um app com uso real.
 
 **Já resolvidas:**
 - ~~Login = email ou username~~ → **email** (Supabase Auth nativo).
@@ -379,6 +378,7 @@ Cada fase é pequena o bastante para eu ler, entender e aprovar antes da próxim
 - ~~Limite do anexo de saída~~ → **10 MB** (§14).
 - ~~Reset dos dados de teste~~ → **feito** na virada (jul/2026). A conta de teste segue existindo, mas fica **fora do relatório** (§18).
 - ~~Push no SO~~ → **concluído** e validado em desktop, Android e iOS (§15, issue #14).
+- ~~Não perder formulário pela metade~~ → **resolvido** (issue #82): a "Nova demanda" pergunta antes de sair e guarda um **rascunho automático** por usuário (`lib/rascunho.js`, validade de 7 dias).
 
 ---
 
@@ -420,3 +420,33 @@ Quando o cliente **fecha a venda**, o vendedor preenchia uma ficha de papel que 
 - **Edição da ficha** (RLS `0045`, o front espelha): admin/atendente até a demanda ser terminal; o **dono** só em `Não iniciado`; os demais **só leem**. A **RT não muda** pela edição (é da demanda, que não tem update direto — todo update passa por função). Ninguém apaga a ficha sozinha.
 - **Status:** trilho próprio, **sem revisão de custo** (§7).
 - **PDF:** botão "Gerar PDF da ficha" (**dono + admin/atendente**; gerente não) → pré-visualização da **réplica fiel do papel** + `window.print()` (sem dependência, §5). Assinaturas saem **em branco** (assina-se no papel). ⚠ No iPhone com o **PWA instalado** o WebKit ignora `window.print()` — o app mostra a dica de abrir pelo Safari (mesma limitação do relatório §18).
+
+---
+
+## 20. MODO DESKTOP (ago/2026, issue #83)
+
+O app nasceu **mobile-first** e é assim que o vendedor o usa. Mas o atendente/admin passa o dia num **PC**, e ali a mesma tela ficava desproporcional: uma coluna estreita no meio de um monitor vazio. A partir da #83 o app **muda de forma conforme a largura** — mesma base de código, duas caras.
+
+**Dois cortes, dois hooks** (`lib/useDesktop.js`) — e é uma armadilha confundi-los:
+
+| Hook | Corte | O que liga |
+|---|---|---|
+| `useDesktop()` | **≥ 900px** | A casca: **menu lateral** no lugar do bottom-nav, coluna central mais larga, filtros e busca à vista, campos de formulário **expostos** (sem sanfona) |
+| `useTelaLarga()` | **≥ 1200px** | **Lista + detalhe lado a lado** na tela de demandas |
+
+> ⚠ O corte é por **largura mínima**, não por orientação: celular deitado continua com a cara de app.
+> ⚠ **CSS do split não pode depender da classe `.app.desktop`** (ela vem do hook de 900px). Quando as duas leituras discordam, o layout aplica pela metade. O `@media (min-width: 1200px)` + a presença do `.dem-split` já delimitam sozinhos.
+
+**O que muda em cada bloco:**
+- **B1 — casca.** `MenuDesktop.jsx`: marca do **app** (losango + "ServiceDesk / EsquadSystem"), Início com **sub-menu dos recortes de status** (Todas/Atenção/Em aberto/Enviados/Cancelados, com contadores ao vivo em `lib/useContadoresLista.js`), Dashboard, Clientes, botão vermelho "Nova demanda" e, no rodapé, o **menu da conta** (Meu perfil · Administração · Sair) — que abre para cima e fecha por clique-fora ou Esc.
+- **B2 — telas de consulta.** Busca e "Filtrar" sempre à vista (a lupa do cabeçalho é do celular); Clientes em duas colunas; Dashboard em grade. No celular **nada** muda — inclusive a posição do chip "Cancelamentos".
+- **B3 — formulários.** `CardCampo` ganhou `sempreAberto`: no PC o card já nasce aberto e o cabeçalho vira **título** (não botão). A sanfona existe para caber numa tela de celular; num monitor ela só esconde.
+- **B4 — lista + detalhe.** Clicar numa demanda a **seleciona** em vez de trocar de tela. A lista ocupa a tela toda e **encolhe para 380px** quando há um detalhe ao lado. Fecha de três jeitos: **Esc**, clique no vazio da coluna, ou clique no card já selecionado. Ficha e PDF continuam em **tela cheia** (o detalhe pede a tela inteira e a lista sai de cena).
+
+**Decisões que custaram caro e não devem ser refeitas:**
+- O **ponto de montagem do detalhe é fixo**; "tela cheia" é uma *classe CSS*, não outro lugar na árvore — mudar o lugar remonta o componente e perde o estado (a ficha aberta piscava e voltava).
+- O layout do split é **congelado enquanto o detalhe está em tela cheia** (`layoutCongelado`), senão cruzar o breakpoint no meio remonta tudo.
+- `detalheTelaCheia` só vale com uma demanda selecionada (`detalheId != null`); sem essa trava, um recorte do menu deixava a tela **sem cabeçalho e sem lista**.
+- A **limpeza do `telaCheia` mora num efeito só de desmontagem** — junto com o resto, ela emite um `false` intermediário e a tela pisca.
+
+**Limitações conhecidas (aceitas):** a posição de rolagem da lista se perde ao entrar/sair da ficha (o `display:none` destrói o scrollport); e uma lista filtrada até ficar vazia ainda mostra no painel a demanda selecionada antes.

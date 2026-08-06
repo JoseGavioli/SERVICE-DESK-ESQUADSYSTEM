@@ -37,10 +37,17 @@ App web interno da **EsquadSystem** (esquadrias de alumínio) para gerir **deman
 - **Dashboard: reforma COMPLETA** (A+B+C, #77) e **TODAS as listagens ilimitadas paginadas** (#78/#79 — helper `lib/paginacao.js`, `todasAsLinhas`): lista, RPCs, Relatório, SeletorCliente, Clientes. A classe de bug "corte silencioso de ~1000 do PostgREST" está **encerrada** no app.
 - **Anexos de entrada:** comprimidos para **≤ 1 MB** (`ALVO_ENTRADA` em `lib/anexos.js`) nos DOIS caminhos (criação e detalhe) — #75.
 - **Ficha de pedido de vendas (#80): COMPLETA (F1–F4)** — o vendedor preenche a ficha no app ao criar demanda de Fechamento; o fluxo de status pula a revisão (dois trilhos na `mover_status`); o detalhe tem a box da ficha (ver/**editar** com permissões espelhando a RLS; RT travada — é da demanda); e o **PDF** sai como réplica fiel do papel via `window.print()`. Spec registrada no **CLAUDE.md §19** (+ exceções em §7/§10). ⚠ iPhone com PWA instalado não imprime (`window.print()` é ignorado em standalone — o app mostra a dica de abrir pelo Safari; mesma limitação do Relatório). Demandas de teste #36/#37 criadas pela conta oculta na validação.
+- **Modo desktop (#83): COMPLETO (B1–B4)** — o app tem duas caras na mesma base: **≥900px** vira site (menu lateral, campos expostos, filtros à vista) e **≥1200px** ganha **lista + detalhe lado a lado**. Spec no **CLAUDE.md §20**. O **celular não mudou em nada** — foi o critério de aceite de cada bloco.
 - **Conta de teste** (`teste@gmail.com` = 'USUARIO DE TESTE'): **oculta** (0041) — não aparece nas listas/dashboard/relatório dos outros; e fora do relatório (0040).
 - **Fora do versionamento de propósito:** `deno.lock` e `supabase/functions/criar-usuario/` (Edge Function criada, **não deployada** — pendência #16).
 
 ## 5. O que foi feito
+
+### Sessão de 05–06/08/2026 (issues #82/#83 fechadas)
+
+**Modo desktop (#83).** Nasceu de uma observação do dono: "o app tem cara de app, mas no PC fica desproporcional". Prototipado como artifact e iterado com ele ANTES de codar. Entregue em 4 blocos, cada um testado por ele antes do commit — **B1** casca (`MenuDesktop.jsx` + `lib/useDesktop.js` + `lib/useContadoresLista.js`), **B2** telas de consulta, **B3** formulários com campos expostos (`CardCampo` ganhou `sempreAberto`), **B4** lista + detalhe lado a lado. Depois, uma rodada de acabamento pedida por ele: anel de seleção (o card real é o `<li>`, com `overflow:hidden` — o contorno no botão de dentro era cortado nos cantos; virou `background` + `box-shadow` no `li` via `:has()`), barra de status como **rodapé do painel** e depois **navy colada na borda inferior** (o `padding-bottom` da coluna empurrava o `sticky` 16px para cima), lista larga que só encolhe quando há detalhe, filtros abaixo da busca (busca com **lupa dentro**, "Filtrar" + "Ordenar por" lado a lado), e o menu lateral com a marca do **app** + **menu da conta** no rodapé. **Bloqueantes pegos pelas revisões/testes antes dos commits:** CSS do split escopado em `.app.desktop` (classe do hook de 900px — quando as duas leituras discordavam o layout aplicava pela metade); `detalheTelaCheia` órfão deixando a tela sem cabeçalho nem lista; remonte do detalhe ao mudar o ponto de montagem (perdia a ficha aberta); e o `Ordenar por` novo disparando o efeito que refazia o rascunho da box (apagava o status escolhido e não aplicado).
+
+**Não perder formulário pela metade (#82).** Trava de saída + **rascunho automático** por usuário (`lib/rascunho.js`, 7 dias, tudo em try/catch). Bloqueante pego na revisão: o sinal de "pediu para voltar" nunca era resetado e o efeito rodava na montagem — reabrir o formulário se auto-fechava **e apagava o rascunho**; corrigido com guarda de `useRef` que só age quando o valor MUDA.
 
 ### Sessão de 04–05/08/2026 (issues #78/#79/#80/#81 fechadas)
 
@@ -117,13 +124,13 @@ Rede de segurança contra tela branca (`ErrorBoundary` em 2 níveis + `erro_log`
 - 📝 **Anotações da #80 (nada bloqueante):** fechamento fica com origem nula → "Sem origem" no relatório (aceito pelo dono) · o PDF imprime o **estado atual da tela** (edição não salva sai na folha — "imprime o que se vê", decisão de produto) · `@page A4/10mm` vale pra **todo** print do app, inclusive o Relatório (aceito e documentado no CSS).
 - 🔁 **#29 (migrar demandas):** o **go-forward** (atribuir dono ao criar) está feito (0042/0043). Sobra, **se precisar**, reatribuir demandas **JÁ existentes** para outro dono.
 - 🔒 **Anotado (sem issue):** o ramo `autor_id = auth.uid()` do `anexo_excluir` deixa o vendedor-autor apagar a própria entrada em **qualquer status** via API direta (o front nunca mostra o botão fora de `nao_iniciado`). Pré-existente à 0044; travar só se o dono quiser rigor total.
-- 📝 **Da lista de melhorias:** *não perder formulário pela metade* (a Nova demanda perde tudo se tocar em voltar) e *export/backup dos dados*.
+- 📝 **Da lista de melhorias:** *export/backup dos dados* (o *não perder formulário pela metade* saiu na #82).
 - 🐢 **Detalhe pesado com muitos PDFs:** cada `MiniaturaPdf` renderiza via pdf.js; demandas com 20+ PDFs de entrada travam a tela ao abrir (renderizar miniaturas sob demanda resolveria). Relevante justo no caso "muitos PDFs".
 - 🗂️ **Backlog aberto:** #43 (documentação), #32 (co-vendedor), #18 (tela de tipos), #17 (box de cor), #16 (cadastro in-app — Edge Function criada, **não deployada**).
 - 🧹 Limpeza de anexos de entrada antigos (§14) · 📅 feriados no cálculo de prazo (§8).
 
 ## 8. 🎯 Próximo passo
-A **#80 está completa e fechada**. Candidatos do backlog: *não perder formulário pela metade*, export/backup, #29 (reatribuir demandas existentes), #43/#32/#18/#17/#16 — ou o que o dono priorizar.
+A **#83 (modo desktop) está completa e fechada**. Em cima da mesa, ideia nova do dono (ainda **sem issue**, a confirmar): menu no botão "Nova demanda" separando *Orçamento* de *Fechamento*, cliente+obra de volta na tela do fechamento, e **obra obrigatória** com "cidade e estado" obrigatório — este último **mexe em dados já existentes** (obras antigas sem endereço), então exige decisão do dono antes de qualquer migração. Backlog: export/backup, #29 (reatribuir demandas existentes), #43/#32/#18/#17/#16.
 
 ## 9. ⚠️ Armadilhas do ambiente (economiza horas)
 
@@ -137,6 +144,9 @@ A **#80 está completa e fechada**. Candidatos do backlog: *não perder formulá
 | **`npm run build` com o preview LIGADO** → `EINVAL` no service worker | Pare o preview antes de buildar. |
 | **Buffer do console não limpa** em navigate/reload | Erro fantasma pode persistir; abra **aba nova** para buffer limpo antes de concluir que é real. |
 | **Screenshot trava** no preview | Verificar por **DOM/`getComputedStyle`** via `javascript_tool` (mais confiável e preciso). |
+| **`resize_window` NÃO dispara `matchMedia change`** | Provado com listeners crus (0 eventos). Trocar de modo (celular↔desktop) exige **reload** — senão os hooks continuam com a leitura antiga e o layout aplica pela metade. |
+| **Ler o DOM no MESMO tick de um clique React** | `setState` é assíncrono: a medição sai do estado ANTERIOR e produz falso negativo. Clicar numa chamada, medir na **seguinte**. |
+| **Preview "dorme"** (`innerWidth === 0`) | Se as medidas vierem zeradas, chame `resize_window` e **recarregue** antes de medir. |
 | **`read_network_requests` não pega cross-origin** (supabase.co) | Interceptar `window.fetch`, ou usar o client via `import('/src/lib/supabase.js')` na página. |
 | **Node/`gh` fora do PATH** | `export PATH="/c/Program Files/nodejs:$PATH"`; `gh` por caminho completo `C:/Program Files/GitHub CLI/gh.exe`. |
 | **Senha da conta de teste MUDA** | O dono a troca ao validar o Meu perfil. **Peça a atual** para validar tela logada. A conta é **ADMIN** (dá p/ validar telas de gerente/admin, ex.: a pizza) e está **oculta** (0041). |

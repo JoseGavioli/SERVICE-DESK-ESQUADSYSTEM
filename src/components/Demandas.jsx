@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { STATUS_ROTULO } from '../lib/status'
 import {
@@ -15,7 +15,7 @@ import Avatar from './Avatar'
 import Icone from './Icone'
 import { haQuantoTempo } from '../lib/tempo'
 import { todasAsLinhas } from '../lib/paginacao'
-import { useDesktop } from '../lib/useDesktop'
+import { useDesktop, useTelaLarga } from '../lib/useDesktop'
 
 // Rank de urgencia (0 = mais critico) para ordenar a fila.
 const RANK_URGENCIA = Object.fromEntries(
@@ -78,6 +78,10 @@ export default function Demandas({
   // solucao de celular) e os recortes de status saem daqui (vivem no
   // sub-menu do menu lateral). So apresentacao — o estado `f` e o mesmo.
   const desktop = useDesktop()
+  // O SPLIT (lista + detalhe) tem corte proprio, mais largo: em 900px o painel
+  // do detalhe ficaria com ~210px depois do menu e da lista — pior que a tela
+  // cheia (achado da revisao do B4).
+  const telaLarga = useTelaLarga()
   // Voltar do Android repassado ao form (§#82): quem fecha e a NovaDemanda,
   // com a trava de "descartar?" — fechar direto daqui perderia o digitado.
   const [pedidoVoltarForm, setPedidoVoltarForm] = useState(0)
@@ -85,6 +89,37 @@ export default function Demandas({
   // nivel (form da filha com trava / tela da ficha) — fechar daqui por cima
   // descartava a filha digitada sem perguntar.
   const [pedidoVoltarDetalhe, setPedidoVoltarDetalhe] = useState(0)
+  // O detalhe pediu a TELA INTEIRA (ficha/PDF/revisao de demanda)? So vale no
+  // desktop, onde ele normalmente vive num painel ao lado da lista (§#83 B4).
+  const [detalheTelaCheia, setDetalheTelaCheia] = useState(false)
+  // O detalhe tem DOIS pontos de montagem (tela no celular, painel no
+  // desktop). Cruzar o breakpoint troca o ponto, e o React REMONTA o
+  // componente — descartando em silencio a filha que estava sendo digitada ou
+  // a ficha em edicao (a filha nem rascunho tem, §#82). Enquanto ele estiver
+  // em tela cheia, o modo de layout CONGELA. O gatilho nao e so arrastar a
+  // janela: o zoom do navegador tambem muda a largura em CSS.
+  const layoutCongelado = useRef(telaLarga)
+  if (!detalheTelaCheia) layoutCongelado.current = telaLarga
+  const desktopLayout = detalheTelaCheia ? layoutCongelado.current : telaLarga
+  // ESC fecha o painel do detalhe (§#83 B4) — atalho esperado de quem usa
+  // teclado. So quando o detalhe esta em PAINEL: em tela cheia (ficha/PDF) o
+  // Esc fecharia a coisa errada, e o celular nem tem teclado.
+  useEffect(() => {
+    if (!desktopLayout || detalheTelaCheia || detalheId == null) return
+    function aoTeclar(e) {
+      if (e.key === 'Escape') setDetalheId(null)
+    }
+    window.addEventListener('keydown', aoTeclar)
+    return () => window.removeEventListener('keydown', aoTeclar)
+  }, [desktopLayout, detalheTelaCheia, detalheId])
+
+  // Rolagem do painel: trocar de demanda tem de voltar ao topo — o container
+  // que rola e ESTAVEL (so o conteudo dentro dele remonta), entao ele
+  // guardaria a rolagem da demanda anterior.
+  const painelRef = useRef(null)
+  useEffect(() => {
+    if (painelRef.current) painelRef.current.scrollTop = 0
+  }, [detalheId])
   // Mapa demanda_id -> data da 1a entrada em "revisao de custo" (para o atraso).
   const [datasRevisao, setDatasRevisao] = useState({})
   const [atividade, setAtividade] = useState({}) // demanda_id -> ultima mexida
@@ -460,7 +495,11 @@ export default function Demandas({
     )
   }
 
-  if (detalheId) {
+  // O DETALHE como TELA: so no CELULAR. No desktop ele vive sempre no mesmo
+  // lugar da arvore (o painel la embaixo) e a "tela cheia" e so uma classe —
+  // mudar o ponto de montagem faria o React REMONTAR o componente e perder o
+  // estado dele (era assim que abrir a ficha voltava sozinho para o split).
+  if (detalheId && !desktopLayout) {
     return (
       <DetalheDemanda
         key={detalheId}
@@ -477,6 +516,7 @@ export default function Demandas({
         }}
         aoVisto={() => marcarLidaDemanda(detalheId)}
         pedidoVoltar={pedidoVoltarDetalhe}
+        aoTelaCheia={setDetalheTelaCheia}
         naoLidas={naoLidas}
         aoAbrirNotif={aoAbrirNotif}
       />
@@ -490,11 +530,21 @@ export default function Demandas({
     const custoAtras = custoAtrasado(d)
     const atencao = precisaAtencao(d)
     const destaque = STATUS_FINAL.includes(d.status) ? ` fim-${d.status}` : ''
+    // No painel do desktop (§#83 B4) a demanda aberta fica MARCADA na lista —
+    // sem isso o usuario perde de vista o que esta lendo ao lado.
+    const selecionada = desktop && d.id === detalheId ? ' selecionada' : ''
     return (
       <button
         type="button"
-        className={`item-demanda${destaque}${atencao ? ' atencao' : ''}`}
-        onClick={() => setDetalheId(d.id)}
+        className={`item-demanda${destaque}${atencao ? ' atencao' : ''}${selecionada}`}
+        // No painel, tocar de novo na demanda ABERTA fecha (§#83 B4). E o
+        // caminho sempre alcancavel: a coluna da lista raramente tem area
+        // vazia para clicar, e nem todo mundo lembra do Esc.
+        onClick={() =>
+          setDetalheId((atual) =>
+            desktopLayout && atual === d.id ? null : d.id,
+          )
+        }
       >
         <div>
           {nivel > 0 && (
@@ -595,8 +645,95 @@ export default function Demandas({
     (a, b) => (precisaAtencao(a) ? 0 : 1) - (precisaAtencao(b) ? 0 : 1),
   )
 
+  // Campo de busca. No desktop ele ganha uma LUPA dentro, no canto direito
+  // (§#83): la a barra esta sempre a vista e nada mais diz que aquilo e a
+  // busca. No celular a lupa ja e o botao do cabecalho que abriu esta barra —
+  // repeti-la seria dizer duas vezes, entao o input vai sozinho, sem nem o
+  // <div> em volta (envolve-lo mexeria numa tela que ninguem pediu p/ mudar).
+  const inputBusca = (
+    <input
+      type="search"
+      className="busca busca-solta"
+      placeholder="Buscar (cliente, obra, descrição)…"
+      value={f.busca}
+      onChange={(e) => aoBuscar(e.target.value)}
+      autoFocus={!desktop}
+    />
+  )
+  const campoBusca = desktop ? (
+    <div className="busca-wrap">
+      {inputBusca}
+      <Icone nome="lupa" size={18} className="busca-lupa" />
+    </div>
+  ) : (
+    inputBusca
+  )
+
+  // A lista (arvore, filtrada, vazia ou esqueleto) virou uma VARIAVEL porque
+  // no desktop ela divide a tela com o detalhe (§#83 B4) — no celular segue
+  // sendo a tela inteira.
+  const listaJSX = (
+    <>
+        {carregando ? (
+          <div className="caixa-lista">
+            <ul className="lista-demandas">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <li key={i}>
+                  <div className="skel-item">
+                    <div className="skel-linha skel-lg" />
+                    <div className="skel-linha skel-md" />
+                    <div className="skel-linha skel-sm" />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : demandas.length === 0 ? (
+          <EstadoVazio
+            nome="lista"
+            titulo="Nenhuma demanda ainda"
+            dica="Toque no + para criar a primeira."
+          />
+        ) : filtrando ? (
+          listaFiltrada.length === 0 ? (
+            <EstadoVazio
+              nome="lupa"
+              titulo="Nada com esses filtros"
+              dica="Tente afrouxar a busca ou limpar os filtros."
+            />
+          ) : (
+            <div className="caixa-lista">
+              <ul className="lista-demandas">
+                {listaFiltrada.map((d) => (
+                  <li key={d.id}>
+                    <div className="linha-demanda">{botaoDemanda(d, 0)}</div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
+        ) : (
+          <div className="caixa-lista">
+            <ul className="lista-demandas">
+              {raizesOrdenadas.map((d) => renderArvore(d, 0))}
+            </ul>
+          </div>
+        )}
+    </>
+  )
+
+  // O detalhe tomou a tela inteira (ficha/PDF/revisao)? O cabecalho e os
+  // filtros da lista saem de cena — quem manda na tela agora e ele.
+  //
+  // O `detalheId != null` e a defesa: um recorte do menu lateral deseleciona a
+  // demanda por fora (filtroInicial), e sem essa condicao a tela ficaria com a
+  // lista escondida, sem cabecalho e mostrando so o "Selecione uma demanda".
+  const soDetalhe = desktop && detalheTelaCheia && detalheId != null
+
   return (
     <div className="secao-demandas">
+      {!soDetalhe && (
+      <>
       <header className="hero-demandas">
         <h1 className="hero-titulo">Orçamentos e Revisões</h1>
         <div className="hero-acoes">
@@ -671,70 +808,74 @@ export default function Demandas({
           lupa (#1); no desktop ficam SEMPRE a vista (§#83 B2). */}
       {(desktop || buscaAberta) && (
         <div className={desktop ? 'linha-busca-desktop' : undefined}>
-          <input
-            type="search"
-            className="busca busca-solta"
-            placeholder="Buscar (cliente, obra, descrição)…"
-            value={f.busca}
-            onChange={(e) => aoBuscar(e.target.value)}
-            autoFocus={!desktop}
-          />
+          {campoBusca}
           <FiltrosDemandas
             f={f}
             vendedores={vendedores}
             aoAplicar={aoAplicarFiltros}
             aoRemover={aoRemoverFiltro}
             aoLimpar={aoLimparFiltros}
+            desktop={desktop}
           />
         </div>
       )}
 
+      </>
+      )}
+
       {erro && <p className="erro">{erro}</p>}
 
-      {carregando ? (
-        <div className="caixa-lista">
-          <ul className="lista-demandas">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <li key={i}>
-                <div className="skel-item">
-                  <div className="skel-linha skel-lg" />
-                  <div className="skel-linha skel-md" />
-                  <div className="skel-linha skel-sm" />
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : demandas.length === 0 ? (
-        <EstadoVazio
-          nome="lista"
-          titulo="Nenhuma demanda ainda"
-          dica="Toque no + para criar a primeira."
-        />
-      ) : filtrando ? (
-        listaFiltrada.length === 0 ? (
-          <EstadoVazio
-            nome="lupa"
-            titulo="Nada com esses filtros"
-            dica="Tente afrouxar a busca ou limpar os filtros."
-          />
-        ) : (
-          <div className="caixa-lista">
-            <ul className="lista-demandas">
-              {listaFiltrada.map((d) => (
-                <li key={d.id}>
-                  <div className="linha-demanda">{botaoDemanda(d, 0)}</div>
-                </li>
-              ))}
-            </ul>
+      {/* DESKTOP (§#83 B4): a lista divide a tela com o detalhe — clicar numa
+          demanda a SELECIONA em vez de trocar de tela, e da p/ pular de uma
+          para outra sem ir e voltar. No celular, a lista e a tela inteira. */}
+      {desktopLayout ? (
+        <div
+          className={`dem-split${detalheId ? ' com-detalhe' : ''}${
+            soDetalhe ? ' so-detalhe' : ''
+          }`}
+        >
+          {/* Clique no VAZIO da coluna (fora de qualquer card) fecha o painel,
+              como o Esc. O onClick no container so dispara quando o alvo e ele
+              mesmo — clicar num card nao borbulha para ca. */}
+          <div
+            className="dem-col-lista"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setDetalheId(null)
+            }}
+          >
+            {listaJSX}
           </div>
-        )
-      ) : (
-        <div className="caixa-lista">
-          <ul className="lista-demandas">
-            {raizesOrdenadas.map((d) => renderArvore(d, 0))}
-          </ul>
+          {/* Sem demanda selecionada a coluna nem existe: a lista ocupa a
+              tela inteira e so encurta quando ha o que mostrar ao lado. */}
+          {detalheId && (
+          <aside className="dem-col-detalhe" ref={painelRef}>
+            {(
+              <DetalheDemanda
+                key={detalheId}
+                demandaId={detalheId}
+                codigo={codigos[detalheId]}
+                perfil={perfil}
+                emPainel={!soDetalhe}
+                aoVoltar={() => {
+                  setDetalheId(null)
+                  carregar({ silencioso: true })
+                }}
+                aoAbrir={(id) => {
+                  carregar({ silencioso: true })
+                  setDetalheId(id)
+                }}
+                aoVisto={() => marcarLidaDemanda(detalheId)}
+                pedidoVoltar={pedidoVoltarDetalhe}
+                aoTelaCheia={setDetalheTelaCheia}
+                naoLidas={naoLidas}
+                aoAbrirNotif={aoAbrirNotif}
+              />
+            )}
+          </aside>
+          )}
         </div>
+      ) : (
+        listaJSX
       )}
 
     </div>

@@ -30,6 +30,8 @@ export default function DetalheDemanda({
   aoAbrir,
   aoVisto,
   pedidoVoltar, // voltar do Android repassado pelo Demandas (§#82)
+  emPainel, // desktop: aberto AO LADO da lista, nao como tela (§#83 B4)
+  aoTelaCheia, // avisa o pai quando precisa da tela inteira (ficha/PDF/filha)
   naoLidas,
   aoAbrirNotif,
 }) {
@@ -56,6 +58,21 @@ export default function DetalheDemanda({
     else aoVoltar()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pedidoVoltar])
+
+  // Ficha, PDF e "Revisao de demanda" pedem a TELA INTEIRA mesmo no modo
+  // painel (§#83 B4): a ficha tem 8 secoes em 2 colunas e o PDF e uma folha
+  // A4 — espremidos em 60% da largura perderiam o ganho do B3.
+  useEffect(() => {
+    aoTelaCheia?.(vendoFicha || criandoFilha)
+  }, [vendoFicha, criandoFilha, aoTelaCheia])
+
+  // Ao DESMONTAR (deselecionar, trocar de secao) o pedido morre junto — senao
+  // o pai ficaria presoem "tela cheia" sem ninguem la. Em efeito SEPARADO de
+  // proposito: junto do de cima, cada troca emitiria um `false` intermediario.
+  useEffect(() => {
+    return () => aoTelaCheia?.(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function carregar() {
     const { data, error } = await supabase
@@ -131,11 +148,16 @@ export default function DetalheDemanda({
     marcarVisto()
   }
 
-  if (carregando) return <p>Carregando…</p>
+  if (carregando)
+    return (
+      <div className={`detalhe-demanda${emPainel ? ' em-painel' : ''}`}>
+        <p>Carregando…</p>
+      </div>
+    )
 
   if (erro) {
     return (
-      <div className="detalhe-demanda">
+      <div className={`detalhe-demanda${emPainel ? ' em-painel' : ''}`}>
         <p className="erro">{erro}</p>
         <button type="button" className="link" onClick={aoVoltar}>
           <Icone nome="voltar" size={16} /> Voltar
@@ -203,19 +225,25 @@ export default function DetalheDemanda({
   const criadaEm = new Date(d.created_at).toLocaleDateString('pt-BR')
 
   return (
-    <div className="detalhe-demanda">
-      {/* Topo: voltar + titulo + sino (§C1) */}
+    <div className={`detalhe-demanda${emPainel ? ' em-painel' : ''}`}>
+      {/* Topo: voltar + titulo + sino (§C1). No PAINEL o voltar some — nao
+          ha para onde voltar, a lista esta ao lado (§#83 B4). */}
       <header className="det-topo">
-        <button
-          type="button"
-          className="det-topo-btn"
-          onClick={aoVoltar}
-          aria-label="Voltar"
-          title="Voltar"
-        >
-          <Icone nome="voltar" size={20} />
-        </button>
+        {!emPainel && (
+          <button
+            type="button"
+            className="det-topo-btn"
+            onClick={aoVoltar}
+            aria-label="Voltar"
+            title="Voltar"
+          >
+            <Icone nome="voltar" size={20} />
+          </button>
+        )}
         <span className="det-topo-titulo">Demanda #{codigo ?? d.id}</span>
+        {/* No painel o sino do hero da lista ja esta na tela — dois sinos com
+            o mesmo contador confundem (achado da revisao). */}
+        {!emPainel && (
         <button
           type="button"
           className="det-topo-btn"
@@ -226,6 +254,7 @@ export default function DetalheDemanda({
           <Icone nome="sino" size={20} />
           {naoLidas > 0 && <span className="sino-badge">{naoLidas}</span>}
         </button>
+        )}
       </header>
 
       {/* "Hero": anexos de entrada (o que o vendedor enviou) */}

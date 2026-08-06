@@ -5719,6 +5719,10 @@ button.cad-item:hover {
     width: 30px;
     height: 30px;
     flex-shrink: 0;
+    /* O SVG do losango tem um fill unico, o proprio navy da marca — sobre o
+       menu (navy tambem) ele praticamente sumia. O filtro o pinta de branco,
+       mesmo truque que o menu do celular usa no tema escuro. */
+    filter: brightness(0) invert(1);
   }
   .md-nome {
     font-weight: 800;
@@ -5757,9 +5761,6 @@ button.cad-item:hover {
     background: rgba(255, 255, 255, 0.16);
     color: #fff;
   }
-  .md-item.discreto {
-    color: rgba(255, 255, 255, 0.55);
-  }
   .md-subnav {
     display: flex;
     flex-direction: column;
@@ -5785,11 +5786,6 @@ button.cad-item:hover {
     background: rgba(255, 255, 255, 0.1);
     color: #fff;
   }
-  .md-sep {
-    height: 1px;
-    background: rgba(255, 255, 255, 0.14);
-    margin: 10px 10px;
-  }
   .md-nova {
     margin-top: 14px;
     display: flex;
@@ -5808,12 +5804,70 @@ button.cad-item:hover {
     cursor: pointer;
     box-shadow: 0 6px 16px rgba(203, 32, 39, 0.35);
   }
-  .md-rodape {
+  /* Area da conta: ancora do menu que abre PARA CIMA (§#83). O menu fica
+     dentro dela para o "clicou fora?" ser uma pergunta so. */
+  .md-conta {
     margin-top: auto;
-    padding: 12px 10px 0;
+    position: relative;
+  }
+  .md-rodape {
+    width: 100%;
+    padding: 10px;
+    margin-top: 12px;
     display: flex;
     align-items: center;
     gap: 10px;
+    /* Vira botao: zera a aparencia nativa e herda a tipografia do menu. */
+    background: transparent;
+    border: 0;
+    border-radius: 12px;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .md-rodape:hover,
+  .md-rodape.aberto,
+  .md-rodape.ativo {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  /* O chevron encosta na direita; o nome no meio pode encolher. */
+  .md-rodape > svg:last-child {
+    margin-left: auto;
+    flex-shrink: 0;
+    opacity: 0.7;
+  }
+  .md-conta-menu {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 6px;
+    /* Um degrau mais claro que o menu para o cartao se destacar do navy. */
+    background: #3a4761;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 12px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    z-index: 5;
+  }
+  .md-conta-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    background: transparent;
+    border: 0;
+    border-radius: 9px;
+    color: #fff;
+    font: inherit;
+    font-size: 0.86rem;
+    text-align: left;
+    cursor: pointer;
+  }
+  .md-conta-item:hover {
+    background: rgba(255, 255, 255, 0.14);
   }
   .md-avatar {
     width: 32px;
@@ -5850,6 +5904,17 @@ button.cad-item:hover {
 
 /* ═══ MODO DESKTOP — B2: telas de consulta (§#83) ════════════════ */
 @media (min-width: 900px) {
+  /* Respiro lateral da lista — SÓ no desktop. O anel do card selecionado
+     (box-shadow, §B4) é desenhado FORA do <li>, e sem folga a coluna que
+     rola o cortava. No celular não há seleção: lá a lista continua colada.
+     A margem de topo também encolhe (1rem -> 0.2rem): aqui em cima ficam a
+     busca e o "Filtrar", que já trazem seu próprio respiro. */
+  .caixa-lista {
+    margin-top: 0.2rem;
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+
   /* Badges dos recortes do sub-menu (Atencao/Em aberto). */
   .md-num {
     margin-left: auto;
@@ -5869,21 +5934,59 @@ button.cad-item:hover {
     width: 100%;
   }
 
-  /* LISTA: busca + Filtrar numa linha; sem chips vazios ocupando espaco. */
+  /* LISTA: a busca ocupa a linha de cima; "Filtrar" e "Ordenar por" ficam
+     na linha de baixo (§#83). Em coluna, e nao lado a lado, porque a busca
+     e o campo mais usado — ela merece a largura toda. */
   .app.desktop .linha-busca-desktop {
     display: flex;
-    flex-wrap: wrap; /* muitas tags de filtro quebram linha em vez de espremer a busca */
-    gap: 10px;
-    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
     margin-bottom: 4px;
   }
   .app.desktop .linha-busca-desktop .busca-solta {
-    flex: 1;
-    min-width: 260px;
+    width: 100%;
     margin-bottom: 0;
+    /* Espaco para a lupa nao encostar no texto digitado. */
+    padding-right: 38px;
   }
   .app.desktop .linha-busca-desktop .filtros {
-    margin: 0; /* a margem padrao (0.85rem) desalinhava o Filtrar do campo */
+    margin: 0; /* a margem padrao (0.85rem) abriria um vao sob a busca */
+  }
+  /* A lupa DENTRO do campo, no canto direito. */
+  .app.desktop .busca-wrap {
+    position: relative;
+  }
+  .app.desktop .busca-lupa {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--texto-suave);
+    /* Decorativa: o clique atravessa e cai no campo (mirar na lupa e
+       esperar que o cursor va para o texto e o reflexo de todo mundo). */
+    pointer-events: none;
+  }
+  /* "Ordenar por" ao lado do botao "Filtrar" (§#83). Ela nao esconde nada,
+     so reordena — por isso ficou fora da box, valendo na hora. */
+  .app.desktop .filtro-ordenar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--texto-suave);
+  }
+  .app.desktop .filtro-ordenar select {
+    padding: 0.45rem 0.6rem;
+    border: 1px solid var(--borda);
+    border-radius: var(--raio-sm);
+    background: var(--surface);
+    color: var(--texto);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
   }
   .app.desktop .chips-status:empty {
     display: none;
@@ -6037,3 +6140,150 @@ button.cad-item:hover {
     grid-column: 1 / -1;
   }
 }
+
+/* ═══ MODO DESKTOP — B4: lista + detalhe lado a lado (§#83) ══════
+   Clicar numa demanda a SELECIONA em vez de trocar de tela. Corte PRÓPRIO
+   (1200px, não os 900 do resto do modo desktop): abaixo disso o painel do
+   detalhe ficaria mais estreito que a tela cheia — pior a emenda. */
+@media (min-width: 1200px) {
+  /* Sem o prefixo .app.desktop de proposito: a classe vem do hook de 900px e
+     estas regras dependem do de 1200px — se os dois discordassem (leituras em
+     momentos diferentes), o layout ficaria pela metade. O @media + a presenca
+     do .dem-split ja delimitam com precisao. */
+  /* Altura pelo FLEX, não por número mágico: a coluna ocupa o que sobra
+     depois do cabeçalho e dos filtros, mesmo quando a caixa "Filtrar" abre e
+     empurra tudo para baixo. De quebra, mata a rolagem dupla (página +
+     coluna) — só as colunas rolam. */
+  .app .app-conteudo:has(.dem-split) {
+    height: 100dvh;
+  }
+  .app .conteudo:has(.dem-split) {
+    height: 100%;
+    max-width: 1440px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-bottom: 12px;
+  }
+  .secao-demandas:has(.dem-split) {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+  /* Sem selecao a lista ocupa a TELA INTEIRA; ela so encurta quando ha um
+     detalhe para mostrar ao lado (pedido do dono). */
+  .dem-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    /* O respiro entre as colunas ja vem do padding de cada uma (§5px/10px),
+       entao o gap fica pequeno de proposito — 18px somavam e afastavam
+       demais o painel da lista. So vale aqui: no celular a .dem-split nem e
+       montada (a Demandas renderiza a lista direto), logo nao ha gap. */
+    gap: 5px;
+    flex: 1;
+    min-height: 0;
+    align-items: stretch;
+  }
+  .dem-split.com-detalhe {
+    grid-template-columns: 380px minmax(0, 1fr);
+  }
+  .dem-col-lista,
+  .dem-col-detalhe {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .dem-col-detalhe {
+    background: var(--surface);
+    border-radius: var(--raio);
+    padding: 0 5px 16px 10px;
+    box-shadow: var(--sombra-sm);
+  }
+  /* O detalhe em painel não é mais "a tela": topo grudado no alto da coluna.
+     O respiro abaixo dele é PADDING (não margem) — margem é transparente e
+     deixaria o conteúdo passar por baixo do topo fixo ao rolar. */
+  .detalhe-demanda.em-painel {
+    padding: 0;
+  }
+  .detalhe-demanda.em-painel .det-topo {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--surface);
+    padding-top: 14px;
+    padding-bottom: 1rem;
+    margin-bottom: 0;
+  }
+  /* Demanda aberta: o destaque vai no <li>, que é o CARD de verdade (dele são
+     o fundo, o arredondamento e o overflow: hidden — o botão por dentro é
+     transparente). Era isso que cortava o contorno anterior nos cantos: um
+     outline retangular dentro de uma caixa arredondada que clipa.
+     O anel é box-shadow (segue o raio) e o fundo marca a linha inteira. */
+  .lista-demandas li:has(.item-demanda.selecionada) {
+    background: color-mix(in srgb, var(--primaria) 12%, var(--surface));
+    box-shadow: 0 0 0 2px var(--primaria);
+  }
+  /* A barra de ação acompanha a coluna do detalhe — no vão da lista ela
+     flutuaria por cima dos cards. Só no split: em tela cheia a coluna não
+     rola e a barra volta a ser a fixa de sempre. */
+  .dem-split:not(.so-detalhe) .dem-col-detalhe .det-barra-acao {
+    position: sticky;
+    left: auto;
+    right: auto;
+    bottom: 0;
+    /* Cola nas bordas do cartão (anula o padding da coluna) e ganha topo e
+       cantos próprios: assim ela LÊ como o rodapé do painel, em vez de uma
+       barra solta flutuando sobre o conteúdo. */
+    width: auto;
+    /* As margens negativas ESPELHAM o padding da coluna (10 / 5): é o que
+       faz a barra colar nas bordas do cartão. Mexeu num, mexe no outro. */
+    margin: 12px -5px 0 -10px;
+    padding: 10px 16px;
+    background: var(--surface);
+    border-top: 1px solid var(--borda);
+    border-radius: 0 0 var(--raio) var(--raio);
+    box-shadow: 0 -6px 16px -12px rgba(0, 0, 0, 0.5);
+  }
+  /* O sticky cola no PADDING BOX do que rola: com padding-bottom na coluna,
+     a barra parava 16px acima da borda. Aqui ele vai a zero — e a barra,
+     que tem padding próprio, vira de fato a borda inferior do painel.
+     Sem barra (vendedor, demanda terminal) o padding volta, senão o texto
+     encostaria na borda. */
+  .dem-split:not(.so-detalhe) .dem-col-detalhe:has(.det-barra-acao) {
+    padding-bottom: 0;
+  }
+  /* Botão em NAVY (pedido do dono): a barra do celular é navy inteira com o
+     botão branco por cima; aqui a barra é o próprio cartão, então quem
+     carrega a marca é o botão. */
+  .dem-split:not(.so-detalhe) .dem-col-detalhe .btn-alterar-status {
+    background: var(--marca-navy);
+    color: #fff;
+  }
+  .dem-split:not(.so-detalhe) .dem-col-detalhe .btn-alterar-status:hover {
+    background: color-mix(in srgb, var(--marca-navy) 85%, #fff);
+  }
+
+  /* Detalhe pediu a tela inteira (ficha/PDF/revisão): a lista sai de cena por
+     CSS. O componente NÃO muda de lugar na árvore — se mudasse, o React o
+     remontaria e o estado dele ("estou vendo a ficha") se perderia. */
+  .dem-split.so-detalhe {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dem-split.so-detalhe .dem-col-lista {
+    display: none;
+  }
+  .dem-split.so-detalhe .dem-col-detalhe {
+    overflow: visible;
+    background: none;
+    box-shadow: none;
+    padding: 0;
+  }
+  .app .conteudo:has(.dem-split.so-detalhe),
+  .app .app-conteudo:has(.dem-split.so-detalhe) {
+    height: auto;
+    overflow: visible;
+  }
+}
+
+

@@ -26,6 +26,11 @@ export default function FiltrosDemandas({
   aoAplicar,
   aoRemover,
   aoLimpar,
+  // Desktop (§#83): so a ORDENACAO sai da box e fica a vista, ao lado do
+  // botao "Filtrar". O resto (status/vendedor/urgencia) continua dentro dele,
+  // como no celular — sao filtros que ESCONDEM demandas, e ficam anunciados
+  // pelas tags; a ordenacao so muda a ordem, entao vive melhor a vista.
+  desktop,
 }) {
   const [aberto, setAberto] = useState(false)
   const [rascunho, setRascunho] = useState(RASCUNHO_VAZIO)
@@ -33,6 +38,12 @@ export default function FiltrosDemandas({
   // O filtro APLICADO mudou por fora com a box aberta (recorte do menu
   // lateral desktop, chips)? Re-fotografa o rascunho — aplicar um rascunho
   // velho por cima do recorte recem-escolhido seria silencioso (§#83 B2).
+  //
+  // A `f.ordenacao` FICA DE FORA das dependencias de proposito: no desktop o
+  // select dela esta a vista e continua clicavel com a box aberta; se ele
+  // disparasse este efeito, o rascunho seria refeito e apagaria o status que
+  // o usuario tinha acabado de escolher e ainda nao aplicou. Nada mais mexe
+  // so na ordenacao — as outras mudancas externas sempre tocam outro campo.
   useEffect(() => {
     if (!aberto) return
     setRascunho({
@@ -42,7 +53,7 @@ export default function FiltrosDemandas({
       ordenacao: f.ordenacao,
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [f.status, f.urgencia, f.vendedor, f.ordenacao])
+  }, [f.status, f.urgencia, f.vendedor])
 
   // Ao abrir, o rascunho parte do que ja esta aplicado.
   function abrir() {
@@ -56,8 +67,24 @@ export default function FiltrosDemandas({
   }
 
   function aplicar() {
-    aoAplicar(rascunho)
+    // No desktop a ordenacao NAO esta na box (ela ficou a vista, ao lado do
+    // botao). Mandar o valor fotografado no rascunho poderia desfazer, sem o
+    // usuario ver, a escolha que ele acabou de fazer no select de fora.
+    if (desktop) {
+      const { ordenacao: _fora, ...semOrdem } = rascunho
+      aoAplicar(semOrdem)
+    } else {
+      aoAplicar(rascunho)
+    }
     setAberto(false)
+  }
+
+  // "Limpar" da box zera o que ESTA nela. No desktop a ordenacao esta fora,
+  // entao ela sobrevive (quem a reseta e o proprio select, a vista).
+  function limparRascunho() {
+    setRascunho((prev) =>
+      desktop ? { ...RASCUNHO_VAZIO, ordenacao: prev.ordenacao } : RASCUNHO_VAZIO
+    )
   }
 
   function setR(campo, valor) {
@@ -73,7 +100,10 @@ export default function FiltrosDemandas({
     const nome = vendedores.find((v) => v.id === f.vendedor)?.nome || '—'
     tags.push({ campo: 'vendedor', texto: `Vendedor: ${nome}` })
   }
-  if (f.ordenacao !== 'padrao')
+  // A tag de ordem so faz sentido quando a ordenacao esta ESCONDIDA. No
+  // desktop o select dela esta a vista mostrando o valor — a tag seria a
+  // mesma informacao duas vezes, ocupando a linha.
+  if (f.ordenacao !== 'padrao' && !desktop)
     tags.push({ campo: 'ordenacao', texto: `Ordem: ${ORDENACAO[f.ordenacao]}` })
 
   return (
@@ -87,6 +117,24 @@ export default function FiltrosDemandas({
         >
           Filtrar {aberto ? <Icone nome="chevron-cima" size={16} /> : <Icone nome="chevron-baixo" size={16} />}
         </button>
+
+        {/* Desktop: a ordenacao fica AO LADO do botao, e vale na hora (nao
+            precisa de "Aplicar" — nada e escondido, so reordenado). */}
+        {desktop && (
+          <label className="filtro-ordenar">
+            <span>Ordenar por</span>
+            <select
+              value={f.ordenacao}
+              onChange={(e) => aoAplicar({ ordenacao: e.target.value })}
+            >
+              {Object.entries(ORDENACAO).map(([valor, rotulo]) => (
+                <option key={valor} value={valor}>
+                  {rotulo}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
 
         {tags.map((t) => (
           <span key={t.campo} className="tag-filtro">
@@ -158,19 +206,21 @@ export default function FiltrosDemandas({
             </select>
           </label>
 
-          <label>
-            Ordenar por
-            <select
-              value={rascunho.ordenacao}
-              onChange={(e) => setR('ordenacao', e.target.value)}
-            >
-              <option value="padrao">Padrão</option>
-              <option value="atividade">Atividade recente</option>
-              <option value="urgencia">Urgência</option>
-              <option value="recentes">Mais recentes</option>
-              <option value="antigas">Mais antigas</option>
-            </select>
-          </label>
+          {!desktop && (
+            <label>
+              Ordenar por
+              <select
+                value={rascunho.ordenacao}
+                onChange={(e) => setR('ordenacao', e.target.value)}
+              >
+                {Object.entries(ORDENACAO).map(([valor, rotulo]) => (
+                  <option key={valor} value={valor}>
+                    {rotulo}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
 
           <div className="filtro-acoes">
             <button type="button" className="botao-aplicar" onClick={aplicar}>
@@ -179,7 +229,7 @@ export default function FiltrosDemandas({
             <button
               type="button"
               className="link"
-              onClick={() => setRascunho(RASCUNHO_VAZIO)}
+              onClick={limparRascunho}
             >
               Limpar
             </button>
