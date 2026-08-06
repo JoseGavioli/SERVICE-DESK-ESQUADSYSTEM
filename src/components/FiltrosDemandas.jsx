@@ -39,11 +39,16 @@ export default function FiltrosDemandas({
   // lateral desktop, chips)? Re-fotografa o rascunho — aplicar um rascunho
   // velho por cima do recorte recem-escolhido seria silencioso (§#83 B2).
   //
-  // A `f.ordenacao` FICA DE FORA das dependencias de proposito: no desktop o
-  // select dela esta a vista e continua clicavel com a box aberta; se ele
-  // disparasse este efeito, o rascunho seria refeito e apagaria o status que
-  // o usuario tinha acabado de escolher e ainda nao aplicou. Nada mais mexe
-  // so na ordenacao — as outras mudancas externas sempre tocam outro campo.
+  // A ordenacao so e vigiada NO CELULAR, e a diferenca importa nos dois lados:
+  //
+  // - Desktop: o select dela esta a vista e continua clicavel com a box
+  //   aberta. Se ele disparasse este efeito, o rascunho seria refeito e
+  //   apagaria o status que o usuario escolheu e ainda nao aplicou.
+  // - Celular: ela vive DENTRO da box, e tem a tag "Ordem: X" do lado de
+  //   fora. Tocar no × dessa tag muda SO a `f.ordenacao` — sem vigia-la, a
+  //   box continuaria exibindo a ordem que o usuario acabou de remover e o
+  //   proximo "Filtrar" a ressuscitaria.
+  const ordemVigiada = desktop ? null : f.ordenacao
   useEffect(() => {
     if (!aberto) return
     setRascunho({
@@ -53,7 +58,7 @@ export default function FiltrosDemandas({
       ordenacao: f.ordenacao,
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [f.status, f.urgencia, f.vendedor])
+  }, [f.status, f.urgencia, f.vendedor, ordemVigiada])
 
   // Ao abrir, o rascunho parte do que ja esta aplicado.
   function abrir() {

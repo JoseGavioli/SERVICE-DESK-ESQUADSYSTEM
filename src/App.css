@@ -5913,6 +5913,9 @@ button.cad-item:hover {
     margin-top: 0.2rem;
     padding-left: 5px;
     padding-right: 5px;
+    /* Mesmo motivo do respiro lateral: sem ele o anel do ultimo card e
+       cortado embaixo pelo fim da coluna que rola. */
+    padding-bottom: 5px;
   }
 
   /* Badges dos recortes do sub-menu (Atencao/Em aberto). */
@@ -5955,6 +5958,13 @@ button.cad-item:hover {
   /* A lupa DENTRO do campo, no canto direito. */
   .app.desktop .busca-wrap {
     position: relative;
+  }
+  /* O `type=search` do Chrome desenha um "x" de limpar no fim do conteudo —
+     com a lupa no canto ele virava um segundo icone quase colado. Some so
+     aqui (no celular o campo continua com o limpar nativo). */
+  .app.desktop .linha-busca-desktop .busca-solta::-webkit-search-cancel-button {
+    appearance: none;
+    -webkit-appearance: none;
   }
   .app.desktop .busca-lupa {
     position: absolute;
@@ -6227,7 +6237,16 @@ button.cad-item:hover {
   /* A barra de ação acompanha a coluna do detalhe — no vão da lista ela
      flutuaria por cima dos cards. Só no split: em tela cheia a coluna não
      rola e a barra volta a ser a fixa de sempre. */
+  /* Conteudo do painel ocupa a altura toda para a barra CAIR no fim quando
+     o detalhe e curto demais para rolar (senao ela parava no meio do vazio,
+     com `sticky` sem nada para grudar). */
+  .dem-split:not(.so-detalhe) .dem-col-detalhe .detalhe-demanda.em-painel {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+  }
   .dem-split:not(.so-detalhe) .dem-col-detalhe .det-barra-acao {
+    margin-top: auto;
     position: sticky;
     left: auto;
     right: auto;
@@ -6264,26 +6283,43 @@ button.cad-item:hover {
     background: color-mix(in srgb, var(--marca-navy) 85%, #fff);
   }
 
-  /* Detalhe pediu a tela inteira (ficha/PDF/revisão): a lista sai de cena por
-     CSS. O componente NÃO muda de lugar na árvore — se mudasse, o React o
-     remontaria e o estado dele ("estou vendo a ficha") se perderia. */
-  .dem-split.so-detalhe {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .dem-split.so-detalhe .dem-col-lista {
-    display: none;
-  }
-  .dem-split.so-detalhe .dem-col-detalhe {
-    overflow: visible;
-    background: none;
-    box-shadow: none;
-    padding: 0;
-  }
-  .app .conteudo:has(.dem-split.so-detalhe),
-  .app .app-conteudo:has(.dem-split.so-detalhe) {
-    height: auto;
-    overflow: visible;
-  }
+}
+
+/* ── Detalhe em TELA CHEIA (ficha/PDF/revisão) — FORA do @media ──────
+   Estas regras dependem do ESTADO, não da largura. Quem decide a tela cheia
+   é o React, e ele CONGELA essa decisão enquanto a ficha está aberta
+   (`layoutCongelado`, §Demandas.jsx) justamente para o zoom do navegador não
+   remontar nada no meio do preenchimento. Se o CSS ficasse preso ao
+   `@media (min-width: 1200px)`, um Ctrl+ durante a ficha derrubaria só a
+   metade CSS: a lista inteira voltava por cima do formulário, e sem
+   cabeçalho (o JS ainda acha que está em tela cheia). O seletor já se
+   delimita sozinho — `.dem-split.so-detalhe` só existe no DOM quando o JS
+   quis. A lista sai de cena por CSS e o componente NÃO muda de lugar na
+   árvore: se mudasse, o React o remontaria e o estado dele ("estou vendo a
+   ficha") se perderia. */
+.dem-split.so-detalhe {
+  grid-template-columns: minmax(0, 1fr);
+}
+.dem-split.so-detalhe .dem-col-lista {
+  display: none;
+}
+.dem-split.so-detalhe .dem-col-detalhe {
+  overflow: visible;
+  background: none;
+  box-shadow: none;
+  padding: 0;
+}
+.app .conteudo:has(.dem-split.so-detalhe),
+.app .app-conteudo:has(.dem-split.so-detalhe) {
+  height: auto;
+  overflow: visible;
+}
+/* Em tela cheia a barra de ação volta a ser `fixed` (a regra sticky exige
+   `:not(.so-detalhe)`), e aí o `padding-bottom: 12px` do split passa a ser
+   folga de MENOS: a barra "Salvar" da ficha cobria o fim do formulário.
+   Aqui devolvemos a folga base do `.conteudo`. */
+.app .conteudo:has(.dem-split.so-detalhe) {
+  padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
 }
 
 

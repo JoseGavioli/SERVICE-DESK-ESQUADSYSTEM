@@ -207,7 +207,18 @@ export default function Demandas({
   // senao o texto viraria filtro invisivel (a familia do filtro preso, #69).
   useEffect(() => {
     if (desktop) setBuscaAberta(false)
-    else if (f.busca.trim()) setBuscaAberta(true)
+    // Nao e so a busca: no desktop os filtros do "Filtrar" ficam a vista, e
+    // ao encolher para o celular eles some junto com a barra — o usuario
+    // ficaria com a lista recortada e NENHUM controle na tela para desfazer
+    // (a mesma familia do filtro preso, #69).
+    else if (
+      f.busca.trim() ||
+      f.status ||
+      f.urgencia ||
+      f.vendedor ||
+      f.ordenacao !== 'padrao'
+    )
+      setBuscaAberta(true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [desktop])
 
@@ -532,11 +543,17 @@ export default function Demandas({
     const destaque = STATUS_FINAL.includes(d.status) ? ` fim-${d.status}` : ''
     // No painel do desktop (§#83 B4) a demanda aberta fica MARCADA na lista —
     // sem isso o usuario perde de vista o que esta lendo ao lado.
-    const selecionada = desktop && d.id === detalheId ? ' selecionada' : ''
+    const selecionada =
+      desktopLayout && d.id === detalheId ? ' selecionada' : ''
     return (
       <button
         type="button"
         className={`item-demanda${destaque}${atencao ? ' atencao' : ''}${selecionada}`}
+        // O card virou um TOGGLE no painel: sem isto, quem usa leitor de tela
+        // aperta Enter numa demanda "ja aberta" e ela FECHA, sem nada nunca
+        // ter dito que estava aberta (o anel e so visual). `undefined` fora
+        // do painel para o botao nao virar toggle onde ele nao e.
+        aria-pressed={desktopLayout ? d.id === detalheId : undefined}
         // No painel, tocar de novo na demanda ABERTA fecha (§#83 B4). E o
         // caminho sempre alcancavel: a coluna da lista raramente tem area
         // vazia para clicar, e nem todo mundo lembra do Esc.
@@ -728,7 +745,11 @@ export default function Demandas({
   // O `detalheId != null` e a defesa: um recorte do menu lateral deseleciona a
   // demanda por fora (filtroInicial), e sem essa condicao a tela ficaria com a
   // lista escondida, sem cabecalho e mostrando so o "Selecione uma demanda".
-  const soDetalhe = desktop && detalheTelaCheia && detalheId != null
+  //
+  // Le o valor CONGELADO, nao o hook cru: quem monta o `.dem-split` (e quem o
+  // CSS de tela cheia enxerga) e o congelado. Com o hook cru, encolher a
+  // janela durante a ficha derrubava o cabecalho e a lista ao mesmo tempo.
+  const soDetalhe = desktopLayout && detalheTelaCheia && detalheId != null
 
   return (
     <div className="secao-demandas">
@@ -846,9 +867,16 @@ export default function Demandas({
             {listaJSX}
           </div>
           {/* Sem demanda selecionada a coluna nem existe: a lista ocupa a
-              tela inteira e so encurta quando ha o que mostrar ao lado. */}
+              tela inteira e so encurta quando ha o que mostrar ao lado.
+              O `aria-label` da o NOME do painel: no modo painel o detalhe
+              perde o "Voltar" e o titulo dele e um <span>, entao sem isto o
+              leitor de tela anuncia um "complementar" sem nome nenhum. */}
           {detalheId && (
-          <aside className="dem-col-detalhe" ref={painelRef}>
+          <aside
+            className="dem-col-detalhe"
+            ref={painelRef}
+            aria-label={`Demanda ${codigos[detalheId] ?? `#${detalheId}`}`}
+          >
             {(
               <DetalheDemanda
                 key={detalheId}
