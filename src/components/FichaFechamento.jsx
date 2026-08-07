@@ -9,7 +9,6 @@ import {
 } from '../lib/ficha'
 import { useDesktop } from '../lib/useDesktop'
 import NdCabecalho from './NdCabecalho'
-import NdClienteObra from './NdClienteObra'
 import FichaCards from './FichaCards'
 import Icone from './Icone'
 
@@ -25,9 +24,7 @@ export default function FichaFechamento({
   perfil,
   base, // { tipoId, prazo, infoAdicional, arquivos, proprietario, demandaPaiId, origemHerdada }
   cliente,
-  aoEscolherCliente,
   obra,
-  aoEscolherObra,
   ficha,
   aoMudarFicha,
   ehFilha,
@@ -42,7 +39,6 @@ export default function FichaFechamento({
   const [aberto, setAberto] = useState(null)
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
-  const [tentou, setTentou] = useState(false)
 
   // 1º consultor = o dono da demanda (o proprietario que o admin escolheu, ou
   // quem esta criando).
@@ -62,19 +58,18 @@ export default function FichaFechamento({
     if (e.key === 'Enter' && e.target.tagName === 'INPUT') e.preventDefault()
   }
 
+  // Rede de seguranca, nao validacao de tela: desde a §#85 fase 2 o cliente e
+  // exigido no FORMULARIO, e sem ele o botao "Preencher ficha" nem abre esta
+  // tela. Se um caminho novo furar isso, e melhor avisar do que gravar uma
+  // demanda sem dono (o insert quebraria mais adiante, em `obra_id`).
   const faltaCliente = !ehFilha && !cliente
 
   async function salvar(evento) {
     evento.preventDefault()
     setErro('')
 
-    // Da ficha, so o CLIENTE e obrigatorio (e o que liga a demanda ao
-    // historico); o resto e opcional como no papel — o staff completa depois.
     if (faltaCliente) {
-      setTentou(true)
-      document
-        .getElementById('card-cliente')
-        ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      setErro('Escolha o cliente no formulário antes de salvar a ficha.')
       return
     }
 
@@ -168,43 +163,34 @@ export default function FichaFechamento({
         />
 
         <div className="nd-cards">
-          {ehFilha ? (
-            /* Filha: cliente/obra herdados da demanda-pai — so mostramos. */
-            <div className="nd-vinculada">
-              <span className="nd-vinculada-icone">
-                <Icone nome="seta-filha" size={20} />
+          {/* Cliente e obra so aparecem — quem os ESCOLHE e o formulario
+              (§#85 fase 2). Eles ja foram editaveis aqui (§#80); ter os
+              mesmos dados em dois lugares e o caminho curto para um deles
+              discordar do outro. A filha usa este mesmo bloco ha mais tempo,
+              com os dados herdados do pai: um desenho so para os dois casos. */}
+          <div className="nd-vinculada">
+            <span className="nd-vinculada-icone">
+              <Icone nome={ehFilha ? 'seta-filha' : 'cliente'} size={20} />
+            </span>
+            <span className="nd-vinculada-texto">
+              <span className="nd-vinculada-rot">
+                {ehFilha ? 'Fechamento vinculado a' : 'Fechamento para'}
               </span>
-              <span className="nd-vinculada-texto">
-                <span className="nd-vinculada-rot">Fechamento vinculado a</span>
-                <strong className="nd-vinculada-dem">
-                  {demandaPai?.codigo ? `#${demandaPai.codigo} — ` : ''}
-                  {demandaPai?.cliente ?? obraFixa?.nome}
-                </strong>
-                <span className="nd-vinculada-obra">
-                  {demandaPai?.obra ?? obraFixa?.nome}
-                </span>
+              <strong className="nd-vinculada-dem">
+                {ehFilha
+                  ? `${demandaPai?.codigo ? `#${demandaPai.codigo} — ` : ''}${
+                      demandaPai?.cliente ?? obraFixa?.nome
+                    }`
+                  : (cliente?.nome ?? '—')}
+              </strong>
+              <span className="nd-vinculada-obra">
+                {ehFilha
+                  ? (demandaPai?.obra ?? obraFixa?.nome)
+                  : (obra?.nome ??
+                    (cliente ? `Obra de ${cliente.nome} (padrão)` : '—'))}
               </span>
-            </div>
-          ) : (
-            /* "Nome do Cliente" da ficha = o seletor busca-primeiro de sempre
-               (anti-duplicata, §6) — e o unico obrigatorio da ficha. */
-            <NdClienteObra
-              cliente={cliente}
-              obra={obra}
-              aoEscolherCliente={(c) => {
-                aoEscolherCliente(c)
-                setAberto('obra') // encadeia: escolheu o cliente, vai na obra
-              }}
-              aoEscolherObra={(o) => {
-                aoEscolherObra(o)
-                setAberto(null)
-              }}
-              aberto={aberto}
-              aoAlternar={alternar}
-              sempreAberto={desktop}
-              faltandoCliente={tentou && faltaCliente}
-            />
-          )}
+            </span>
+          </div>
 
           <FichaCards
             ficha={ficha}
@@ -216,12 +202,6 @@ export default function FichaFechamento({
           />
         </div>
 
-        {tentou && faltaCliente && (
-          <p className="nd-aviso" role="alert">
-            <Icone nome="aviso" size={16} />
-            Faltou escolher o cliente.
-          </p>
-        )}
         {erro && <p className="erro">{erro}</p>}
       </form>
 

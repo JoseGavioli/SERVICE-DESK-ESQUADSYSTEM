@@ -483,13 +483,10 @@ export default function NovaDemanda({
           // Filha: o arquiteto do pai (ja carregado no estado) e preservado.
           arquitetoHerdado: ehFilha ? arquiteto.trim() || null : null,
         }}
+        /* Cliente e obra vao so para EXIBIR: quem escolhe e o card la de cima
+           (§#85 fase 2). */
         cliente={cliente}
-        aoEscolherCliente={(c) => {
-          setCliente(c)
-          setObra(null) // a obra que estava escolhida era de OUTRO cliente
-        }}
         obra={obra}
-        aoEscolherObra={setObra}
         ficha={ficha}
         aoMudarFicha={(f) => {
           setFichaTocada(true) // mexeu na ficha: conta como form sujo (§#82)
@@ -583,22 +580,23 @@ export default function NovaDemanda({
               </span>
             </div>
           ) : (
-            /* Fechamento: o cliente e escolhido DENTRO da ficha (§#80). */
-            !ehFechamento && (
-              <NdClienteObra
-                cliente={cliente}
-                obra={obra}
-                aoEscolherCliente={escolherCliente}
-                aoEscolherObra={(o) => {
-                  setObra(o)
-                  setAberto(null)
-                }}
-                aberto={aberto}
-                aoAlternar={alternar}
-                sempreAberto={desktop}
-                faltandoCliente={marcado('cliente')}
-              />
-            )
+            /* Cliente e obra valem para TODO tipo, inclusive o fechamento
+               (§#85 fase 2). Eles ja moraram dentro da ficha (§#80); voltaram
+               para ca porque o lugar de dizer "de quem e esta demanda" e o
+               mesmo em todos os fluxos — e assim ha um lugar so, nao dois. */
+            <NdClienteObra
+              cliente={cliente}
+              obra={obra}
+              aoEscolherCliente={escolherCliente}
+              aoEscolherObra={(o) => {
+                setObra(o)
+                setAberto(null)
+              }}
+              aberto={aberto}
+              aoAlternar={alternar}
+              sempreAberto={desktop}
+              faltandoCliente={marcado('cliente')}
+            />
           )}
 
           {/* Tipo TRAVADO quando veio do menu do botao (§#85): quem escolheu

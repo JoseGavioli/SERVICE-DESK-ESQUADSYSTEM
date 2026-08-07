@@ -45,9 +45,10 @@ export function resumir(texto, max = 42) {
 // A OBRA nao entra de proposito: ela e opcional — sem escolha, a demanda cai na
 // "Obra de {cliente}" (achar-ou-criar, no componente).
 //
-// FECHAMENTO (tipo com ficha, §#80): o cliente e escolhido DENTRO da ficha, a
-// descricao vira "Informacao adicional" (opcional), e origem/condicoes nem
-// aparecem — nada disso e obrigatorio aqui.
+// FECHAMENTO (tipo com ficha, §#80): o CLIENTE e obrigatorio como em todo tipo
+// — ele voltou para o formulario na §#85 fase 2 (chegou a ser escolhido dentro
+// da ficha). O que este modo dispensa e outra coisa: a descricao vira
+// "Informacao adicional" (opcional) e origem/condicoes nem aparecem.
 export function calcularFaltantes({
   ehFilha,
   ehFechamento,
@@ -60,8 +61,11 @@ export function calcularFaltantes({
   rtPercentual,
 }) {
   const faltantes = []
-  if (!ehFilha && !ehFechamento && !cliente)
-    faltantes.push({ id: 'cliente', nome: 'cliente' })
+  // O cliente e obrigatorio em TODO tipo (§#85 fase 2). Ele chegou a ser
+  // dispensado no fechamento porque era escolhido dentro da ficha; agora que
+  // voltou para o formulario, a exigencia volta com ele — assim o botao
+  // "Preencher ficha" nao abre a ficha de um fechamento sem dono.
+  if (!ehFilha && !cliente) faltantes.push({ id: 'cliente', nome: 'cliente' })
   if (!tipoId) faltantes.push({ id: 'tipo', nome: 'tipo' })
   if (!ehFechamento && !descricao.trim())
     faltantes.push({ id: 'descricao', nome: 'descrição' })

@@ -3769,7 +3769,9 @@ textarea::placeholder {
   font-size: 0.95rem;
   transition: background 0.15s ease;
 }
-/* Card no topo da criação da filha: qual demanda está sendo vinculada. */
+/* Bloco de LEITURA no topo do formulário: na filha diz a qual demanda ela está
+   vinculada; no fechamento (§#85 fase 2) diz o cliente e a obra escolhidos —
+   quem os escolhe é o card acima, aqui eles só aparecem. */
 .nd-vinculada {
   display: flex;
   align-items: center;
@@ -6095,8 +6097,11 @@ button.cad-item:hover {
   .app.desktop .nd-cards > [id^='card-fi-'] {
     grid-column: auto;
   }
-  /* FECHAMENTO: origem, condições e cliente/obra não montam — prazo e anexos
-     ficariam sozinhos numa linha. Aqui ninguém pareia. */
+  /* FECHAMENTO: aqui só cliente|obra pareiam — origem e condições não montam
+     (§#80). Sem esta regra, prazo e anexos caem cada um sozinho numa coluna e
+     deixam meia linha vazia ao lado.
+     (Cliente e obra JÁ não montaram neste modo, entre a #80 e a #85 fase 2 —
+     se o comentário parecer velho, confira o form antes de apagar a regra.) */
   .app.desktop .nd-cards.nd-fechamento > #card-prazo,
   .app.desktop .nd-cards.nd-fechamento > #card-anexos {
     grid-column: 1 / -1;
