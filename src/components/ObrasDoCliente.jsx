@@ -12,11 +12,11 @@ export default function ObrasDoCliente({ cliente, perfil }) {
 
   const [mostrarForm, setMostrarForm] = useState(false)
   const [nome, setNome] = useState('')
-  const [endereco, setEndereco] = useState('')
+  const [cidadeEstado, setCidadeEstado] = useState('')
 
   const [editandoId, setEditandoId] = useState(null)
   const [editNome, setEditNome] = useState('')
-  const [editEndereco, setEditEndereco] = useState('')
+  const [editCidade, setEditCidade] = useState('')
 
   const [salvando, setSalvando] = useState(false)
 
@@ -26,7 +26,7 @@ export default function ObrasDoCliente({ cliente, perfil }) {
     setCarregando(true)
     const { data, error } = await supabase
       .from('obra')
-      .select('id, nome, endereco')
+      .select('id, nome, cidade_estado')
       .eq('cliente_id', cliente.id)
       .order('nome')
 
@@ -53,7 +53,7 @@ export default function ObrasDoCliente({ cliente, perfil }) {
 
   function abrirForm() {
     setNome(busca.trim())
-    setEndereco('')
+    setCidadeEstado('')
     setMostrarForm(true)
   }
 
@@ -64,14 +64,15 @@ export default function ObrasDoCliente({ cliente, perfil }) {
     const { error } = await supabase.from('obra').insert({
       cliente_id: cliente.id,
       nome: nome.trim(),
-      endereco: endereco.trim() || null,
+      // Obrigatoria desde a §#85 fase 3 — o banco tambem exige (0049).
+      cidade_estado: cidadeEstado.trim(),
     })
 
     if (error) {
       setErro('Não foi possível criar a obra.')
     } else {
       setNome('')
-      setEndereco('')
+      setCidadeEstado('')
       setBusca('')
       setMostrarForm(false)
       await carregar()
@@ -82,7 +83,7 @@ export default function ObrasDoCliente({ cliente, perfil }) {
   function iniciarEdicao(o) {
     setEditandoId(o.id)
     setEditNome(o.nome)
-    setEditEndereco(o.endereco ?? '')
+    setEditCidade(o.cidade_estado ?? '')
     setErro('')
   }
 
@@ -92,7 +93,7 @@ export default function ObrasDoCliente({ cliente, perfil }) {
     setErro('')
     const { error } = await supabase
       .from('obra')
-      .update({ nome: editNome.trim(), endereco: editEndereco.trim() || null })
+      .update({ nome: editNome.trim(), cidade_estado: editCidade.trim() })
       .eq('id', editandoId)
 
     if (error) setErro('Não foi possível salvar a obra.')
@@ -146,11 +147,15 @@ export default function ObrasDoCliente({ cliente, perfil }) {
                     required
                     autoFocus
                   />
+                  {/* Obrigatoria (§#85 fase 3): as obras antigas nasceram sem
+                      este campo, e editar uma delas e a hora de completar — o
+                      banco (0049) tambem exige. */}
                   <input
                     type="text"
-                    placeholder="Endereço (opcional)"
-                    value={editEndereco}
-                    onChange={(e) => setEditEndereco(e.target.value)}
+                    placeholder="Cidade e estado (ex.: Tatuí - SP)"
+                    value={editCidade}
+                    onChange={(e) => setEditCidade(e.target.value)}
+                    required
                   />
                   {editNomeDuplicado && (
                     <p className="aviso">
@@ -158,7 +163,12 @@ export default function ObrasDoCliente({ cliente, perfil }) {
                     </p>
                   )}
                   <div className="form-cad-acoes">
-                    <button type="submit" disabled={salvando || !editNome.trim()}>
+                    <button
+                      type="submit"
+                      disabled={
+                        salvando || !editNome.trim() || !editCidade.trim()
+                      }
+                    >
                       {salvando ? 'Salvando…' : 'Salvar'}
                     </button>
                     <button
@@ -178,7 +188,22 @@ export default function ObrasDoCliente({ cliente, perfil }) {
                     </span>
                     <span className="cad-texto">
                       <strong className="cad-nome">{o.nome}</strong>
-                      {o.endereco && <span className="cad-sub">{o.endereco}</span>}
+                      {/* "edite para completar" so para quem TEM o botao de
+                          editar (admin/atendente). Para o vendedor, que ve
+                          esta lista mas nao edita, isso seria uma cobranca sem
+                          saida — para ele o texto diz onde a cidade vai ser
+                          pedida de verdade: na proxima demanda daquela obra. */}
+                      {o.cidade_estado ? (
+                        <span className="cad-sub">{o.cidade_estado}</span>
+                      ) : podeEditar ? (
+                        <span className="cad-sub cad-sub-falta">
+                          sem cidade — edite para completar
+                        </span>
+                      ) : (
+                        <span className="cad-sub">
+                          cidade será pedida ao criar a demanda
+                        </span>
+                      )}
                     </span>
                   </div>
                   {podeEditar && (
@@ -223,12 +248,16 @@ export default function ObrasDoCliente({ cliente, perfil }) {
           />
           <input
             type="text"
-            placeholder="Endereço (opcional)"
-            value={endereco}
-            onChange={(e) => setEndereco(e.target.value)}
+            placeholder="Cidade e estado (ex.: Tatuí - SP)"
+            value={cidadeEstado}
+            onChange={(e) => setCidadeEstado(e.target.value)}
+            required
           />
           <div className="form-cad-acoes">
-            <button type="submit" disabled={salvando || !nome.trim()}>
+            <button
+              type="submit"
+              disabled={salvando || !nome.trim() || !cidadeEstado.trim()}
+            >
               {salvando ? 'Salvando…' : 'Criar obra'}
             </button>
             <button

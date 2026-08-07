@@ -118,8 +118,11 @@ Login via **Supabase Auth**, baseado em **email + senha** (nativo do Supabase).
 - `id`
 - `cliente_id` (FK → cliente)
 - `nome` / identificação da obra
-- `endereco` (opcional)
+- `cidade_estado` — **obrigatória** (§`0047`/`0049`). Era `endereco`, opcional: de 36 obras, 35 estavam vazias e a única preenchida tinha *"Itapetininga"* — ou seja, o campo já era usado como **cidade**, e o nome agora diz isso. A coluna `endereco` continua no banco como **legado sem uso** e sai numa migração futura.
 - `created_at`
+
+> **A obra é obrigatória para criar demanda** (§#85 fase 3). Antes, quem não escolhesse caía numa **"Obra de {cliente}"** criada em silêncio — 16 das 36 obras nasceram assim, sem endereço nenhum. Esse fallback acabou (`lib/obraPadrao.js` foi removido); as 16 continuam lá, normais.
+> **Obra antiga sem cidade:** o formulário pede na hora e grava na obra — o cadastro se completa conforme as obras voltam a ser usadas. Quem grava é a função **`completar_cidade_obra`** (`0048`), não um update direto: a RLS de `obra` só deixa admin/atendente atualizar, e **update barrado por RLS volta 0 linhas SEM erro** — o vendedor veria "salvo" e a obra seguiria vazia. A função só **completa** (nunca sobrescreve) e exige conta ativa.
 
 ### `tipo_demanda` (data-driven — ver §10)
 - `id`

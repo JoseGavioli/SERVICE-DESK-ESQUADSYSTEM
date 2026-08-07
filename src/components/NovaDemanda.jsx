@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { enviarAnexo } from '../lib/anexos'
-import { obterOuCriarObraPadrao } from '../lib/obraPadrao'
 import {
   ORIGENS,
   calcularFaltantes,
@@ -63,6 +62,9 @@ export default function NovaDemanda({
   const comHero = Boolean(aoAbrirNotif)
   const [cliente, setCliente] = useState(null)
   const [obra, setObra] = useState(obraFixa ?? null)
+  // Cidade digitada para uma obra ANTIGA que ainda nao tem o campo (§#85
+  // fase 3). Vive aqui, e nao no card, porque quem grava e o salvar().
+  const [cidadeObra, setCidadeObra] = useState('')
   const [tipos, setTipos] = useState([])
   // Vem escolhido quando o usuario entrou pelo menu num tipo COM FICHA; no
   // "Orcamento" (e na filha) nasce vazio e o card "Tipo" pergunta.
@@ -156,7 +158,13 @@ export default function NovaDemanda({
       arquivos.length ||
       fichaTocada ||
       (!ehFilha &&
-        (origem || rt || arquiteto.trim() || cliente || obra || proprietario)),
+        (origem ||
+          rt ||
+          arquiteto.trim() ||
+          cliente ||
+          obra ||
+          cidadeObra.trim() ||
+          proprietario)),
   )
 
   // Trava de saida (§#82): sair com o form sujo PERGUNTA antes. Confirmou o
@@ -212,6 +220,7 @@ export default function NovaDemanda({
         arquiteto,
         cliente,
         obra,
+        cidadeObra,
         proprietario,
         ficha,
         fichaTocada,
@@ -229,6 +238,7 @@ export default function NovaDemanda({
     arquiteto,
     cliente,
     obra,
+    cidadeObra,
     proprietario,
     ficha,
     fichaTocada,
@@ -248,6 +258,7 @@ export default function NovaDemanda({
     setArquiteto(d.arquiteto ?? '')
     setCliente(d.cliente ?? null)
     setObra(d.obra ?? null)
+    setCidadeObra(d.cidadeObra ?? '')
     setProprietario(d.proprietario ?? null)
     if (d.ficha) setFicha({ ...fichaVazia(hojeIsoLocal()), ...d.ficha })
     setFichaTocada(Boolean(d.fichaTocada))
@@ -271,7 +282,18 @@ export default function NovaDemanda({
   function escolherCliente(c) {
     setCliente(c)
     setObra(null) // a obra que estava escolhida era de OUTRO cliente
+    setCidadeObra('') // ...e a cidade digitada era daquela obra
     setAberto('obra') // encadeia: quem acabou de escolher o cliente vai na obra
+  }
+
+  function escolherObra(o) {
+    setObra(o)
+    setCidadeObra('') // cidade digitada pertencia a obra anterior
+    // Obra que ainda nao tem cidade MANTEM o card aberto: no celular o card
+    // fechado desmonta o corpo, e o campo obrigatorio que acabou de aparecer
+    // sumiria no mesmo toque — o vendedor so veria "faltou a cidade" apontando
+    // para um card sem campo nenhum.
+    setAberto(o.cidade_estado ? null : 'obra')
   }
 
   // Tipo com FICHA (Fechamento, §#80): o form encolhe para tipo + prazo +
@@ -290,6 +312,8 @@ export default function NovaDemanda({
     ehFilha,
     ehFechamento,
     cliente,
+    obra,
+    cidadeObra,
     tipoId,
     descricao,
     prazo,
@@ -326,12 +350,27 @@ export default function NovaDemanda({
 
     setSalvando(true)
 
-    // Obra: a escolhida, ou "Obra de {cliente}" (achar-ou-criar) se ficou em branco.
-    let obraId = obra?.id
-    if (!obraId) {
-      obraId = await obterOuCriarObraPadrao(cliente)
-      if (!obraId) {
-        setErro('Não foi possível criar a obra padrão do cliente.')
+    // A obra e obrigatoria (§#85 fase 3) — `calcularFaltantes` ja barrou o
+    // caminho sem ela, entao aqui ela existe. Nao ha mais "obra padrao"
+    // fabricada em silencio.
+    const obraId = obra.id
+
+    // Obra antiga sem cidade: completa ANTES de criar a demanda. Vai por
+    // FUNCAO (0048), nao por update direto: a RLS de `obra` so deixa
+    // admin/atendente atualizar, e um update barrado volta 0 linhas SEM erro —
+    // o vendedor veria "salvo" e a obra continuaria vazia.
+    // `!ehFilha` e o que faz esta linha existir: na filha a obra vem travada do
+    // pai e NAO ha onde digitar a cidade (o card nem e montado), entao a RPC
+    // iria com string vazia, o banco recusaria e a filha ficaria impossivel de
+    // criar. Quem valida ja isenta a filha (novaDemanda.js) — quem grava
+    // precisa isentar igual.
+    if (!ehFilha && !obra.cidade_estado) {
+      const { error: erroCidade } = await supabase.rpc('completar_cidade_obra', {
+        p_obra_id: obraId,
+        p_cidade: cidadeObra.trim(),
+      })
+      if (erroCidade) {
+        setErro('Não foi possível salvar a cidade da obra.')
         setSalvando(false)
         return
       }
@@ -487,6 +526,7 @@ export default function NovaDemanda({
            (§#85 fase 2). */
         cliente={cliente}
         obra={obra}
+        cidadeObra={cidadeObra}
         ficha={ficha}
         aoMudarFicha={(f) => {
           setFichaTocada(true) // mexeu na ficha: conta como form sujo (§#82)
@@ -588,14 +628,15 @@ export default function NovaDemanda({
               cliente={cliente}
               obra={obra}
               aoEscolherCliente={escolherCliente}
-              aoEscolherObra={(o) => {
-                setObra(o)
-                setAberto(null)
-              }}
+              aoEscolherObra={escolherObra}
               aberto={aberto}
               aoAlternar={alternar}
               sempreAberto={desktop}
               faltandoCliente={marcado('cliente')}
+              faltandoObra={marcado('obra')}
+              cidadeObra={cidadeObra}
+              aoMudarCidadeObra={setCidadeObra}
+              faltandoCidade={marcado('obra')}
             />
           )}
 

@@ -6405,3 +6405,57 @@ button.cad-item:hover {
 .md-nova-caixa {
   position: relative;
 }
+
+/* ═══ Cidade e estado da obra (§#85 fase 3) ═════════════════════════
+   A obra virou obrigatória, e com ela a cidade. Duas telas pedem o campo:
+   o seletor (obra NOVA — o banco recusa criar sem, §0049) e o card da obra
+   (obra ANTIGA: 35 das 36 nasceram antes do campo existir). */
+.escolher-nova-obra {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 0.6rem;
+  padding: 0.7rem;
+  background: var(--surface-2);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-sm);
+}
+.escolher-nova-acoes {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.escolher-nova-acoes .escolher-criar {
+  margin: 0;
+}
+
+.nd-cidade-obra {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 0.7rem;
+  padding-top: 0.7rem;
+  border-top: 1px dashed var(--borda);
+}
+.nd-cidade-obra label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--texto-suave);
+}
+.nd-cidade-obra input.falta {
+  /* `--perigo` e nao `--marca-red`: o vermelho da MARCA nao tem variante de
+     tema escuro; o token de erro tem. */
+  border-color: var(--perigo);
+}
+.nd-cidade-dica {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--texto-suave);
+}
+
+/* Obra ainda sem cidade na lista do cadastro: o aviso é o convite para
+   completar, não um erro — quem cadastrou não fez nada de errado. */
+.cad-sub-falta {
+  color: var(--perigo);
+  font-style: italic;
+}

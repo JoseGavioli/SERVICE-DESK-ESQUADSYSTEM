@@ -78,7 +78,7 @@ export default function DetalheDemanda({
     const { data, error } = await supabase
       .from('demanda')
       .select(
-        'id, descricao, prazo, status, created_at, vendedor_id, obra_id, cancelamento_solicitado, origem, urgencia_manual, club_casa, rt, rt_percentual, arquiteto_engenheiro, tipo_demanda(nome, com_ficha), obra(nome, endereco, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo, avatar_path)',
+        'id, descricao, prazo, status, created_at, vendedor_id, obra_id, cancelamento_solicitado, origem, urgencia_manual, club_casa, rt, rt_percentual, arquiteto_engenheiro, tipo_demanda(nome, com_ficha), obra(nome, cidade_estado, cliente(nome)), vendedor:perfil!vendedor_id(nome_completo, avatar_path)',
       )
       .eq('id', demandaId)
       .single()
@@ -199,7 +199,13 @@ export default function DetalheDemanda({
     return (
       <NovaDemanda
         perfil={perfil}
-        obraFixa={{ id: d.obra_id, nome: d.obra?.nome }}
+        obraFixa={{
+                  id: d.obra_id,
+                  nome: d.obra?.nome,
+                  // A consulta ja traz a cidade; sem repassar, o objeto diria
+                  // que a obra nao tem cidade mesmo quando tem (§#85 fase 3).
+                  cidade_estado: d.obra?.cidade_estado,
+                }}
         demandaPaiId={d.id}
         demandaPai={{
           codigo,
@@ -267,7 +273,7 @@ export default function DetalheDemanda({
           <h2 className="det-cliente">{d.obra?.cliente?.nome}</h2>
           <p className="det-obra">
             {d.obra?.nome}
-            {d.obra?.endereco ? ` — ${d.obra.endereco}` : ''}
+            {d.obra?.cidade_estado ? ` — ${d.obra.cidade_estado}` : ''}
           </p>
         </div>
         <div className="det-tags">

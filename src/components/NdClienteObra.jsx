@@ -16,16 +16,35 @@ export default function NdClienteObra({
   aberto,
   aoAlternar,
   faltandoCliente,
+  faltandoObra,
+  // Obra ANTIGA sem cidade (§#85 fase 3): o campo aparece aqui para ser
+  // completado na hora, e a Nova demanda grava na obra ao criar.
+  cidadeObra,
+  aoMudarCidadeObra,
+  faltandoCidade,
   sempreAberto, // desktop: campos expostos (§#83 B3)
 }) {
-  // Sem obra a demanda NAO trava: cai na obra padrao do cliente (achar-ou-criar
-  // na NovaDemanda). Dizemos isso aqui para o vendedor saber, ANTES de criar, o
-  // que vai acontecer se ele nao mexer.
+  // A obra e OBRIGATORIA (§#85 fase 3) — nao existe mais a "obra padrao"
+  // criada em silencio quando ninguem escolhia.
+  // A cidade que VALE: a que a obra ja tem, ou a que o vendedor acabou de
+  // digitar. Sem juntar as duas, o card fechado continuaria anunciando "falta
+  // a cidade" depois de ela ter sido preenchida — e no celular esse subtitulo
+  // e o unico resumo do que foi respondido.
+  const cidadeEfetiva = obra?.cidade_estado || String(cidadeObra ?? '').trim()
+
   function subtituloObra() {
-    if (obra) return obra.nome
+    if (obra) {
+      return cidadeEfetiva
+        ? `${obra.nome} · ${cidadeEfetiva}`
+        : `${obra.nome} · falta a cidade`
+    }
     if (!cliente) return 'Escolha o cliente primeiro'
-    return `Obra de ${cliente.nome} (padrão)`
+    return 'Escolher a obra'
   }
+
+  // Quem decide se o INPUT aparece e so o que esta GRAVADO na obra (35 das 36
+  // no banco nao tem): o campo nao pode sumir enquanto a pessoa digita nele.
+  const faltaCidadeNaObra = Boolean(obra) && !obra.cidade_estado
 
   return (
     <>
@@ -49,7 +68,8 @@ export default function NdClienteObra({
         icone="predio"
         titulo="Obra"
         subtitulo={subtituloObra()}
-        preenchido={Boolean(obra)}
+        preenchido={Boolean(obra) && Boolean(cidadeEfetiva)}
+        faltando={faltandoObra || faltandoCidade}
         desabilitado={!cliente}
         aberto={aberto === 'obra'}
         sempreAberto={sempreAberto}
@@ -62,11 +82,34 @@ export default function NdClienteObra({
             `autoFoco` desligado no exposto: os dois seletores montam juntos e
             o ultimo ganharia o foco, pulando o campo de cliente. */}
         {cliente ? (
-          <SeletorObra
-            cliente={cliente}
-            aoSelecionar={aoEscolherObra}
-            autoFoco={!sempreAberto}
-          />
+          <>
+            <SeletorObra
+              cliente={cliente}
+              aoSelecionar={aoEscolherObra}
+              autoFoco={!sempreAberto}
+            />
+            {/* Obra antiga sem cidade: completa aqui e a demanda grava na obra
+                (o cadastro se completa conforme as obras voltam a ser usadas). */}
+            {faltaCidadeNaObra && (
+              <div className="nd-cidade-obra">
+                <label htmlFor="campo-cidade-obra">
+                  Cidade e estado de “{obra.nome}”
+                </label>
+                <input
+                  id="campo-cidade-obra"
+                  type="text"
+                  placeholder="ex.: Tatuí - SP"
+                  value={cidadeObra}
+                  onChange={(e) => aoMudarCidadeObra(e.target.value)}
+                  className={faltandoCidade ? 'falta' : undefined}
+                />
+                <p className="nd-cidade-dica">
+                  Esta obra foi cadastrada antes deste campo existir. O que você
+                  escrever aqui fica salvo nela.
+                </p>
+              </div>
+            )}
+          </>
         ) : (
           sempreAberto && (
             <p className="card-campo-espera">

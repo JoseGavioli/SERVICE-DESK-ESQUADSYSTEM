@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { enviarAnexo } from '../lib/anexos'
-import { obterOuCriarObraPadrao } from '../lib/obraPadrao'
 import {
   DESCRICAO_PADRAO_FECHAMENTO,
   montarInsertFicha,
@@ -25,6 +24,7 @@ export default function FichaFechamento({
   base, // { tipoId, prazo, infoAdicional, arquivos, proprietario, demandaPaiId, origemHerdada }
   cliente,
   obra,
+  cidadeObra,
   ficha,
   aoMudarFicha,
   ehFilha,
@@ -75,12 +75,24 @@ export default function FichaFechamento({
 
     setSalvando(true)
 
-    // Obra: a fixa (filha), a escolhida, ou "Obra de {cliente}" (achar-ou-criar).
-    let obraId = obraFixa?.id ?? obra?.id
+    // Obra: a fixa (filha) ou a escolhida no formulario. Desde a §#85 fase 3
+    // ela e obrigatoria la — nao ha mais "obra padrao" criada em silencio.
+    const obraId = obraFixa?.id ?? obra?.id
     if (!obraId) {
-      obraId = await obterOuCriarObraPadrao(cliente)
-      if (!obraId) {
-        setErro('Não foi possível criar a obra padrão do cliente.')
+      setErro('Escolha a obra no formulário antes de salvar a ficha.')
+      setSalvando(false)
+      return
+    }
+
+    // Obra antiga sem cidade: completa antes (mesma funcao do formulario —
+    // update direto barraria o vendedor em silencio, §0048).
+    if (!obraFixa && obra && !obra.cidade_estado) {
+      const { error: erroCidade } = await supabase.rpc('completar_cidade_obra', {
+        p_obra_id: obraId,
+        p_cidade: String(cidadeObra ?? '').trim(),
+      })
+      if (erroCidade) {
+        setErro('Não foi possível salvar a cidade da obra.')
         setSalvando(false)
         return
       }
