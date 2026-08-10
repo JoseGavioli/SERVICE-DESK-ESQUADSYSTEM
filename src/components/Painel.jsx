@@ -65,6 +65,9 @@ export default function Painel({ sessao }) {
   const [criarInicial, setCriarInicial] = useState(null)
   // Menu do botao "Nova demanda": 'fab' (celular) | 'lateral' (desktop) | null.
   const [menuNovaEm, setMenuNovaEm] = useState(null)
+  // Recorte de status que a lista esta mostrando — o menu lateral acende o
+  // item correspondente. Quem diz e a propria lista (§#83 B1).
+  const [recorteAtivo, setRecorteAtivo] = useState('Todas')
   const tiposComFicha = useTiposComFicha()
   const [detalheAberto, setDetalheAberto] = useState(false) // detalhe de demanda aberto
   const [criandoAberto, setCriandoAberto] = useState(false) // form de nova demanda aberto
@@ -288,6 +291,7 @@ export default function Painel({ sessao }) {
           }
           menuNovaAberto={menuNovaEm === 'lateral'}
           formAberto={criandoAberto}
+          recorteAtivo={recorteAtivo}
           tiposComFicha={tiposComFicha}
           aoEscolherNova={abrirNovaDemanda}
           aoSair={sair}
@@ -370,6 +374,7 @@ export default function Painel({ sessao }) {
             aoDetalhe={setDetalheAberto}
             aoCriando={setCriandoAberto}
             aoBuscando={setBuscaAberta}
+            aoRecorte={setRecorteAtivo}
             pedidoVoltar={pedidoVoltar}
           />
         )}

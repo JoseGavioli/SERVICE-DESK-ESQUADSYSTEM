@@ -15,6 +15,7 @@ import Avatar from './Avatar'
 import Icone from './Icone'
 import { haQuantoTempo } from '../lib/tempo'
 import { todasAsLinhas } from '../lib/paginacao'
+import { recorteAtivo } from '../lib/recortes'
 import { useDesktop, useTelaLarga } from '../lib/useDesktop'
 
 // Rank de urgencia (0 = mais critico) para ordenar a fila.
@@ -65,6 +66,7 @@ export default function Demandas({
   aoDetalhe,
   aoCriando,
   aoBuscando,
+  aoRecorte, // avisa o menu lateral qual recorte esta na tela (§#83 B1)
   pedidoVoltar,
 }) {
   const [demandas, setDemandas] = useState([])
@@ -276,6 +278,21 @@ export default function Demandas({
     aoCriando?.(criando)
   }, [criando])
   useEffect(() => () => aoCriando?.(false), [])
+
+  // Avisa o menu lateral QUAL recorte a lista esta mostrando, para ele acender
+  // o item certo. Quem responde e a lista, nao o clique no menu: o Dashboard,
+  // os chips do celular e o "limpar" dos filtros tambem mexem no recorte, e um
+  // destaque guardado no menu ficaria mentindo em todos esses caminhos.
+  useEffect(() => {
+    aoRecorte?.(recorteAtivo(f))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [f.soAtencao, f.soAtivas, f.status, f.soCancelamentoSolicitado])
+  // Reseta ao desmontar, como os avisos acima. Sair da Inicio (para o
+  // Dashboard, Clientes...) desmonta esta lista, e sem apagar o recorte o menu
+  // ficava com DOIS itens acesos — o da secao atual e o recorte velho, logo
+  // abaixo de um "Inicio" apagado. E era um destaque falso: voltar para a
+  // Inicio remonta a lista em FILTROS_VAZIOS, ou seja, sempre em "Todas".
+  useEffect(() => () => aoRecorte?.(null), [])
 
   // Avisa o Painel quando a busca abre/fecha, para o botao "voltar" saber que
   // ha uma sobreposicao a fechar (§issue #40). Reseta ao desmontar.

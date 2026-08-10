@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import Avatar from './Avatar'
 import Icone from './Icone'
 import { useContadoresLista } from '../lib/useContadoresLista'
+import { RECORTES } from '../lib/recortes'
 import MenuNovaDemanda from './MenuNovaDemanda'
 
 // Menu lateral do MODO DESKTOP (§issue #83, B1). Substitui o bottom-nav e o
@@ -19,17 +20,6 @@ const SECAO_RAIZ = {
   erros: 'admin',
   relatorio: 'dashboard',
 }
-
-// Recortes do sub-menu do Inicio = os chips da lista de hoje, com os MESMOS
-// filtros (e os mesmos que o Dashboard ja manda para a lista). `contador`
-// aponta qual numero do useContadoresLista o recorte exibe (§B2).
-const RECORTES = [
-  { rotulo: 'Todas', filtro: {} },
-  { rotulo: 'Atenção', filtro: { soAtencao: true }, contador: 'atencao', perigo: true },
-  { rotulo: 'Em aberto', filtro: { soAtivas: true }, contador: 'emAberto' },
-  { rotulo: 'Enviados', filtro: { status: 'enviado', ordenacao: 'recentes' } },
-  { rotulo: 'Cancelados', filtro: { status: 'cancelada' } },
-]
 
 // Secoes que vivem no menu da CONTA: quando uma delas esta aberta, quem
 // acende e o rodape (nenhum item do topo representa mais essas telas).
@@ -56,7 +46,6 @@ function Item({ alvo, icone, raiz, aoNavegar, children }) {
     </button>
   )
 }
-
 export default function MenuDesktop({
   perfil,
   secao,
@@ -69,6 +58,7 @@ export default function MenuDesktop({
   tiposComFicha,
   aoEscolherNova,
   formAberto, // form de nova demanda na tela (§#85)
+  recorteAtivo, // rotulo do recorte que a lista esta mostrando (ou null)
 }) {
   const raiz = SECAO_RAIZ[secao] ?? secao
   // Numeros dos recortes (Atencao/Em aberto), em tempo real (§B2). Enquanto
@@ -122,12 +112,17 @@ export default function MenuDesktop({
       <div className="md-subnav">
         {RECORTES.map((r) => {
           const n = r.contador ? contadores[r.contador] : null
+          // Acende o recorte que a LISTA esta mostrando — quem responde e ela,
+          // nao um clique guardado aqui: o Dashboard e os chips do celular
+          // tambem mudam o filtro, e o menu tem de acompanhar.
+          const ativo = recorteAtivo === r.rotulo
           return (
             <button
               key={r.rotulo}
               type="button"
-              className="md-subitem"
+              className={`md-subitem${ativo ? ' ativo' : ''}`}
               onClick={() => aoAbrirComFiltro(r.filtro)}
+              aria-current={ativo ? 'true' : undefined}
             >
               {r.rotulo}
               {n > 0 && (
