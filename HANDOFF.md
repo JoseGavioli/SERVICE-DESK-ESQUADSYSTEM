@@ -1,6 +1,6 @@
 # 📋 Handoff — Service Desk - EsquadSystem
 
-**Data:** 05/08/2026 · **Branch:** `main` · **último HEAD publicado antes desta leva:** `4a785fd`
+**Data:** 10/08/2026 · **Branch:** `main` · **último HEAD publicado:** `ea25e2c`
 
 > Documento de continuidade. Para retomar: leia a **§7** (pendências) e a **§9** (armadilhas).
 > A fundação é o **`CLAUDE.md`** — leia-o por completo antes de mexer em qualquer coisa.
@@ -13,6 +13,7 @@ Todas rodadas e confirmadas pelo dono no SQL Editor. As mais recentes:
 - **`0042`/`0043`/`0044`** — admin define o **dono** da demanda + os dois fixes de posse que isso exigiu (anexar entrada; dono apaga entrada — ver §6).
 - **`0045`** — **Ficha de pedido de vendas** (F1 da #80): `tipo_demanda.com_ficha` (flag data-driven), tabela `ficha_fechamento` (1:1 com demanda, RLS: ler=quem vê a demanda; criar=dono em `nao_iniciado` OU admin não-terminal, só tipo com ficha; editar=staff não-terminal OU dono em `nao_iniciado`; delete=negado; gatilho impede trocar de demanda) e **`mover_status` com DOIS trilhos**: tipo com ficha pula a revisão de custo (`em_andamento → concluido` direto; entrar em revisão é bloqueado, sair continua podendo).
 - **`0046`** — devolve o aviso **"prazo se aproximando"** que a 0039 tinha derrubado sem querer (achado de revisão adversarial); agora só em `nao_iniciado`/`em_andamento`, alinhado ao "Atrasado" (§8).
+- **`0047`/`0048`/`0049`** — **cidade e estado da obra** (#85 fase 3), em três porque a ordem importava: `0047` só ADICIONA `obra.cidade_estado` e copia de `endereco` (um `rename` quebraria o app no ar — e como é PWA, cada aparelho ficaria quebrado até atualizar; `endereco` fica como legado); `0048` a função `completar_cidade_obra` (SECURITY DEFINER, só preenche quando está vazio) — sem ela o vendedor **não consegue** gravar a cidade, porque `obra_editar` é só admin/atendente e update barrado por RLS volta 0 linhas SEM erro; `0049` o `check NOT VALID`, que só pôde rodar **depois** do deploy do front.
 
 > **Lição que se manteve.** O dono roda as migrações; **peça confirmação explícita** de que rodou (não presuma pelo silêncio), sempre diga **o que quebra se não rodar**, e prefira que a ausência degrade **só a tela nova**. Nesta rodada, a `0043` foi um bug que a `0042` criou (ver §6).
 
@@ -32,16 +33,33 @@ App web interno da **EsquadSystem** (esquadrias de alumínio) para gerir **deman
 
 ## 4. Estado atual
 
-- **Fases 0–6 completas** e no ar. Migrações **`0001` → `0046`**, todas aplicadas (§1).
+- **Fases 0–6 completas** e no ar. Migrações **`0001` → `0049`**, todas aplicadas (§1).
 - **Web Push (#14): CONCLUÍDO** — validado nas 3 plataformas (desktop, Android, iOS com PWA).
 - **Dashboard: reforma COMPLETA** (A+B+C, #77) e **TODAS as listagens ilimitadas paginadas** (#78/#79 — helper `lib/paginacao.js`, `todasAsLinhas`): lista, RPCs, Relatório, SeletorCliente, Clientes. A classe de bug "corte silencioso de ~1000 do PostgREST" está **encerrada** no app.
 - **Anexos de entrada:** comprimidos para **≤ 1 MB** (`ALVO_ENTRADA` em `lib/anexos.js`) nos DOIS caminhos (criação e detalhe) — #75.
 - **Ficha de pedido de vendas (#80): COMPLETA (F1–F4)** — o vendedor preenche a ficha no app ao criar demanda de Fechamento; o fluxo de status pula a revisão (dois trilhos na `mover_status`); o detalhe tem a box da ficha (ver/**editar** com permissões espelhando a RLS; RT travada — é da demanda); e o **PDF** sai como réplica fiel do papel via `window.print()`. Spec registrada no **CLAUDE.md §19** (+ exceções em §7/§10). ⚠ iPhone com PWA instalado não imprime (`window.print()` é ignorado em standalone — o app mostra a dica de abrir pelo Safari; mesma limitação do Relatório). Demandas de teste #36/#37 criadas pela conta oculta na validação.
 - **Modo desktop (#83): COMPLETO (B1–B4)** — o app tem duas caras na mesma base: **≥900px** vira site (menu lateral, campos expostos, filtros à vista) e **≥1200px** ganha **lista + detalhe lado a lado**. Spec no **CLAUDE.md §20**. O **celular não mudou em nada** — foi o critério de aceite de cada bloco.
+- **Backup dos dados (§17): FEITO** — Administração → Backup baixa as 9 tabelas em CSV+JSON, e os ARQUIVOS dos anexos em zips por tipo. Era a pendência que protegia contra perda; a lista do §17 do CLAUDE.md ficou sem itens de risco.
 - **Conta de teste** (`teste@gmail.com` = 'USUARIO DE TESTE'): **oculta** (0041) — não aparece nas listas/dashboard/relatório dos outros; e fora do relatório (0040).
 - **Fora do versionamento de propósito:** `deno.lock` e `supabase/functions/criar-usuario/` (Edge Function criada, **não deployada** — pendência #16).
 
 ## 5. O que foi feito
+
+### Sessão de 06–10/08/2026 (issues #85/#86/#87/#88 fechadas)
+
+**#85 — menu Orçamento/Fechamento + obra obrigatória (3 fases).**
+- **F1:** o botão "Nova demanda" (FAB do celular e vermelho da barra) abre um **menu** — "Orçamento" (form de sempre) e um item por tipo **com ficha**, lido do banco pela flag `com_ficha` (`lib/useTiposComFicha.js`), nunca pelo nome. `criarInicial` deixou de ser boolean e virou `{ tipoId }`; entrar por um tipo com ficha abre o form com o tipo **travado**.
+- **F2:** cliente e obra voltaram da ficha para a **tela de criação** do Fechamento (entre a #80 e a #85 o mesmo dado era editável em dois lugares). O cliente virou obrigatório em todo tipo, então "Preencher ficha" não abre sem ele; na ficha viraram leitura, reusando o `.nd-vinculada` da filha.
+- **F3:** obra **obrigatória** com **cidade e estado**; `obra.endereco` → `obra.cidade_estado`; o fallback `lib/obraPadrao.js` (a "Obra de {cliente}" criada em silêncio, 16 das 36 obras) foi **removido**. Três migrações **nesta ordem, por um motivo**: `0047` só a coluna (aditiva — um `rename` quebraria o app no ar, e como é PWA cada aparelho ficaria quebrado até atualizar); `0048` a função `completar_cidade_obra`; `0049` o `check NOT VALID`, rodado **depois do deploy**.
+
+**O que as revisões pegaram na #85 — o padrão vale mais que os casos:**
+- **Na migração, antes de existir código:** a policy `obra_editar` só deixa admin/atendente dar UPDATE em obra, e update barrado por RLS volta **0 linhas SEM erro** — o vendedor digitaria a cidade, o app diria "salvo" e a obra seguiria vazia, para sempre. E o dono, sendo admin, passaria em todos os testes. Foi isso que originou a `0048`.
+- **Na F1:** escolher no menu com o form já aberto não remontava a `NovaDemanda` — card travado num tipo velho, ou vazio num form impossível de enviar. E a primeira solução de rascunho (`rascunhoCombina`) **apagava rascunho não visto** e travava o auto-save; foi jogada fora, e o `tipoTravado` passou a derivar do tipo ATUAL.
+- **Na F3:** a **demanda-filha ficava impossível de criar** (a RPC ia com string vazia e o banco recusava antes do insert) — quem valida já isentava a filha, faltou isentar quem grava. E no celular o card da obra fechava escondendo o campo que acabara de virar obrigatório: era o caminho PADRÃO, já que 35 das 36 obras não têm cidade, e invisível no PC.
+
+**#86 — destaque do recorte ativo** no sub-menu do Início. O CSS já existia; faltava o menu **saber** qual recorte está aplicado. `lib/recortes.js` virou fonte única (a lista + `recorteAtivo(f)`), e **quem responde é a LISTA**, não o clique no menu — o filtro também muda pelo Dashboard, pelos chips do celular e pelo "limpar". Duas regras deliberadas: busca/vendedor/urgência **não** apagam o destaque (são filtros por cima); um status que não é recorte apaga **todos** (acender "Todas" ali seria mentira). Achado da revisão: faltava a limpeza no desmontar — sair da Início deixava DOIS itens acesos e prometia um recorte que a volta não cumpre (a lista remonta em "Todas").
+
+**#87/#88 — export/backup dos dados e dos anexos** (pendência antiga do §17). Ver a seção própria abaixo.
 
 ### Sessão de 05–06/08/2026 (issues #82/#83/#84 fechadas)
 
@@ -91,6 +109,21 @@ App web interno da **EsquadSystem** (esquadrias de alumínio) para gerir **deman
 
 Rede de segurança contra tela branca (`ErrorBoundary` em 2 níveis + `erro_log` `0035` + tela **Erros**); **Meu perfil** (foto+senha `0034`) + `<Avatar>` em todas as telas; tela **Administração** (agrupa Equipe+Erros); **Tema virou toggle** no perfil; **Relatório mensal** (§18 do CLAUDE.md); e vários de fluxo/UX (anexar após "enviado" via gatilho `0038`, sheet de status ícone+cor, filtro por status, "movida há X" + ordenar por atividade, aviso sem conexão, aviso de nova versão PWA, girar imagem, anexos múltiplos, custo atrasado 5→3 dias `0039`).
 
+### Export/backup dos dados e dos anexos (§17, #87/#88)
+
+**Administração → Backup.** Um botão baixa um `.zip` (~250 KB) com as **9 tabelas de conteúdo** em `dados/*.csv` e `json/*.json`, mais um `LEIA-ME` com data, índice e as chaves que ligam as tabelas. Outros dois botões baixam os **ARQUIVOS** dos anexos, separados por tipo (saída 63/60 MB · entrada 123/45 MB), numa pasta por demanda — o número da pasta é o `id`, que liga ao backup de dados. Sem dependência: reusa o `lib/zip.js` da #72, que absorveu o `baixarBlob` e o `nomeUnicoNoZip` antes soltos no `CarrosselEntrada`.
+
+**Três detalhes decidem se o CSV presta:** **BOM UTF-8** (sem ele o Excel mostra "JosÃ©"); separador **`;`** e não `,` (o Excel usa o separador de lista do Windows, que em português é `;` — com vírgula as 16 colunas caem na coluna A); e **neutralizar fórmula** (célula começando com `= + - @` é avaliada — e "- 2 janelas de correr" é descrição comum aqui; duas descrições REAIS precisaram do apóstrofo). O CSV distorce nesses dois pontos de propósito; o `json/` é a cópia fiel.
+
+**Nos anexos, o que os números reais ensinaram:** **15 arquivos precisaram de desempate de nome** (a demanda-17 tem cinco fotos do WhatsApp idênticas — sem isso, quatro sumiriam do backup em silêncio); em série levava **122s**, contra **8s** com 4 downloads em paralelo; e o **retry** nasceu de um caso real — 1 dos 123 falhou por oscilação de rede e, numa segunda passada, os 123 baixaram inteiros.
+
+⚠ **A armadilha mais cara da leva**, achada pela revisão DEPOIS do commit: o `download()` do storage-js só converte em `{ data, error }` o que dá errado **até os cabeçalhos** — a leitura do corpo (`await result.blob()`) **relança um TypeError cru** se a conexão cair no meio. Com o `Promise.race` fora de try/catch, a rejeição pulava as 3 tentativas, derrubava os 4 trabalhadores e matava o backup inteiro — **justamente na falha para a qual o retry foi escrito**. Hoje: try/catch dentro do laço de tentativas E no corpo do trabalhador.
+
+⚠ Outros dois da mesma revisão: `nomeUnicoNoZip` comparava a string EXATA, mas **NTFS não distingue maiúsculas** (`IMG_0042.JPG` × `img_0042.jpg` viravam duas entradas e uma sobrescrevia a outra ao extrair); e o LEIA-ME identificava a falha por `demanda-N/nome`, que pode ser IGUAL ao de um arquivo presente no zip — agora usa `anexo #id`.
+
+⚠ O backup traz **o que a conta enxerga** (RLS): como admin é tudo, menos as demandas da conta oculta.
+⚠ O `.gitignore` barra `service-desk-backup-*.zip` e `service-desk-anexos-*.zip` — um download de teste caiu na raiz do projeto, e esses arquivos têm CPF e dados bancários das fichas (§19).
+
 ## 6. Decisões tomadas (e o porquê) — não re-litigar sem motivo novo
 
 | Decisão | Por quê |
@@ -126,36 +159,21 @@ Rede de segurança contra tela branca (`ErrorBoundary` em 2 níveis + `erro_log`
 - 📝 **Anotações da #80 (nada bloqueante):** fechamento fica com origem nula → "Sem origem" no relatório (aceito pelo dono) · o PDF imprime o **estado atual da tela** (edição não salva sai na folha — "imprime o que se vê", decisão de produto) · `@page A4/10mm` vale pra **todo** print do app, inclusive o Relatório (aceito e documentado no CSS).
 - 🔁 **#29 (migrar demandas):** o **go-forward** (atribuir dono ao criar) está feito (0042/0043). Sobra, **se precisar**, reatribuir demandas **JÁ existentes** para outro dono.
 - 🔒 **Anotado (sem issue):** o ramo `autor_id = auth.uid()` do `anexo_excluir` deixa o vendedor-autor apagar a própria entrada em **qualquer status** via API direta (o front nunca mostra o botão fora de `nao_iniciado`). Pré-existente à 0044; travar só se o dono quiser rigor total.
-- ✅ *export/backup dos dados* — **feito** (§17, tela Administração → Backup).
+- 🧾 **Remover a coluna `obra.endereco`** — legado sem uso desde a `0047` (o app inteiro lê `cidade_estado`). Migração de uma linha, sem pressa.
+- 🏗️ **35 obras sem cidade** — vão se completando conforme forem usadas (o formulário pede na hora). Nenhuma ação necessária.
 - 🐢 **Detalhe pesado com muitos PDFs:** cada `MiniaturaPdf` renderiza via pdf.js; demandas com 20+ PDFs de entrada travam a tela ao abrir (renderizar miniaturas sob demanda resolveria). Relevante justo no caso "muitos PDFs".
 - 🗂️ **Backlog aberto:** #43 (documentação), #32 (co-vendedor), #18 (tela de tipos), #17 (box de cor), #16 (cadastro in-app — Edge Function criada, **não deployada**).
 - 🧹 Limpeza de anexos de entrada antigos (§14) · 📅 feriados no cálculo de prazo (§8).
 
-### Em andamento: #85 (menu Orçamento/Fechamento + obra obrigatória)
-
-**#85 COMPLETA** (fases 1, 2 e 3; migrações `0047`–`0049` rodadas).
-
-**Fase 3 — obra obrigatória + cidade.** A obra passou a ser exigida em toda demanda, e com ela a **cidade e estado**. O fallback `lib/obraPadrao.js` (a "Obra de {cliente}" criada em silêncio, responsável por 16 das 36 obras) **foi removido**. Três migrações, nesta ordem por um motivo: **`0047`** só a coluna (aditiva — um `rename` quebraria o app no ar, e como é PWA cada aparelho ficaria quebrado até atualizar; `endereco` fica como legado); **`0048`** a função `completar_cidade_obra` — **achado da revisão da migração**: a policy `obra_editar` só deixa admin/atendente dar UPDATE em obra, e update barrado por RLS volta **0 linhas SEM erro**, então o vendedor veria "salvo" e a obra seguiria vazia (e o dono, sendo admin, passaria em todos os testes); **`0049`** o `check NOT VALID`, rodado **depois do deploy** (antes disso quebraria quem ainda estivesse com o PWA velho). Confirmado no ar: insert sem cidade devolve `23514 — violates check constraint "obra_cidade_estado_preenchida"`.
-
-**Bloqueante pego pela revisão do front, antes do commit:** a **demanda-filha ficava impossível de criar**. O guard era `if (!obra.cidade_estado)` sem checar `ehFilha`, e o `obraFixa` do DetalheDemanda não repassava `cidade_estado` — então a RPC ia com string vazia, o banco recusava e o insert nunca acontecia. Corrigido nos dois lados (`!ehFilha` + o campo no `obraFixa`) e validado com filha de obra COM e SEM cidade. Outros: no celular o card da obra fechava escondendo o campo que acabara de virar obrigatório (agora fica aberto quando falta cidade); o rótulo continuava dizendo "falta a cidade" depois de digitada; o painel de "nova obra" do seletor sobrevivia à troca da busca (dava para criar duplicata) e o Enter duplo criava duas obras; e o aviso "edite para completar" aparecia para quem não tem botão de editar. O botão "Nova demanda" (FAB do celular e botão vermelho da barra) abre um **menu**: "Orçamento" (form de sempre) e um item por tipo **com ficha** — a lista vem do banco pela flag `com_ficha` (`lib/useTiposComFicha.js`), nunca pelo nome. `criarInicial` deixou de ser boolean e virou `{ tipoId }`. Escolher um tipo com ficha abre o form com o tipo **travado** (o card vira título, sem lista). **Fases 2 e 3 pendentes** — a 3 exige a migração `0047` (renomear `obra.endereco` → `obra.cidade_estado`), que **o dono roda**.
-
-**Fase 2:** cliente e obra voltaram da ficha para a **tela de criação** do Fechamento — o cliente virou obrigatório em todo tipo (`calcularFaltantes`), então o botão "Preencher ficha" **não abre a ficha sem cliente**; dentro da ficha eles só aparecem, num bloco de leitura que reusa o `.nd-vinculada` da demanda-filha. Motivo: entre a #80 e a #85 o mesmo dado era editável em dois lugares. Validado E2E (demanda #43 pela conta oculta: obra/cliente certos, ficha vinculada). A revisão da fase 2 não achou defeito de comportamento — só quatro **comentários que passaram a mentir** (o cabeçalho do `calcularFaltantes` dizia o oposto da regra logo abaixo; o comentário do grid do desktop justificava a regra com "cliente/obra não montam"; e o §19 apontava para o §20, que é do modo desktop, quando o menu também é do celular), todos corrigidos.
-
-**Achados da revisão corrigidos ANTES do push** (foi por isso que ela rodou antes desta vez): o **bloqueante** era escolher no menu com o form já aberto — a `NovaDemanda` não remontava, então `tipoInicial` mudava e `tipoId` não, deixando o card travado num valor velho (ou vazio, um form impossível de enviar). Corrigido com `key` de abertura **e** desabilitando o botão enquanto o form está na tela (o celular já fazia isso de graça, desmontando o bottom-nav). Os dois "sérios" seguintes vinham da minha primeira solução de rascunho (`rascunhoCombina`), que escondia o banner e com isso **apagava rascunho não visto** e **travava o auto-save**: a solução foi jogá-la fora e fazer o `tipoTravado` derivar do **tipo atual** (`ehFechamento`), não da porta — assim restaurar um rascunho de outro tipo simplesmente devolve o form àquele tipo. Também: `ehFechamento` passa a respeitar a porta enquanto os tipos não carregam (senão a porta do Fechamento criava demanda **sem ficha**); o form esconde da lista **exatamente o que o menu oferece** (se aquela consulta falhar, o tipo volta a aparecer no card em vez de sumir dos dois lugares); o tipo vindo da porta não conta como "sujo"; e o Esc do menu não vaza mais para o painel de detalhe.
-
-### Export/backup dos dados (§17, pendência antiga)
-
-**Administração → Backup** baixa um `.zip` (~250 KB) com as **9 tabelas de conteúdo** em `dados/*.csv` e `json/*.json`, mais um `LEIA-ME` com a data, o índice e como as tabelas se ligam. Só os DADOS: os arquivos dos anexos (~100 MB no Storage) ficam de fora — decisão do dono. Sem dependência (reusa o `lib/zip.js` da #72, que ganhou o `baixarBlob` antes solto no `CarrosselEntrada`) e sem migração.
-
-**Três detalhes que decidem se o arquivo presta**, e que a revisão ajudou a fechar: **BOM UTF-8** (sem ele o Excel mostra "JosÃ©"); separador **`;`** e não `,` (o Excel usa o separador de lista do Windows, que em português é `;` — com vírgula as 16 colunas caem todas na coluna A); e **neutralizar fórmula** — célula começando com `= + - @` é avaliada pelo Excel, e "- 2 janelas de correr" é descrição comum aqui (duas descrições REAIS do banco precisaram do apóstrofo). O CSV distorce nesses dois pontos de propósito; o `json/` é a cópia fiel.
-
-**Os ARQUIVOS dos anexos** têm botões próprios (saída 63 arq./60 MB · entrada 123/45 MB), numa pasta por demanda — o número da pasta é o `id` da demanda, que liga ao backup de dados. Desabilitados no celular (o zip é montado na memória). Dois números medidos que explicam o desenho: **15 arquivos precisaram de desempate de nome** (a demanda-17 tem 5 fotos do WhatsApp com nome idêntico — sem isso, 4 sumiriam do backup em silêncio); e o download em série levava **122s**, contra **8s** com 4 em paralelo. O `retry` (3 tentativas + limite de espera) veio de um caso REAL: na primeira execução 1 dos 123 falhou por oscilação de rede e, na segunda passada, os mesmos 123 baixaram inteiros — sem insistir, um backup perderia arquivo por um soluço de conexão.
-
-⚠ O backup traz **o que a conta enxerga** (RLS). Como admin é tudo, menos as demandas da conta oculta.
-⚠ O `.gitignore` agora barra `service-desk-backup-*.zip` e `service-desk-anexos-*.zip`: um download de teste caiu na raiz do projeto, e esses arquivos têm CPF e dados bancários das fichas.
-
 ## 8. 🎯 Próximo passo
-A **#85 está completa e fechada**. Pendências que ela deixou de propósito: (a) remover a coluna **`obra.endereco`** (legado sem uso desde a `0047`) numa migração futura; (b) as **35 obras sem cidade** vão se completando conforme forem usadas — nenhuma ação necessária; (c) há uma feature **em andamento no working tree** (não commitada): destacar o **recorte ativo** no sub-menu do Início — o `SubItem` em `MenuDesktop.jsx` e a regra `.md-subitem.ativo` no `App.css`. Falta o menu saber qual recorte está aplicado, o que exige a lista informar o filtro corrente ao `Painel`. Backlog: export/backup, #29 (reatribuir demandas existentes), #43/#32/#18/#17/#16.
+
+Nada em andamento — o working tree está limpo e tudo o que foi feito está no ar.
+
+Do backlog, em ordem de valor (opinião, não decisão):
+1. **#16 — cadastro de usuários in-app.** A Edge Function `criar-usuario` está escrita há tempos e **nunca foi deployada**; falta o deploy + o formulário na Administração. É a pendência mais antiga que ainda tem valor prático.
+2. **Remover `obra.endereco`** (acima) — barato e tira uma coluna que mente.
+3. **#29** (reatribuir demandas já existentes), **#43** (documentação), **#32** (co-vendedor), **#18** (tela de tipos), **#17** (box de cor).
+4. 🐢 **Detalhe pesado com muitos PDFs** — 20+ miniaturas via pdf.js travam a tela ao abrir; renderizar sob demanda resolveria.
 
 ## 9. ⚠️ Armadilhas do ambiente (economiza horas)
 
@@ -176,6 +194,9 @@ A **#85 está completa e fechada**. Pendências que ela deixou de propósito: (a
 | **Node/`gh` fora do PATH** | `export PATH="/c/Program Files/nodejs:$PATH"`; `gh` por caminho completo `C:/Program Files/GitHub CLI/gh.exe`. |
 | **Senha da conta de teste MUDA** | O dono a troca ao validar o Meu perfil. **Peça a atual** para validar tela logada. A conta é **ADMIN** (dá p/ validar telas de gerente/admin, ex.: a pizza) e está **oculta** (0041). |
 | **Validar query nova SEM depender do navegador** | Logar via REST (`POST /auth/v1/token?grant_type=password` com a anon key do `.env.local`) e bater a query com `curl` direto no PostgREST (`Prefer: count=exact`, `-I` p/ head). Prova sintaxe e semântica ao vivo, imune à instabilidade do login/preview. Usado no Bloco C. |
+| **`storage.download()` pode REJEITAR, não só devolver `{error}`** | O storage-js só converte em `{ data, error }` o que falha até os CABEÇALHOS; a leitura do corpo (`await result.blob()`) relança um `TypeError` cru se a conexão cair no meio. Todo laço de retry sobre ele precisa de **try/catch** — senão a rejeição pula as tentativas e derruba tudo (mordeu no backup dos anexos, §#88). |
+| **Nome de arquivo no zip: NTFS não distingue maiúsculas** | Desempatar por string exata deixa `IMG.JPG` e `img.jpg` virarem duas entradas — e uma sobrescreve a outra ao extrair, sem erro. Comparar sempre por `toLowerCase()`. |
+| **CSV para o Excel em português** | Precisa de **BOM UTF-8** (senão "JosÃ©"), separador **`;`** (o Excel usa o separador de lista do Windows) e **apóstrofo** antes de `= + - @` (senão a célula vira fórmula — e "- 2 janelas" é descrição comum aqui). |
 | **PWA cacheia a versão antiga** | Modo `prompt` ("Nova versão → Atualizar"). Se o deploy "não pegou", quase sempre é cache. |
 | **PostgREST: ambiguidade de embed** com >1 FK | `tabela!fk_coluna` (ex.: `vendedor:perfil!vendedor_id(...)`). |
 | **Enum do Postgres** não remove valor fácil | Por isso "concluído" virou legado. `ALTER TYPE ... ADD VALUE` não roda na mesma transação em que o tipo é criado. |
