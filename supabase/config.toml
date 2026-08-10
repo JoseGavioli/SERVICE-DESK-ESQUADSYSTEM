@@ -15,3 +15,14 @@
 
 [functions.enviar-push]
 verify_jwt = false
+
+# A criar-usuario e o CONTRARIO da enviar-push: ela precisa do Verify JWT
+# LIGADO, porque identifica quem chamou pelo token do proprio chamador (e so
+# deixa passar admin ATIVO). Com ele desligado, qualquer um com a URL da
+# funcao chegaria ate o codigo — e o `getUser()` sem token devolveria "nao
+# autenticado", mas a funcao estaria exposta sem necessidade.
+#
+# `true` e o padrao do Supabase; esta escrito para deixar a intencao clara e
+# evitar que alguem desligue por analogia com a funcao de cima.
+[functions.criar-usuario]
+verify_jwt = true
