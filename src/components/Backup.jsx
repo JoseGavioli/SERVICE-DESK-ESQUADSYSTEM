@@ -27,6 +27,11 @@ export default function Backup({ naoLidas, aoAbrirNotif, aoVoltar }) {
   // pisarem um no outro.
   const [tipoBaixando, setTipoBaixando] = useState(null) // 'saida' | 'entrada'
   const [progAnexos, setProgAnexos] = useState(null)
+  // Erro PROPRIO: mostrado junto dos botoes de anexo, la embaixo. Com o erro
+  // compartilhado, a falha de um clique no fim da tela aparecia na secao do
+  // backup de dados — e "o botao nao fez nada" e a leitura mais cara possivel
+  // num backup.
+  const [erroAnexos, setErroAnexos] = useState('')
   const [prontoAnexos, setProntoAnexos] = useState(null)
   // Os anexos passam dos 100 MB somados e o zip e montado NA MEMORIA: num
   // celular isso trava a aba. O corte de largura nao mede memoria, mas separa
@@ -58,7 +63,7 @@ export default function Backup({ naoLidas, aoAbrirNotif, aoVoltar }) {
 
   async function baixarAnexos(tipo) {
     setTipoBaixando(tipo)
-    setErro('')
+    setErroAnexos('')
     setProntoAnexos(null)
     try {
       const { blob, incluidos, falhas, quando } = await gerarZipAnexos({
@@ -70,7 +75,7 @@ export default function Backup({ naoLidas, aoAbrirNotif, aoVoltar }) {
       baixarBlob(blob, arquivo)
       setProntoAnexos({ arquivo, tipo, incluidos: incluidos.length, falhas })
     } catch (e) {
-      setErro(e.message || 'Não foi possível baixar os anexos.')
+      setErroAnexos(e.message || 'Não foi possível baixar os anexos.')
       registrarErro('backup-anexos', e, 'Backup')
     } finally {
       setTipoBaixando(null)
@@ -186,6 +191,8 @@ export default function Backup({ naoLidas, aoAbrirNotif, aoVoltar }) {
             </button>
           ))}
         </div>
+
+        {erroAnexos && <p className="erro">{erroAnexos}</p>}
 
         {progAnexos && (
           <p className="bk-progresso" role="status">

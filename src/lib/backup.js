@@ -228,7 +228,13 @@ function leiaMeAnexos(tipo, incluidos, falhas, quando) {
     linhas.push(
       '',
       'NÃO ENTRARAM (falha ao baixar):',
-      ...falhas.map((f) => `  demanda-${f.demanda_id}/${f.nome_original}`),
+      // Pelo ID, e nao pelo caminho: o nome CRU do que falhou pode ser igual
+      // ao de um arquivo que ENTROU (a demanda-17 tem cinco "image.jpg"), e a
+      // linha apontaria para um arquivo presente no zip. O id casa com a
+      // coluna `id` de dados/anexo.csv, no backup de dados.
+      ...falhas.map(
+        (f) => `  anexo #${f.id} — demanda ${f.demanda_id} — "${f.nome_original}"`,
+      ),
       '',
       `Cada um foi tentado ${TENTATIVAS} vezes. Tente o download de novo — se`,
       'persistir, o arquivo pode ter sido removido do Storage.',
@@ -262,10 +268,25 @@ const dorme = (ms) => new Promise((r) => setTimeout(r, ms))
 // e o que importa: um arquivo lento nao pode parar a fila inteira.
 async function baixarArquivo(caminho) {
   for (let tentativa = 1; tentativa <= TENTATIVAS; tentativa++) {
-    const resposta = await Promise.race([
-      supabase.storage.from('anexos').download(caminho),
-      dorme(ESPERA_MS).then(() => ({ data: null, error: { message: 'tempo esgotado' } })),
-    ])
+    // O try/catch NAO e precaucao generica — e o caso mais provavel de falhar.
+    // O `download()` do storage-js so converte em `{ data, error }` o que da
+    // errado ATE os cabecalhos; a leitura do CORPO (`await result.blob()`)
+    // acontece depois e, se a conexao cair no meio da transferencia, ele
+    // RELANCA um TypeError cru. Sem este catch a rejeicao pularia as
+    // tentativas, derrubaria os quatro trabalhadores e mataria o backup
+    // inteiro — justamente na oscilacao de rede que motivou o retry.
+    let resposta
+    try {
+      resposta = await Promise.race([
+        supabase.storage.from('anexos').download(caminho),
+        dorme(ESPERA_MS).then(() => ({
+          data: null,
+          error: { message: 'tempo esgotado' },
+        })),
+      ])
+    } catch (e) {
+      resposta = { data: null, error: e }
+    }
     if (resposta?.data && !resposta.error) return resposta.data
     // Espera crescente entre as tentativas: se o Storage engasgou, insistir no
     // mesmo instante so repete o engasgo.
@@ -308,9 +329,17 @@ export async function gerarZipAnexos({ tipo, aoProgredir } = {}) {
       const i = proximo++
       if (i >= anexos.length) return
       const a = anexos[i]
-      const dados = await baixarArquivo(a.caminho_storage)
-      if (!dados) falhas.push(a)
-      else baixados[i] = new Uint8Array(await dados.arrayBuffer())
+      // Rede de seguranca do trabalhador: qualquer coisa que escape aqui
+      // rejeitaria o Promise.all e mataria a corrida inteira, deixando os
+      // outros tres baixando orfaos. Um anexo problematico vira UMA linha de
+      // falha no LEIA-ME — que e o contrato desta funcao.
+      try {
+        const dados = await baixarArquivo(a.caminho_storage)
+        if (!dados) falhas.push(a)
+        else baixados[i] = new Uint8Array(await dados.arrayBuffer())
+      } catch {
+        falhas.push(a)
+      }
       feitas += 1
       aoProgredir?.(feitas, anexos.length, a.nome_original)
     }

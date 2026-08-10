@@ -138,9 +138,16 @@ export function baixarBlob(blob, nomeArquivo) {
 // Nao e caso raro: no banco de hoje ha seis anexos chamados "image.jpg".
 //
 // `usados` e um Set que o chamador mantem entre as chamadas.
+// A comparacao ignora MAIUSCULAS porque o disco de quem extrai tambem ignora:
+// no Windows (NTFS) e no macOS, "IMG_0042.JPG" e "img_0042.jpg" sao O MESMO
+// arquivo. Comparando a string exata, os dois entrariam no zip como entradas
+// distintas e, ao extrair, um sobrescreveria o outro — sem erro, sem aviso,
+// exatamente a perda que esta funcao existe para impedir.
+const chave = (nome) => nome.toLowerCase()
+
 export function nomeUnicoNoZip(nome, usados) {
-  if (!usados.has(nome)) {
-    usados.add(nome)
+  if (!usados.has(chave(nome))) {
+    usados.add(chave(nome))
     return nome
   }
   const ponto = nome.lastIndexOf('.')
@@ -148,10 +155,10 @@ export function nomeUnicoNoZip(nome, usados) {
   const ext = ponto > 0 ? nome.slice(ponto) : ''
   let n = 2
   let novo = `${base} (${n})${ext}`
-  while (usados.has(novo)) {
+  while (usados.has(chave(novo))) {
     n += 1
     novo = `${base} (${n})${ext}`
   }
-  usados.add(novo)
+  usados.add(chave(novo))
   return novo
 }
