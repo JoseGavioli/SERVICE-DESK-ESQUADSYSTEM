@@ -34,3 +34,9 @@ dev-dist
 vapid.json
 vapid-keys.txt
 vapid-public.txt
+
+# Backups baixados pelo app (§17). O navegador salva onde estiver apontado, e
+# um deles ja caiu aqui na raiz durante os testes — sao DADOS REAIS: CPF,
+# dados bancarios das fichas (§19) e o celular da equipe. Nunca versionar.
+service-desk-backup-*.zip
+service-desk-anexos-*.zip

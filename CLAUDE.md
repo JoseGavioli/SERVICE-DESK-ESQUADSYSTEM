@@ -370,7 +370,7 @@ Cada fase é pequena o bastante para eu ler, entender e aprovar antes da próxim
 3. **Tela admin de tipos de demanda** (issue #18) — hoje os 6 tipos são semeados no banco. Também vai para a **Administração**.
 4. **Feriados no cálculo de prazo** (§8) — hoje só pula sábado/domingo.
 5. **Limpeza de anexos de entrada antigos** (§14) — os de saída são permanentes.
-6. ~~Export/backup dos dados~~ → **feito**: Administração → **Backup** baixa um `.zip` com as 9 tabelas de conteúdo em **CSV** (separador `;`, o do Excel em português) e **JSON**, mais um `LEIA-ME`. Só os DADOS — os arquivos dos anexos (~100 MB) ficam no Storage. Sem dependência (reusa o `lib/zip.js` da #72) e sem migração. Não substitui o backup automático do Supabase; resolve outra coisa — ter os dados fora dele, legíveis.
+6. ~~Export/backup dos dados~~ → **feito**: Administração → **Backup** baixa um `.zip` com as 9 tabelas de conteúdo em **CSV** (separador `;`, o do Excel em português) e **JSON**, mais um `LEIA-ME`. Os **arquivos** dos anexos têm botões próprios, um por tipo (saída ~60 MB / entrada ~45 MB), organizados numa pasta por demanda — separados porque o zip é montado na memória do navegador, e por isso o botão fica **desabilitado no celular**. Sem dependência (reusa o `lib/zip.js` da #72) e sem migração. Não substitui o backup automático do Supabase; resolve outra coisa — ter os dados fora dele, legíveis.
 
 **Já resolvidas:**
 - ~~Login = email ou username~~ → **email** (Supabase Auth nativo).

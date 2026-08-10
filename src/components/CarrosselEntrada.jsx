@@ -7,7 +7,7 @@ import {
   validarArquivo,
   ALVO_ENTRADA,
 } from '../lib/anexos'
-import { montarZip, baixarBlob } from '../lib/zip'
+import { montarZip, baixarBlob, nomeUnicoNoZip } from '../lib/zip'
 import Lightbox from './Lightbox'
 import MiniaturaPdf from './MiniaturaPdf'
 import Icone from './Icone'
@@ -128,26 +128,6 @@ export default function CarrosselEntrada({ demanda, perfil }) {
     // um orfao invisivel, nao um erro na cara do usuario).
     await supabase.storage.from('anexos').remove([a.caminho_storage])
     carregar()
-  }
-
-  // Nome unico dentro do zip: dois PDFs com o mesmo nome_original nao podem
-  // colidir. Na colisao, vira "nome (2).pdf", "nome (3).pdf"...
-  function nomeUnicoNoZip(nome, usados) {
-    if (!usados.has(nome)) {
-      usados.add(nome)
-      return nome
-    }
-    const ponto = nome.lastIndexOf('.')
-    const base = ponto > 0 ? nome.slice(0, ponto) : nome
-    const ext = ponto > 0 ? nome.slice(ponto) : ''
-    let n = 2
-    let novo = `${base} (${n})${ext}`
-    while (usados.has(novo)) {
-      n += 1
-      novo = `${base} (${n})${ext}`
-    }
-    usados.add(novo)
-    return novo
   }
 
   // Baixa TODOS os PDFs de entrada compactados num .zip (§nova função). Busca

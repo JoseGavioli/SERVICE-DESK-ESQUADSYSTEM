@@ -130,3 +130,28 @@ export function baixarBlob(blob, nomeArquivo) {
   a.remove()
   URL.revokeObjectURL(url)
 }
+
+// Nome unico DENTRO do zip: dois arquivos com o mesmo nome nao podem colidir —
+// o segundo sobrescreveria o primeiro e alguem perderia um arquivo sem nunca
+// saber. Na colisao vira "nome (2).pdf", "nome (3).pdf"...
+//
+// Nao e caso raro: no banco de hoje ha seis anexos chamados "image.jpg".
+//
+// `usados` e um Set que o chamador mantem entre as chamadas.
+export function nomeUnicoNoZip(nome, usados) {
+  if (!usados.has(nome)) {
+    usados.add(nome)
+    return nome
+  }
+  const ponto = nome.lastIndexOf('.')
+  const base = ponto > 0 ? nome.slice(0, ponto) : nome
+  const ext = ponto > 0 ? nome.slice(ponto) : ''
+  let n = 2
+  let novo = `${base} (${n})${ext}`
+  while (usados.has(novo)) {
+    n += 1
+    novo = `${base} (${n})${ext}`
+  }
+  usados.add(novo)
+  return novo
+}

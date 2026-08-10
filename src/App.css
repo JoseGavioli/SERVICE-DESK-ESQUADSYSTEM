@@ -6567,3 +6567,57 @@ button.cad-item:hover {
     margin: 0 auto;
   }
 }
+
+/* Arquivos dos anexos (§17): zips separados por tipo. */
+.bk-anexos {
+  margin-top: 1.6rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--borda);
+}
+.bk-anexos h2 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+}
+.bk-anexos code {
+  background: var(--surface-2);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 0.85em;
+}
+.bk-anexos-botoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+}
+/* Secundário: o backup de DADOS é o principal (leve, uso frequente); estes são
+   pesados e esporádicos, e o peso visual acompanha. */
+.bk-botao-secundario {
+  flex: 1;
+  min-width: 200px;
+  background: var(--surface);
+  color: var(--texto);
+  border: 1px solid var(--borda-forte, var(--borda));
+  font-size: 0.92rem;
+}
+.bk-botao-secundario:disabled {
+  opacity: 0.55;
+}
+.bk-aviso-celular {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0.9rem 0 0;
+  padding: 0.7rem 0.8rem;
+  background: var(--surface-2);
+  border-left: 3px solid var(--perigo);
+  border-radius: var(--raio-sm);
+  color: var(--texto-suave);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+.bk-aviso-celular svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--perigo);
+}

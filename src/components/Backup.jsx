@@ -1,5 +1,13 @@
 import { useState } from 'react'
-import { gerarBackup, nomeDoArquivo, TABELAS } from '../lib/backup'
+import {
+  gerarBackup,
+  gerarZipAnexos,
+  nomeDoArquivo,
+  nomeDoZipAnexos,
+  TABELAS,
+  TIPOS_ANEXO,
+} from '../lib/backup'
+import { useDesktop } from '../lib/useDesktop'
 import { baixarBlob } from '../lib/zip'
 import { registrarErro } from '../lib/erros'
 import Icone from './Icone'
@@ -15,6 +23,15 @@ export default function Backup({ naoLidas, aoAbrirNotif, aoVoltar }) {
   const [progresso, setProgresso] = useState(null) // { feitas, total, nome }
   const [erro, setErro] = useState('')
   const [pronto, setPronto] = useState(null) // { arquivo, resumo, quando }
+  // Anexos: estado proprio, para o download dos dados e o dos arquivos nao
+  // pisarem um no outro.
+  const [tipoBaixando, setTipoBaixando] = useState(null) // 'saida' | 'entrada'
+  const [progAnexos, setProgAnexos] = useState(null)
+  const [prontoAnexos, setProntoAnexos] = useState(null)
+  // Os anexos passam dos 100 MB somados e o zip e montado NA MEMORIA: num
+  // celular isso trava a aba. O corte de largura nao mede memoria, mas separa
+  // bem o caso de uso — backup de 100 MB se faz no computador.
+  const desktop = useDesktop()
 
   async function baixar() {
     setGerando(true)
@@ -36,6 +53,28 @@ export default function Backup({ naoLidas, aoAbrirNotif, aoVoltar }) {
     } finally {
       setGerando(false)
       setProgresso(null)
+    }
+  }
+
+  async function baixarAnexos(tipo) {
+    setTipoBaixando(tipo)
+    setErro('')
+    setProntoAnexos(null)
+    try {
+      const { blob, incluidos, falhas, quando } = await gerarZipAnexos({
+        tipo,
+        aoProgredir: (feitas, total, nome) =>
+          setProgAnexos({ feitas, total, nome }),
+      })
+      const arquivo = nomeDoZipAnexos(tipo, quando)
+      baixarBlob(blob, arquivo)
+      setProntoAnexos({ arquivo, tipo, incluidos: incluidos.length, falhas })
+    } catch (e) {
+      setErro(e.message || 'Não foi possível baixar os anexos.')
+      registrarErro('backup-anexos', e, 'Backup')
+    } finally {
+      setTipoBaixando(null)
+      setProgAnexos(null)
     }
   }
 
@@ -82,7 +121,7 @@ export default function Backup({ naoLidas, aoAbrirNotif, aoVoltar }) {
         type="button"
         className="bk-botao"
         onClick={baixar}
-        disabled={gerando}
+        disabled={gerando || Boolean(tipoBaixando)}
       >
         <Icone nome="arquivo" size={18} />
         {gerando ? 'Gerando…' : 'Baixar backup agora'}
@@ -113,6 +152,62 @@ export default function Backup({ naoLidas, aoAbrirNotif, aoVoltar }) {
         </div>
       )}
 
+      {/* Os ARQUIVOS dos anexos, em zips separados por tipo. Separados porque
+          somam 105 MB: dois arquivos de 60 e 45 MB são bem mais fáceis de
+          montar (e de guardar) do que um de 105. */}
+      <div className="bk-anexos">
+        <h2>Arquivos dos anexos</h2>
+        <p className="bk-nota">
+          Os PDFs e fotos em si, organizados numa pasta por demanda. O número
+          da pasta é o <code>id</code> da demanda — é por ele que este zip se
+          liga ao backup de dados.
+        </p>
+
+        {!desktop && (
+          <p className="bk-aviso-celular" role="status">
+            <Icone nome="aviso" size={16} />
+            São mais de 100 MB somados, montados na memória do aparelho. Faça
+            este download <strong>pelo computador</strong>.
+          </p>
+        )}
+
+        <div className="bk-anexos-botoes">
+          {Object.entries(TIPOS_ANEXO).map(([tipo, info]) => (
+            <button
+              key={tipo}
+              type="button"
+              className="bk-botao bk-botao-secundario"
+              onClick={() => baixarAnexos(tipo)}
+              disabled={!desktop || Boolean(tipoBaixando) || gerando}
+              title={!desktop ? 'Disponível no computador' : info.ajuda}
+            >
+              <Icone nome="arquivo" size={18} />
+              {tipoBaixando === tipo ? 'Baixando…' : info.rotulo}
+            </button>
+          ))}
+        </div>
+
+        {progAnexos && (
+          <p className="bk-progresso" role="status">
+            Baixando {progAnexos.feitas} de {progAnexos.total}
+            {progAnexos.nome ? ` — ${progAnexos.nome}` : ''}
+          </p>
+        )}
+
+        {prontoAnexos && (
+          <div className="bk-pronto" role="status">
+            <strong>{prontoAnexos.arquivo}</strong> baixado —{' '}
+            {prontoAnexos.incluidos} arquivo(s).
+            {prontoAnexos.falhas.length > 0 && (
+              <p className="bk-nota">
+                {prontoAnexos.falhas.length} não puderam ser baixados e estão
+                listados no LEIA-ME dentro do zip.
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* O que o backup NÃO leva. Dito aqui, e não só dentro do zip: quem
           confia num backup precisa saber o tamanho da rede antes de precisar
           dela. */}
@@ -120,8 +215,8 @@ export default function Backup({ naoLidas, aoAbrirNotif, aoVoltar }) {
         <h2>O que este backup não inclui</h2>
         <ul>
           <li>
-            <strong>Os arquivos dos anexos</strong> (PDFs e fotos) — só os
-            dados sobre eles. Os arquivos ficam no Storage do Supabase.
+            <strong>Os arquivos dos anexos</strong> (PDFs e fotos) — aqui vão
+            só os dados sobre eles. Os arquivos têm botão próprio, abaixo.
           </li>
           <li>
             <strong>Senhas</strong> — ficam no Auth do Supabase, fora do

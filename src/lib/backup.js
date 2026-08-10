@@ -1,6 +1,6 @@
 import { supabase } from './supabase'
 import { todasAsLinhas } from './paginacao'
-import { montarZip } from './zip'
+import { montarZip, nomeUnicoNoZip } from './zip'
 
 // EXPORT / BACKUP dos dados (§17). Rede de segurança para um app em uso real:
 // leva os dados para FORA do Supabase, num arquivo que o dono guarda onde
@@ -187,4 +187,177 @@ export function nomeDoArquivo(quando = new Date()) {
   const d = String(quando.getDate()).padStart(2, '0')
   const m = String(quando.getMonth() + 1).padStart(2, '0')
   return `service-desk-backup-${quando.getFullYear()}-${m}-${d}.zip`
+}
+
+// ── ANEXOS: os ARQUIVOS, não os metadados ──────────────────────────
+// O backup de dados leva a tabela `anexo` (quem enviou, quando, tamanho); os
+// PDFs e fotos em si ficam no Storage. Estas funções trazem os arquivos.
+//
+// Vêm SEPARADOS por tipo (§decisão do dono) por dois motivos: cada zip fica
+// gerenciável (60 MB / 45 MB em vez de 105 de uma vez, montados na memória do
+// navegador) e dá para levar só o que interessa — os de SAÍDA são os
+// orçamentos entregues, permanentes por §14; os de ENTRADA são fotos de
+// referência, e já estão marcados para limpeza futura.
+export const TIPOS_ANEXO = {
+  saida: {
+    rotulo: 'Anexos de saída',
+    ajuda: 'Os orçamentos entregues. São permanentes (§14).',
+  },
+  entrada: {
+    rotulo: 'Anexos de entrada',
+    ajuda: 'Fotos e PDFs que o vendedor mandou junto do pedido.',
+  },
+}
+
+function leiaMeAnexos(tipo, incluidos, falhas, quando) {
+  const linhas = [
+    `ANEXOS DE ${tipo.toUpperCase()} — Service Desk / EsquadSystem`,
+    `Gerado em ${quando.toLocaleString('pt-BR')}`,
+    '',
+    `${incluidos.length} arquivo(s), organizados em uma pasta por demanda:`,
+    '',
+    '  demanda-12/orcamento.pdf',
+    '',
+    'O NÚMERO DA PASTA é o id da demanda — o mesmo `id` do arquivo',
+    'dados/demanda.csv no backup de dados. É por ele que se liga um ao outro.',
+    '',
+    'Nomes repetidos ganham "(2)", "(3)"... dentro da mesma pasta: no banco há',
+    'vários anexos chamados "image.jpg", e sem isso um sobrescreveria o outro.',
+  ]
+  if (falhas.length) {
+    linhas.push(
+      '',
+      'NÃO ENTRARAM (falha ao baixar):',
+      ...falhas.map((f) => `  demanda-${f.demanda_id}/${f.nome_original}`),
+      '',
+      `Cada um foi tentado ${TENTATIVAS} vezes. Tente o download de novo — se`,
+      'persistir, o arquivo pode ter sido removido do Storage.',
+    )
+  }
+  return linhas.join('\r\n')
+}
+
+// Quantos downloads ao mesmo tempo. Em série, medido: 63 arquivos levaram 122
+// segundos (~2s cada) — e os 123 de entrada levariam quatro minutos com o app
+// parado. O tempo é de rede, não de processamento, então esperar em paralelo
+// resolve. Quatro é conservador de propósito: acelera ~4x sem abrir uma
+// enxurrada de conexões nem segurar dezenas de arquivos em memória de uma vez.
+const CONCORRENTES = 4
+
+// Quantas vezes tentar cada arquivo, e quanto esperar antes de desistir de uma
+// tentativa. Isto NAO e zelo teorico: na primeira execucao real, 1 dos 123
+// arquivos falhou — e numa segunda passada, os mesmos 123 baixaram inteiros.
+// Ou seja, foi oscilacao de rede sob concorrencia. Sem repetir, um backup
+// perderia um arquivo por causa de um soluco de conexao; e o arquivo travado
+// segurou o processo por ~60s, deixando a tela parada em "122 de 123".
+const TENTATIVAS = 3
+const ESPERA_MS = 30000
+
+const dorme = (ms) => new Promise((r) => setTimeout(r, ms))
+
+// Baixa um arquivo do Storage, insistindo. Devolve o Blob ou null.
+//
+// O `race` com o relogio nao CANCELA o download que ficou pendurado (o fetch
+// segue em segundo plano), mas libera o trabalhador para pegar o proximo — que
+// e o que importa: um arquivo lento nao pode parar a fila inteira.
+async function baixarArquivo(caminho) {
+  for (let tentativa = 1; tentativa <= TENTATIVAS; tentativa++) {
+    const resposta = await Promise.race([
+      supabase.storage.from('anexos').download(caminho),
+      dorme(ESPERA_MS).then(() => ({ data: null, error: { message: 'tempo esgotado' } })),
+    ])
+    if (resposta?.data && !resposta.error) return resposta.data
+    // Espera crescente entre as tentativas: se o Storage engasgou, insistir no
+    // mesmo instante so repete o engasgo.
+    if (tentativa < TENTATIVAS) await dorme(400 * tentativa)
+  }
+  return null
+}
+
+// Baixa os arquivos de um tipo e devolve o zip.
+// Um arquivo que falha NÃO impede os outros — ele é listado no LEIA-ME.
+export async function gerarZipAnexos({ tipo, aoProgredir } = {}) {
+  const { data: anexos, error } = await todasAsLinhas((de, ate) =>
+    supabase
+      .from('anexo')
+      .select('id, demanda_id, tipo, nome_original, caminho_storage')
+      .eq('tipo', tipo)
+      .order('id')
+      .range(de, ate),
+  )
+  if (error) {
+    throw new Error(
+      `Não foi possível listar os anexos de ${tipo}: ${error.message}`,
+      { cause: error },
+    )
+  }
+  if (!anexos?.length) {
+    throw new Error(`Não há anexos de ${tipo} para baixar.`)
+  }
+
+  // Os bytes vão para um vetor NA POSIÇÃO ORIGINAL, não na ordem em que
+  // chegam: em paralelo a ordem de chegada é imprevisível, e o zip ficaria
+  // embaralhado diferente a cada backup.
+  const baixados = new Array(anexos.length).fill(null)
+  const falhas = []
+  let proximo = 0
+  let feitas = 0
+
+  async function trabalhador() {
+    while (true) {
+      const i = proximo++
+      if (i >= anexos.length) return
+      const a = anexos[i]
+      const dados = await baixarArquivo(a.caminho_storage)
+      if (!dados) falhas.push(a)
+      else baixados[i] = new Uint8Array(await dados.arrayBuffer())
+      feitas += 1
+      aoProgredir?.(feitas, anexos.length, a.nome_original)
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(CONCORRENTES, anexos.length) }, trabalhador),
+  )
+
+  const arquivos = []
+  const incluidos = []
+  // Um Set de nomes POR DEMANDA: o desempate só precisa valer dentro da pasta.
+  // Feito AQUI, na ordem original, para o "(2)" cair sempre no mesmo arquivo.
+  const usadosPorDemanda = new Map()
+  for (let i = 0; i < anexos.length; i++) {
+    if (!baixados[i]) continue
+    const a = anexos[i]
+    if (!usadosPorDemanda.has(a.demanda_id)) {
+      usadosPorDemanda.set(a.demanda_id, new Set())
+    }
+    const nome = nomeUnicoNoZip(
+      a.nome_original,
+      usadosPorDemanda.get(a.demanda_id),
+    )
+    arquivos.push({
+      nome: `demanda-${a.demanda_id}/${nome}`,
+      dados: baixados[i],
+    })
+    incluidos.push(a)
+  }
+
+  if (!arquivos.length) {
+    throw new Error('Nenhum arquivo pôde ser baixado.')
+  }
+
+  const quando = new Date()
+  arquivos.push({
+    nome: 'LEIA-ME.txt',
+    dados: bytesDeTexto(leiaMeAnexos(tipo, incluidos, falhas, quando), true),
+  })
+  aoProgredir?.(anexos.length, anexos.length, null)
+
+  return { blob: montarZip(arquivos), incluidos, falhas, quando }
+}
+
+export function nomeDoZipAnexos(tipo, quando = new Date()) {
+  const d = String(quando.getDate()).padStart(2, '0')
+  const m = String(quando.getMonth() + 1).padStart(2, '0')
+  return `service-desk-anexos-${tipo}-${quando.getFullYear()}-${m}-${d}.zip`
 }
