@@ -18,6 +18,7 @@ import MenuNovaDemanda from './MenuNovaDemanda'
 const SECAO_RAIZ = {
   equipe: 'admin',
   erros: 'admin',
+  backup: 'admin',
   relatorio: 'dashboard',
 }
 

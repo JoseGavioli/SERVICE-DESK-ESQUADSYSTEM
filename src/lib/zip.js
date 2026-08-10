@@ -112,3 +112,21 @@ export function montarZip(arquivos) {
     type: 'application/zip',
   })
 }
+
+// Dispara o download de um Blob, sem abrir aba em branco. Mora aqui porque
+// quem monta um zip no navegador quase sempre quer baixa-lo em seguida — era
+// uma funcao solta dentro do carrossel de anexos, e o backup (§17) precisava
+// da mesma coisa.
+//
+// O `revokeObjectURL` devolve a memoria do blob: sem ele, o arquivo inteiro
+// fica pendurado ate a aba fechar.
+export function baixarBlob(blob, nomeArquivo) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = nomeArquivo
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}

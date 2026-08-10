@@ -20,6 +20,12 @@ const ITENS = [
     titulo: 'Erros',
     sub: 'O que quebrou no aparelho dos usuários.',
   },
+  {
+    id: 'backup',
+    icone: 'arquivo',
+    titulo: 'Backup',
+    sub: 'Baixa todos os dados num .zip, para guardar fora daqui.',
+  },
 ]
 
 export default function Administracao({ aoNavegar, naoLidas, aoAbrirNotif }) {

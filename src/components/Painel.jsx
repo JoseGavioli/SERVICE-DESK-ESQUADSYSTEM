@@ -7,6 +7,7 @@ import Clientes from './Clientes'
 import Equipe from './Equipe'
 import MeuPerfil from './MeuPerfil'
 import Erros from './Erros'
+import Backup from './Backup'
 import Relatorio from './Relatorio'
 import Administracao from './Administracao'
 import MenuLateral from './MenuLateral'
@@ -36,6 +37,7 @@ const NOME_TELA = {
   equipe: 'Equipe',
   perfil: 'Meu perfil',
   erros: 'Erros',
+  backup: 'Backup',
   relatorio: 'Relatório',
 }
 
@@ -44,6 +46,7 @@ const NOME_TELA = {
 const SECAO_MAE = {
   equipe: 'admin',
   erros: 'admin',
+  backup: 'admin',
   relatorio: 'dashboard',
 }
 
@@ -263,6 +266,7 @@ export default function Painel({ sessao }) {
     secao === 'equipe' ||
     secao === 'perfil' ||
     secao === 'erros' ||
+    secao === 'backup' ||
     secao === 'admin' ||
     secao === 'relatorio' ||
     secao === 'dashboard'
@@ -436,6 +440,13 @@ export default function Painel({ sessao }) {
         )}
         {secao === 'erros' && (
           <Erros
+            naoLidas={naoLidas}
+            aoAbrirNotif={() => setNotifAberto(true)}
+            aoVoltar={() => setSecao('admin')}
+          />
+        )}
+        {secao === 'backup' && (
+          <Backup
             naoLidas={naoLidas}
             aoAbrirNotif={() => setNotifAberto(true)}
             aoVoltar={() => setSecao('admin')}

@@ -7,7 +7,7 @@ import {
   validarArquivo,
   ALVO_ENTRADA,
 } from '../lib/anexos'
-import { montarZip } from '../lib/zip'
+import { montarZip, baixarBlob } from '../lib/zip'
 import Lightbox from './Lightbox'
 import MiniaturaPdf from './MiniaturaPdf'
 import Icone from './Icone'
@@ -148,18 +148,6 @@ export default function CarrosselEntrada({ demanda, perfil }) {
     }
     usados.add(novo)
     return novo
-  }
-
-  // Dispara o download de um Blob (sem abrir aba em branco).
-  function baixarBlob(blob, nomeArquivo) {
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = nomeArquivo
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    URL.revokeObjectURL(url)
   }
 
   // Baixa TODOS os PDFs de entrada compactados num .zip (§nova função). Busca
