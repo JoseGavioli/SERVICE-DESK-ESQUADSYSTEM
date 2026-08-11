@@ -1,0 +1,36 @@
+-- ───────────────────────────────────────────────────────────────
+-- Migracao 0051 — a lista da equipe exige estar logado
+--
+-- Problema: a `perfil_staff_visivel` (0007) foi criada SEM clausula `to`. No
+-- Postgres isso significa `TO PUBLIC`, e no Supabase o PUBLIC inclui o papel
+-- `anon` — o visitante sem sessao. A condicao dela e so `papel in (...)`, sem
+-- nada que dependa de estar autenticado. Resultado: qualquer um que abrisse o
+-- endereco do app conseguia LISTAR a equipe — nome completo, celular, papel e
+-- o id de autenticacao — usando apenas a chave publishable, que por desenho
+-- vai no bundle do frontend.
+--
+-- Medido antes de escrever esta migracao, com uma consulta sem sessao nenhuma:
+-- as 13 tabelas do app foram testadas uma a uma e SO a `perfil` devolveu
+-- linhas. demanda, cliente, obra, comentario, anexo, ficha_fechamento,
+-- historico_status, notificacao, erro_log, assinatura_push, tipo_demanda e
+-- visualizacao voltaram vazias. O vazamento estava confinado aqui.
+--
+-- Por que as outras policies de leitura de `perfil` nao tem o mesmo furo: a
+-- `perfil_leitura_propria` (0001) compara com `auth.uid()` e a
+-- `perfil_leitura_equipe` (0003/0032) chama `meu_papel()` — para um anonimo as
+-- duas dao nulo e nenhuma linha passa. A 0007 e a unica cuja condicao nao
+-- olha para quem esta perguntando.
+--
+-- A correcao NAO mexe na condicao (quais linhas): so em QUEM pode perguntar.
+-- Vendedor continua sem ver vendedor, e o gerente continua visivel (0050).
+-- Mesmo idioma da 0035, que ja usa `to authenticated` pelo mesmo motivo.
+--
+-- Nao quebra o app: os seis lugares que leem `perfil` (Painel, Equipe,
+-- Dashboard, MeuPerfil, NovaDemanda, LinhaPerfil) so renderizam depois do
+-- login — o App.jsx so monta o Painel quando ha sessao.
+--
+-- NAO e destrutiva e nao toca em dado nenhum. Cole no SQL Editor e rode.
+-- ───────────────────────────────────────────────────────────────
+
+alter policy "perfil_staff_visivel" on perfil
+  to authenticated;
