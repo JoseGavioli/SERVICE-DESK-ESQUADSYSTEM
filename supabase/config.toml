@@ -26,3 +26,8 @@ verify_jwt = false
 # evitar que alguem desligue por analogia com a funcao de cima.
 [functions.criar-usuario]
 verify_jwt = true
+
+# Mesmo caso da criar-usuario: identifica o chamador pelo token dele, entao o
+# Verify JWT fica LIGADO. As duas compartilham o portao em functions/_shared.
+[functions.resetar-senha]
+verify_jwt = true
