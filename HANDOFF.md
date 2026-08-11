@@ -1,15 +1,16 @@
 # 📋 Handoff — Service Desk - EsquadSystem
 
-**Data:** 11/08/2026 · **Branch:** `main` · **último HEAD publicado:** `57e8dd2`
+**Data:** 11/08/2026 · **Branch:** `main` · **último HEAD publicado:** `0e3c34f`
 
 > Documento de continuidade. Para retomar: leia a **§7** (pendências) e a **§9** (armadilhas).
 > A fundação é o **`CLAUDE.md`** — leia-o por completo antes de mexer em qualquer coisa.
 
 ---
 
-## 1. ✅ Migrações: todas aplicadas (`0001` → `0051`)
+## 1. ✅ Migrações: todas aplicadas (`0001` → `0052`)
 
 Todas rodadas e confirmadas pelo dono no SQL Editor. As mais recentes:
+- **`0052`** — conta desativada para de **LER** (issue #91). A `0025` só cobria a escrita, e o barrar na entrada era do frontend — pela API, com o token na mão, um desativado seguia lendo tudo. Fecha com policies **`restrictive`** nas 8 tabelas de conteúdo: restritiva o Postgres soma com **E** ao que já existe, então **nenhuma condição antiga precisou ser reescrita**. Foi de propósito — `alter policy ... using` SUBSTITUI a expressão, e várias dessas policies já tinham sido refeitas depois (a `0031` por causa do gerente, a `0041` pelo `perfil_oculto()`); copiar oito à mão é como um pedaço de condição some sem ninguém ver, e numa policy de LEITURA isso quer dizer alguém enxergando o que não devia. A `perfil` ficou **fora** para o aviso *"Sua conta está desativada"* não virar *"Seu usuário ainda não tem um perfil cadastrado"*.
 - **`0050`/`0051`** — as duas na `perfil`, e a segunda **nasceu de conferir a primeira**. A `0050` põe o `gerente` na `perfil_staff_visivel`, que era de quando existiam três papéis: sem ele, o vendedor via o comentário de mudança de prazo assinado por **"Alguém"** (o embed `autor:perfil(...)` é to-one sem `!inner` — linha barrada volta **nula**, não dá erro). Ao verificar se pegou, a consulta mostrou que ela respondia **sem sessão nenhuma**: a policy fora criada sem cláusula `to`, que em Postgres é `TO PUBLIC` e no Supabase inclui o `anon`. Como a condição olhava só a linha (`papel in (...)`), qualquer um com o endereço do app listava nome, celular e papel da equipe — no ar desde julho. A `0051` fecha com `to authenticated` (muda **quem pergunta**, não **quais linhas**).
 - **`0042`/`0043`/`0044`** — admin define o **dono** da demanda + os dois fixes de posse que isso exigiu (anexar entrada; dono apaga entrada — ver §6).
 - **`0045`** — **Ficha de pedido de vendas** (F1 da #80): `tipo_demanda.com_ficha` (flag data-driven), tabela `ficha_fechamento` (1:1 com demanda, RLS: ler=quem vê a demanda; criar=dono em `nao_iniciado` OU admin não-terminal, só tipo com ficha; editar=staff não-terminal OU dono em `nao_iniciado`; delete=negado; gatilho impede trocar de demanda) e **`mover_status` com DOIS trilhos**: tipo com ficha pula a revisão de custo (`em_andamento → concluido` direto; entrar em revisão é bloqueado, sair continua podendo).
@@ -34,14 +35,14 @@ App web interno da **EsquadSystem** (esquadrias de alumínio) para gerir **deman
 
 ## 4. Estado atual
 
-- **Fases 0–6 completas** e no ar. Migrações **`0001` → `0051`**, todas aplicadas (§1).
+- **Fases 0–6 completas** e no ar. Migrações **`0001` → `0052`**, todas aplicadas (§1).
 - **Web Push (#14): CONCLUÍDO** — validado nas 3 plataformas (desktop, Android, iOS com PWA).
 - **Dashboard: reforma COMPLETA** (A+B+C, #77) e **TODAS as listagens ilimitadas paginadas** (#78/#79 — helper `lib/paginacao.js`, `todasAsLinhas`): lista, RPCs, Relatório, SeletorCliente, Clientes. A classe de bug "corte silencioso de ~1000 do PostgREST" está **encerrada** no app.
 - **Anexos de entrada:** comprimidos para **≤ 1 MB** (`ALVO_ENTRADA` em `lib/anexos.js`) nos DOIS caminhos (criação e detalhe) — #75.
 - **Ficha de pedido de vendas (#80): COMPLETA (F1–F4)** — o vendedor preenche a ficha no app ao criar demanda de Fechamento; o fluxo de status pula a revisão (dois trilhos na `mover_status`); o detalhe tem a box da ficha (ver/**editar** com permissões espelhando a RLS; RT travada — é da demanda); e o **PDF** sai como réplica fiel do papel via `window.print()`. Spec registrada no **CLAUDE.md §19** (+ exceções em §7/§10). ⚠ iPhone com PWA instalado não imprime (`window.print()` é ignorado em standalone — o app mostra a dica de abrir pelo Safari; mesma limitação do Relatório). Demandas de teste #36/#37 criadas pela conta oculta na validação.
 - **Modo desktop (#83): COMPLETO (B1–B4)** — o app tem duas caras na mesma base: **≥900px** vira site (menu lateral, campos expostos, filtros à vista) e **≥1200px** ganha **lista + detalhe lado a lado**. Spec no **CLAUDE.md §20**. O **celular não mudou em nada** — foi o critério de aceite de cada bloco.
 - **Backup dos dados (§17): FEITO** — Administração → Backup baixa as 9 tabelas em CSV+JSON, e os ARQUIVOS dos anexos em zips por tipo. Era a pendência que protegia contra perda; a lista do §17 do CLAUDE.md ficou sem itens de risco.
-- **Cadastro de membro in-app (#16): FEITO** — a Equipe tem "Novo membro"; quem cria o login é a Edge Function **`criar-usuario`**, agora **deployada** (v2, `verify_jwt=true`). Ver a seção própria abaixo.
+- **Cadastro de membro in-app (#16): FEITO** — a Equipe tem "Novo membro"; quem cria o login é a Edge Function **`criar-usuario`**, agora **deployada** (v3, `verify_jwt=true`). Ver a seção própria abaixo.
 - **Conta de teste** (`teste@gmail.com` = 'USUARIO DE TESTE'): **oculta** (0041) — não aparece nas listas/dashboard/relatório dos outros; e fora do relatório (0040).
 - **Reset de senha in-app: FEITO** — bloco "Senha" dentro do "Editar membro". Ver a seção própria abaixo.
 - **Edge Functions no ar:** `enviar-push` (v11, `verify_jwt=**false**` — o webhook do banco chama sem token), `criar-usuario` (v3) e `resetar-senha` (v1), as duas últimas com `verify_jwt=**true**` e compartilhando o portão em `functions/_shared/admin.ts`. Todas versionadas, e o `supabase/config.toml` é quem preserva essa diferença a cada deploy. ⚠ **Mexer no `_shared` obriga a redeployar as DUAS** que o usam.
@@ -49,7 +50,7 @@ App web interno da **EsquadSystem** (esquadrias de alumínio) para gerir **deman
 
 ## 5. O que foi feito
 
-### Sessão de 11/08/2026 (issues #16 e #89 fechadas · migrações `0050`/`0051`)
+### Sessão de 11/08/2026 (issues #16, #89, #90 e #91 · migrações `0050`–`0052`)
 
 **#16 — cadastro de membro dentro do app.** Era a pendência mais antiga com valor prático: adicionar alguém exigia abrir o painel do Supabase, criar o login na mão e voltar para acertar nome e papel.
 
@@ -191,7 +192,8 @@ Rede de segurança contra tela branca (`ErrorBoundary` em 2 níveis + `erro_log`
 - 🧾 **Remover a coluna `obra.endereco`** — legado sem uso desde a `0047` (o app inteiro lê `cidade_estado`). Migração de uma linha, sem pressa.
 - 🏗️ **35 obras sem cidade** — vão se completando conforme forem usadas (o formulário pede na hora). Nenhuma ação necessária.
 - 🐢 **Detalhe pesado com muitos PDFs:** cada `MiniaturaPdf` renderiza via pdf.js; demandas com 20+ PDFs de entrada travam a tela ao abrir (renderizar miniaturas sob demanda resolveria). Relevante justo no caso "muitos PDFs".
-- 🚪 **Sessão aberta não cai — nem por reset de senha, nem por desativar.** MEDIDO pelo dono (ago/2026): resetada a senha, o celular que estava logado continuou funcionando. E a `0025` cobre só a **escrita** (o cabeçalho dela diz: *"um desativado ainda loga e VÊ, mas não FAZ mais nada"*); quem barra na entrada é o frontend ([Painel.jsx:203](src/components/Painel.jsx:203)), que só roda quando a tela monta — pela API, com o token na mão, a leitura continua. **Consequência prática:** desativar um ex-funcionário **não** o impede de ler as demandas dele enquanto a sessão viver. Para cortar de verdade, hoje: painel do Supabase (revogar sessões). Se o dono quiser isso dentro do app, é issue própria — não fazer sem perguntar.
+- 🚪 **A sessão em si nunca cai** — nem por reset de senha (MEDIDO pelo dono: o celular logado continuou funcionando), nem por desativar. O token segue válido até expirar; encerrar sessão de verdade continua sendo no painel do Supabase. O que mudou com a `0052` é que o desativado deixou de **ver** — antes ele lia tudo pela API. Se algum dia for preciso "expulsar agora" (celular roubado), aí sim é Edge Function nova com `auth.admin.signOut` — não fazer sem o dono pedir.
+- ✅ **Falta confirmar a `0052` pelo lado do desativado.** O dono testou o lado que arriscava regressão (ativo continua lendo — a lista aparece normal). O outro lado — desativar a conta de teste com ela logada e ver a lista vazia **com** o aviso *"Sua conta está desativada"* — não foi feito. Teste de 2 minutos; até lá, a regra está aplicada mas não observada.
 - 🗂️ **Backlog aberto:** #43 (documentação), #32 (co-vendedor), #18 (tela de tipos), #17 (box de cor).
 - 🧹 Limpeza de anexos de entrada antigos (§14) · 📅 feriados no cálculo de prazo (§8).
 
@@ -246,4 +248,4 @@ Do backlog, em ordem de valor (opinião, não decisão):
 
 ---
 
-_Atualizado por Claude Code em 11/08/2026 (após `57e8dd2`; migrações até `0051`)._
+_Atualizado por Claude Code em 11/08/2026 (após `0e3c34f`; migrações até `0052`)._
