@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { textoPresenca, ultimoVistoMs, useTique } from '../lib/usePresenca'
 import LinhaPerfil from './LinhaPerfil'
+import NovoMembro from './NovoMembro'
 import Avatar from './Avatar'
 import Icone from './Icone'
 
@@ -12,9 +13,9 @@ const ROTULO_PAPEL = {
   vendedor: 'Vendedor',
 }
 
-// Tela "Equipe" (so Admin): lista os perfis com busca + edicao in-place.
-// A criacao do LOGIN e feita no painel do Supabase; o gatilho cria o perfil
-// automaticamente, e ele aparece aqui para ajuste de nome/papel/ativo.
+// Tela "Equipe" (so Admin): lista os perfis com busca, edicao in-place e o
+// CADASTRO de um novo membro (§issue #16 — antes o login tinha de ser criado
+// a mao no painel do Supabase).
 export default function Equipe({
   perfil,
   online = new Map(),
@@ -32,17 +33,28 @@ export default function Equipe({
   const [busca, setBusca] = useState('')
   const [editandoId, setEditandoId] = useState(null)
   const [carregando, setCarregando] = useState(true)
+  const [mostrarNovo, setMostrarNovo] = useState(false)
   const [erro, setErro] = useState('')
 
+  // NAO volta a ligar o `carregando`: ele so vale na PRIMEIRA carga. Recarregar
+  // depois de salvar trocava a tela inteira pelo "Carregando equipe…" por um
+  // instante — o que, no cadastro, desmontava o form junto com a caixa que
+  // mostra a senha recem-criada. Ela nao aparece de novo em lugar nenhum.
   async function carregar() {
-    setCarregando(true)
     const { data, error } = await supabase
       .from('perfil')
       .select('id, nome_completo, celular, papel, ativo, visto_em, avatar_path')
       .order('nome_completo')
 
+    // O sucesso LIMPA o erro. Sem isso, uma primeira carga que falhasse por
+    // oscilacao de rede deixava o recado vermelho preso na tela — agora
+    // convivendo com a lista certa logo abaixo, ja que a tela nao volta mais
+    // para o "Carregando equipe…" entre uma carga e outra.
     if (error) setErro('Não foi possível carregar a equipe.')
-    else setPerfis(data)
+    else {
+      setPerfis(data)
+      setErro('')
+    }
     setCarregando(false)
   }
 
@@ -172,15 +184,23 @@ export default function Equipe({
         </ul>
       )}
 
-      {/* Como adicionar alguem: a criacao do login e no painel do Supabase. */}
-      <div className="equipe-dica">
-        <Icone nome="aviso" size={16} />
-        <p>
-          Para adicionar um membro, crie o login no painel do Supabase
-          (Authentication → Add user). O perfil aparece aqui automaticamente —
-          depois é só editar o nome e o papel.
-        </p>
-      </div>
+      {/* Cadastro de membro: mesmo par botao-tracejado ↔ formulario do "Novo
+          cliente". O login em si e criado por uma Edge Function (a chave que
+          faz isso nao pode viver no frontend) — ver NovoMembro. */}
+      {mostrarNovo ? (
+        <NovoMembro
+          aoCriar={carregar}
+          aoFechar={() => setMostrarNovo(false)}
+        />
+      ) : (
+        <button
+          type="button"
+          className="botao-novo-cad"
+          onClick={() => setMostrarNovo(true)}
+        >
+          <Icone nome="mais" size={18} /> Novo membro
+        </button>
+      )}
     </div>
   )
 }

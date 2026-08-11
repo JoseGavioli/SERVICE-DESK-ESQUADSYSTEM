@@ -1506,26 +1506,91 @@ textarea::placeholder {
   accent-color: var(--primaria);
 }
 
-/* dica: como adicionar um membro (a criacao do login e no Supabase) */
-.equipe-dica {
+/* ── Novo membro (§#16) ────────────────────────────────────── */
+/* A senha e o botao "Sugerir" dividem a linha. O `.form-novo` e uma coluna,
+   entao esta e a unica linha do formulario. */
+.nm-senha {
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 0.5rem;
-  margin-top: 0.25rem;
-  padding: 0.75rem 0.9rem;
-  border-radius: var(--raio);
+}
+.nm-senha input {
+  flex: 1;
+  /* sem isto o input recusa encolher (min-width auto) e empurra o botao para
+     fora da borda no celular */
+  min-width: 0;
+}
+.nm-senha button {
+  flex: none;
+  /* vence o `align-self: flex-start` de `.form-novo button`, que aqui deixaria
+     o botao colado no topo da linha */
+  align-self: stretch;
+  white-space: nowrap;
+}
+
+/* Email + senha do membro recem-criado: e o unico lugar onde a senha aparece
+   legivel (no banco ela vira hash). */
+.nm-credenciais {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--raio-sm);
   background: var(--surface-2);
+  /* A borda e o que faz a caixa EXISTIR. No tema claro o --surface-2 (#f3f6f9)
+     esta a um passo do --bg (#eef1f5): so o fundo dava 1,05:1 de contraste e o
+     bloco sumia — email e senha viravam texto solto. `--borda-forte` e a mesma
+     escolha do `.botao-novo-cad`, o irmao logo abaixo nesta tela, que resolve
+     esse mesmo fundo-sobre-fundo. Continua discreta (1,3:1 no claro); a
+     paleta do app e assim, e inventar aqui um peso que nao existe em lugar
+     nenhum seria pior que a borda fraca. */
+  border: 1px solid var(--borda-forte);
+}
+.nm-credenciais div {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.nm-credenciais dt {
+  flex-shrink: 0;
+  min-width: 3.5rem;
+  font-size: 0.8rem;
   color: var(--texto-suave);
 }
-.equipe-dica p {
+.nm-credenciais dd {
   margin: 0;
-  font-size: 0.85rem;
+  min-width: 0;
+}
+.nm-credenciais code {
+  font-size: 0.95rem;
+  /* email longo quebra em vez de estourar a caixa */
+  word-break: break-all;
+}
+.nm-nota {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--texto-suave);
   line-height: 1.45;
 }
-.equipe-dica .lucide {
-  flex-shrink: 0;
-  margin-top: 0.15rem;
-  color: var(--texto-fraco);
+
+/* O secundario com cara de secundario.
+   `.form-novo button` (0,1,1) vence `.link` (0,1,0), entao em TODOS os
+   formularios do app o "Cancelar" sai identico ao botao cheio de salvar. Aqui
+   isso pesa mais que nas outras telas: no painel "Membro criado" os dois
+   botoes seriam "Copiar dados" e "Fechar" — e o Fechar apaga o unico lugar
+   onde a senha aparece legivel. A regra fica presa ao `.nm-acoes` de proposito:
+   corrigir `.form-novo button.link` de uma vez arrumaria os cinco formularios,
+   mas mudaria a cara de telas que o dono usa todo dia sem ele ter pedido. */
+.nm-acoes button.link {
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--primaria);
+  font-weight: 400;
+}
+.nm-acoes button.link:hover:not(:disabled) {
+  background: transparent;
+  text-decoration: underline;
 }
 
 /* ── Demandas ──────────────────────────────────────────────── */

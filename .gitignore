@@ -40,3 +40,10 @@ vapid-public.txt
 # dados bancarios das fichas (§19) e o celular da equipe. Nunca versionar.
 service-desk-backup-*.zip
 service-desk-anexos-*.zip
+
+# Rastros locais do CLI do Supabase: qual projeto esta "linkado" nesta maquina
+# (supabase/.temp) e o lock do Deno gerado ao deployar uma Edge Function. Sao
+# estado da MAQUINA, nao do projeto — versionar so criaria conflito entre
+# maquinas diferentes.
+supabase/.temp/
+deno.lock
