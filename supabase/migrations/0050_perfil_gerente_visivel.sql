@@ -1,0 +1,32 @@
+-- ───────────────────────────────────────────────────────────────
+-- Migracao 0050 — o gerente deixa de ser "Alguem"  [issue #89]
+--
+-- Problema: o vendedor via o comentario de mudanca de prazo assinado por
+-- "Alguem", sem nome e sem foto. Texto, data e conteudo apareciam normais —
+-- so a autoria sumia. O mesmo valia para a notificacao, o historico, os
+-- anexos e o cancelamento: todos usam o mesmo join `autor:perfil(...)`.
+--
+-- Causa: a `perfil_staff_visivel` (0007) libera as linhas de papel
+-- 'admin' e 'atendente'. Ela e de JULHO, de quando existiam TRES papeis; o
+-- `gerente` nasceu na 0030 (issue #44) e ninguem voltou aqui. Como o embed do
+-- PostgREST e to-one e sem `!inner`, a linha barrada nao da erro: volta NULA,
+-- e a tela cai no texto de reserva.
+--
+-- E a terceira vez que este projeto tropeca na mesma raiz — ver os cabecalhos
+-- da propria 0007 ("o nome do admin/atendente nao aparecia") e da 0032 ("o
+-- join vendedor:perfil vinha vazio para o gerente"). Ao criar um papel novo,
+-- as policies de LEITURA de `perfil` sao o lugar para conferir.
+--
+-- O que NAO muda: vendedor continua sem ver vendedor. Esta policy filtra por
+-- QUAL LINHA e liberada (papel de staff/gerencia), nao por quem le — as linhas
+-- de vendedor seguem fora dela, alcancaveis so pela `perfil_leitura_propria`
+-- (a sua) e pela `perfil_leitura_equipe` (para admin/atendente/gerente).
+-- Um gerente passa a ser tao visivel quanto um atendente ja era: nome,
+-- celular, foto e papel. Mesmo tratamento, mesma exposicao.
+--
+-- NAO e destrutiva (so troca a expressao da policy) e nao mexe em dado
+-- nenhum. Cole no SQL Editor e rode.
+-- ───────────────────────────────────────────────────────────────
+
+alter policy "perfil_staff_visivel" on perfil
+  using ( papel in ('admin', 'atendente', 'gerente') );
