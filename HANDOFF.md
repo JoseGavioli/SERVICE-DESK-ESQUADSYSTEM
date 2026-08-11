@@ -1,6 +1,6 @@
 # 📋 Handoff — Service Desk - EsquadSystem
 
-**Data:** 11/08/2026 · **Branch:** `main` · **último HEAD publicado:** `a6a1e5c`
+**Data:** 11/08/2026 · **Branch:** `main` · **último HEAD publicado:** `57e8dd2`
 
 > Documento de continuidade. Para retomar: leia a **§7** (pendências) e a **§9** (armadilhas).
 > A fundação é o **`CLAUDE.md`** — leia-o por completo antes de mexer em qualquer coisa.
@@ -43,7 +43,8 @@ App web interno da **EsquadSystem** (esquadrias de alumínio) para gerir **deman
 - **Backup dos dados (§17): FEITO** — Administração → Backup baixa as 9 tabelas em CSV+JSON, e os ARQUIVOS dos anexos em zips por tipo. Era a pendência que protegia contra perda; a lista do §17 do CLAUDE.md ficou sem itens de risco.
 - **Cadastro de membro in-app (#16): FEITO** — a Equipe tem "Novo membro"; quem cria o login é a Edge Function **`criar-usuario`**, agora **deployada** (v2, `verify_jwt=true`). Ver a seção própria abaixo.
 - **Conta de teste** (`teste@gmail.com` = 'USUARIO DE TESTE'): **oculta** (0041) — não aparece nas listas/dashboard/relatório dos outros; e fora do relatório (0040).
-- **Edge Functions no ar:** `enviar-push` (v11, `verify_jwt=**false**` — o webhook do banco chama sem token) e `criar-usuario` (v2, `verify_jwt=**true**` — identifica o chamador pelo token dele). As duas versionadas, e o `supabase/config.toml` é quem preserva essa diferença a cada deploy.
+- **Reset de senha in-app: FEITO** — bloco "Senha" dentro do "Editar membro". Ver a seção própria abaixo.
+- **Edge Functions no ar:** `enviar-push` (v11, `verify_jwt=**false**` — o webhook do banco chama sem token), `criar-usuario` (v3) e `resetar-senha` (v1), as duas últimas com `verify_jwt=**true**` e compartilhando o portão em `functions/_shared/admin.ts`. Todas versionadas, e o `supabase/config.toml` é quem preserva essa diferença a cada deploy. ⚠ **Mexer no `_shared` obriga a redeployar as DUAS** que o usam.
 - **Fora do versionamento de propósito:** `deno.lock` e `supabase/.temp/` — estado da máquina (qual projeto está "linkado" no CLI), não do projeto.
 
 ## 5. O que foi feito
@@ -58,6 +59,18 @@ App web interno da **EsquadSystem** (esquadrias de alumínio) para gerir **deman
 - **Mudança que parece detalhe e não é:** o `carregar()` da Equipe deixou de religar o `carregando`. Ele trocava a tela inteira pelo "Carregando equipe…" a cada recarga — e recarregar é exatamente o que acontece depois de criar o membro, o que desmontaria o componente **junto com a senha**.
 
 **O que a revisão adversarial pegou (4 confirmados, corrigidos antes do commit):** o **"Cancelar" ficava clicável durante o envio** — o pedido não é abortável, então fechar no meio derrubava o componente mas a função seguia e criava o login: a pessoa apareceria na lista e **ninguém saberia a senha dela**; a mensagem genérica de falha mandava "tente de novo", mas se a rede cai *depois* da criação isso leva a "já existe esse email" sem explicação; o `erro` da Equipe nunca era limpo (alcançável só a partir daqui — antes, lista vazia não tinha botão que recarregasse); e a caixa das credenciais **não existia visualmente no tema claro** (fundo `#f3f6f9` sobre página `#eef1f5` = 1,05:1 de contraste).
+
+**#90 — reset de senha in-app.** Quem esquece a senha não entra e, por não entrar, não alcança o "Meu perfil" para trocá-la. Bloco **"Senha"** dentro do "Editar membro" (escolha do dono entre pôr ali ou uma chave em cada linha da lista), com Edge Function **`resetar-senha`**. Descartado o "esqueci minha senha" por email: o §15 põe email fora de escopo, exigiria SMTP (o padrão do Supabase é limitado e cai em spam) e o link volta com token na URL, que este app não lê — navegação por estado, sem router.
+
+- **O portão saiu das duas funções** e virou `_shared/admin.ts`. Não foi arrumação: a checagem de "admin **ativo**" já tinha sido esquecida uma vez, e essas funções rodam com `service_role`, **por fora da RLS**. O preço é redeployar as duas quando o portão muda — preço certo para código que não pode divergir. Nas duas, o portão passou a rodar **antes** de validar o corpo (validar antes de autorizar deixava descobrir os papéis válidos sem token; na `resetar-senha` pesaria mais, porque o corpo carrega o **id de outra pessoa**).
+- **Três peças saíram do `NovoMembro`** para `lib/senha.js` e `Credenciais.jsx`, e o `MeuPerfil` passou a importar o mínimo em vez do `6` chumbado.
+
+**O que a revisão adversarial pegou (6 confirmados) — e o padrão vale mais que os casos:**
+- **Enter no campo da senha salvava o perfil e fechava a tela.** O campo mora dentro do form de editar membro, que tem botão de submit: o Enter disparava o **envio implícito** do HTML. Gravava nome/papel, fechava o editor, a senha sumia e o reset **nunca acontecia** — com toda a aparência de sucesso. Quatro verificadores confirmaram, independentes. É a **segunda vez** que este projeto leva a mesma rasteira (§#64).
+- **Três achados eram uma raiz só:** a senha vivia num estado que a lista destrói por três gestos comuns — lápis de outra linha, busca que filtra a linha aberta para fora, e o pedido em voo (não abortável). A trava cobria só Salvar/Cancelar. A senha **mudou de dono**: mora na tela Equipe, que sobrevive aos três e tranca os três.
+- A mensagem de falha **afirmava** que a senha não fora trocada; se a conexão cai depois da resposta, ela pode ter sido.
+
+⚠ **Um erro só apareceu no navegador:** numa reescrita sobrou referência a uma variável renomeada — `ReferenceError` em produção. **`oxlint` e `npm run build` passaram os dois**, porque é JS válido até rodar. Neste projeto, nenhum dos dois protege contra isso: abrir o console é parte de testar.
 
 **#89 — o gerente deixa de ser "Alguém"** (`0050`), e a `0051` que **nasceu de conferir a `0050`** — ver §1. A #89 foi aberta como issue normal; a exposição anônima **não**, porque o repositório é **público** e uma issue descrevendo uma brecha ativa com o nome do projeto é um convite. Foi conversada no chat e registrada só depois de fechada.
 
@@ -178,7 +191,7 @@ Rede de segurança contra tela branca (`ErrorBoundary` em 2 níveis + `erro_log`
 - 🧾 **Remover a coluna `obra.endereco`** — legado sem uso desde a `0047` (o app inteiro lê `cidade_estado`). Migração de uma linha, sem pressa.
 - 🏗️ **35 obras sem cidade** — vão se completando conforme forem usadas (o formulário pede na hora). Nenhuma ação necessária.
 - 🐢 **Detalhe pesado com muitos PDFs:** cada `MiniaturaPdf` renderiza via pdf.js; demandas com 20+ PDFs de entrada travam a tela ao abrir (renderizar miniaturas sob demanda resolveria). Relevante justo no caso "muitos PDFs".
-- 🔑 **Reset de senha continua fora do app** — o §5 do CLAUDE.md diz que o admin reseta senhas, mas isso segue sendo feito no painel do Supabase. Ficou de fora da #16 de propósito (é outra Edge Function). Vira relevante se alguém perder a senha entregue no cadastro.
+- ❓ **Resetar a senha derruba a sessão aberta da pessoa?** Não foi medido. Se ela estiver logada no celular, não se sabe se continua entrando até o token expirar. Não muda nada no uso normal (o reset é para quem *não* consegue entrar), mas é o que decide se dá para usar o reset como "expulsar alguém agora". Medir antes de afirmar qualquer coisa no `CLAUDE.md`.
 - 🗂️ **Backlog aberto:** #43 (documentação), #32 (co-vendedor), #18 (tela de tipos), #17 (box de cor).
 - 🧹 Limpeza de anexos de entrada antigos (§14) · 📅 feriados no cálculo de prazo (§8).
 
@@ -188,8 +201,7 @@ Nada em andamento — o working tree está limpo e tudo o que foi feito está no
 
 Do backlog, em ordem de valor (opinião, não decisão):
 1. **Remover `obra.endereco`** (acima) — barato e tira uma coluna que mente.
-2. **Reset de senha in-app** (acima) — vira o próximo buraco natural agora que o cadastro existe: o admin entrega uma senha, e quando alguém a perder ele volta ao painel do Supabase.
-3. **#29** (reatribuir demandas já existentes), **#43** (documentação), **#32** (co-vendedor), **#18** (tela de tipos), **#17** (box de cor).
+2. **#29** (reatribuir demandas já existentes), **#43** (documentação), **#32** (co-vendedor), **#18** (tela de tipos), **#17** (box de cor).
 4. 🐢 **Detalhe pesado com muitos PDFs** — 20+ miniaturas via pdf.js travam a tela ao abrir; renderizar sob demanda resolveria.
 
 ## 9. ⚠️ Armadilhas do ambiente (economiza horas)
@@ -215,6 +227,8 @@ Do backlog, em ordem de valor (opinião, não decisão):
 | **Nome de arquivo no zip: NTFS não distingue maiúsculas** | Desempatar por string exata deixa `IMG.JPG` e `img.jpg` virarem duas entradas — e uma sobrescreve a outra ao extrair, sem erro. Comparar sempre por `toLowerCase()`. |
 | **CSV para o Excel em português** | Precisa de **BOM UTF-8** (senão "JosÃ©"), separador **`;`** (o Excel usa o separador de lista do Windows) e **apóstrofo** antes de `= + - @` (senão a célula vira fórmula — e "- 2 janelas" é descrição comum aqui). |
 | **PWA cacheia a versão antiga** | Modo `prompt` ("Nova versão → Atualizar"). Se o deploy "não pegou", quase sempre é cache. |
+| **`oxlint` e `npm run build` NÃO pegam variável inexistente** | Uma referência a variável renomeada passou pelos dois e só estourou como `ReferenceError` no navegador — é JS válido até rodar. **Abrir o console faz parte de testar**, não é zelo extra. |
+| **Enter num `<input>` dentro de `<form>` = envio implícito** | Se o form tem um botão de submit habilitado, Enter em qualquer input o aciona — mesmo que o input seja de um bloco aninhado com finalidade totalmente outra. Já mordeu **duas vezes** (§#64 na Nova demanda, e o campo de senha nova dentro do "Editar membro", onde salvava o perfil e fechava a tela **parecendo sucesso**). Remédio: `e.preventDefault()` no `onKeyDown` do input e, se fizer sentido, disparar ali a ação que o dedo quis. |
 | **Policy sem cláusula `to` vale para o ANÔNIMO** | Sem `to`, é `TO PUBLIC` — e no Supabase o PUBLIC inclui o `anon` (visitante sem sessão, só com a chave publishable, que por desenho vai no bundle). Quase nunca vaza, porque quase toda policy compara com `auth.uid()` ou chama `meu_papel()` e para o anônimo isso dá nulo. **Vaza quando a condição olha só a LINHA** (`papel in (...)`) — foi a `perfil_staff_visivel`, dois meses no ar. Auditoria barata: varrer TODAS as tabelas por curl anônimo (lista via `grep -rhoE "create table" supabase/migrations/`), antes e depois. Foi o que provou que o vazamento estava confinado a uma tabela. |
 | **`functions.invoke` esconde o corpo do erro** | Resposta não-2xx vira sempre a MESMA frase em inglês no `error.message`. O texto que a função escreveu está no **`error.context`**, que é um `Response` ainda por ler (`await error.context.json()`). Sem isso a função fica bem-educada por dentro e fala inglês com o usuário. |
 | **Deploy de Edge Function não precisa de `link`** | `npx supabase functions deploy <nome> --project-ref <ref>` (o `login` é interativo — é do dono). O `supabase/config.toml` **vai junto** e é ele que preserva o `verify_jwt` de cada função; sem ele, cada deploy religa a verificação e derruba o webhook do push. Conferir depois com `functions list`. |
@@ -232,4 +246,4 @@ Do backlog, em ordem de valor (opinião, não decisão):
 
 ---
 
-_Atualizado por Claude Code em 11/08/2026 (após `a6a1e5c`; migrações até `0051`)._
+_Atualizado por Claude Code em 11/08/2026 (após `57e8dd2`; migrações até `0051`)._
