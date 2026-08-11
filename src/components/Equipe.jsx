@@ -35,6 +35,16 @@ export default function Equipe({
   const [carregando, setCarregando] = useState(true)
   const [mostrarNovo, setMostrarNovo] = useState(false)
   const [erro, setErro] = useState('')
+  // A senha recem-trocada mora AQUI, e nao no formulario que a mostra.
+  // Motivo: ela so existe legivel em memoria, e o formulario e desmontado por
+  // tres gestos comuns — clicar no lapis de outra linha, digitar na busca (que
+  // pode filtrar esta linha para fora) e fechar o proprio formulario. Guardada
+  // na tela, ela sobrevive aos tres; e daqui da para TRANCAR os tres enquanto
+  // ela estiver a vista. `enviandoSenha` cobre o mesmo perigo durante o
+  // pedido, que nao e abortavel.
+  const [senhaNova, setSenhaNova] = useState(null) // { id, nome, senha }
+  const [enviandoSenha, setEnviandoSenha] = useState(false)
+  const travado = Boolean(senhaNova) || enviandoSenha
 
   // NAO volta a ligar o `carregando`: ele so vale na PRIMEIRA carga. Recarregar
   // depois de salvar trocava a tela inteira pelo "Carregando equipe…" por um
@@ -102,12 +112,17 @@ export default function Equipe({
         <span className="campo-busca-icone">
           <Icone nome="lupa" size={18} />
         </span>
+        {/* Travada durante o reset: buscar re-filtra a lista, e se a linha
+            aberta sair do filtro o formulario e desmontado — junto com a senha
+            nova, que nao aparece em lugar nenhum de novo. */}
         <input
           type="search"
           className="input-busca"
           placeholder="Buscar por nome…"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
+          disabled={travado}
+          title={travado ? 'Termine o reset de senha antes de buscar' : ''}
         />
       </div>
 
@@ -128,6 +143,10 @@ export default function Equipe({
                     carregar()
                   }}
                   aoCancelar={() => setEditandoId(null)}
+                  senhaNova={senhaNova}
+                  aoSenhaNova={setSenhaNova}
+                  aoEnviandoSenha={setEnviandoSenha}
+                  travado={travado}
                 />
               ) : (
                 <div className="cad-linha">
@@ -168,12 +187,19 @@ export default function Equipe({
                       </span>
                     </span>
                   </div>
+                  {/* Travado durante o reset: abrir OUTRA linha fecha a que
+                      esta aberta, e leva a senha nova junto. */}
                   <button
                     type="button"
                     className="cad-editar"
-                    title="Editar membro"
+                    title={
+                      travado
+                        ? 'Termine o reset de senha antes de editar outro'
+                        : 'Editar membro'
+                    }
                     aria-label="Editar membro"
                     onClick={() => setEditandoId(p.id)}
+                    disabled={travado}
                   >
                     <Icone nome="editar" size={16} />
                   </button>

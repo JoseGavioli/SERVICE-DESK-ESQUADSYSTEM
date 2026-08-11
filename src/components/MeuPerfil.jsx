@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { comprimirImagemSePreciso, MB } from '../lib/anexos'
+// Mesmo minimo do cadastro e do reset de senha — a regra vale para as tres
+// telas e agora mora num lugar so (`lib/senha.js`).
+import { SENHA_MINIMA } from '../lib/senha'
 import Icone from './Icone'
 
 // Iniciais (ate 2 letras) para o avatar quando ainda nao ha foto.
@@ -119,8 +122,10 @@ export default function MeuPerfil({ perfil, email, naoLidas, aoAbrirNotif }) {
 
       // 2) Senha (se preencheu) — precisa das duas iguais e min. 6 caracteres.
       if (novaSenha || confirma) {
-        if (novaSenha.length < 6) {
-          throw new Error('A senha precisa ter ao menos 6 caracteres.')
+        if (novaSenha.length < SENHA_MINIMA) {
+          throw new Error(
+            `A senha precisa ter ao menos ${SENHA_MINIMA} caracteres.`,
+          )
         }
         if (novaSenha !== confirma) {
           throw new Error('As senhas não conferem — digite a mesma nas duas.')
@@ -238,7 +243,7 @@ export default function MeuPerfil({ perfil, email, naoLidas, aoAbrirNotif }) {
                 type="password"
                 value={novaSenha}
                 onChange={(e) => setNovaSenha(e.target.value)}
-                placeholder="Ao menos 6 caracteres"
+                placeholder={`Ao menos ${SENHA_MINIMA} caracteres`}
                 autoComplete="new-password"
               />
             </label>

@@ -1,5 +1,12 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import {
+  copiarTexto,
+  mensagemDoErro,
+  senhaSugerida,
+  SENHA_MINIMA,
+} from '../lib/senha'
+import Credenciais from './Credenciais'
 
 // Form de CADASTRO de um membro (§issue #16), aberto pela tela Equipe.
 //
@@ -15,40 +22,11 @@ const PAPEIS = [
   { valor: 'admin', rotulo: 'Admin' },
 ]
 
-// Repetido de proposito na funcao (SENHA_MINIMA la tambem) e igual ao do
-// "Meu perfil". Aqui e so para nao gastar uma ida ao servidor com uma senha
-// curta; quem REALMENTE barra e a funcao.
-const SENHA_MINIMA = 6
-
-const TAMANHO_SUGERIDO = 8
-// Sem os caracteres que se confundem quando alguem LE a senha em voz alta ou
-// copia dela de um print: l/I/1 e O/0 ficaram de fora.
-const ALFABETO = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-
-function senhaSugerida() {
-  const sorteio = new Uint32Array(TAMANHO_SUGERIDO)
-  crypto.getRandomValues(sorteio)
-  return Array.from(sorteio, (n) => ALFABETO[n % ALFABETO.length]).join('')
-}
-
-// O `invoke` NAO entrega o corpo da resposta quando ela nao e 2xx: o
-// `error.message` vem sempre a MESMA frase em ingles ("Edge Function returned
-// a non-2xx status code"). O texto que a funcao escreveu — "Ja existe um
-// usuario com esse email", "Apenas admin ativo pode cadastrar" — esta no
-// `error.context`, que e um Response ainda por ler. Sem isto, a funcao fica
-// bem-educada por dentro e muda para o ingles na hora de falar com o usuario.
-async function mensagemDoErro(erro) {
-  try {
-    const corpo = await erro?.context?.json?.()
-    if (corpo?.error) return corpo.error
-  } catch {
-    // resposta sem corpo JSON (falha de rede, timeout): cai no texto abaixo
-  }
-  // "Confira na lista" nao e frase de enfeite: a rede pode cair DEPOIS de a
-  // funcao ter criado o login. Mandar "tente de novo" seco levaria o admin a
-  // repetir e esbarrar em "ja existe um usuario com esse email", sem entender.
-  return 'Não foi possível criar o membro. Confira na lista se ele já apareceu antes de tentar de novo.'
-}
+// "Confira na lista" nao e frase de enfeite: a rede pode cair DEPOIS de a
+// funcao ter criado o login. Mandar "tente de novo" seco levaria o admin a
+// repetir e esbarrar em "ja existe um usuario com esse email", sem entender.
+const FALHA =
+  'Não foi possível criar o membro. Confira na lista se ele já apareceu antes de tentar de novo.'
 
 export default function NovoMembro({ aoCriar, aoFechar }) {
   const [nome, setNome] = useState('')
@@ -79,7 +57,7 @@ export default function NovoMembro({ aoCriar, aoFechar }) {
     })
 
     if (error) {
-      setErro(await mensagemDoErro(error))
+      setErro(await mensagemDoErro(error, FALHA))
       setSalvando(false)
       return
     }
@@ -90,18 +68,14 @@ export default function NovoMembro({ aoCriar, aoFechar }) {
   }
 
   async function copiar() {
-    try {
-      await navigator.clipboard.writeText(
-        `Acesso ao Service Desk\nEmail: ${pronto.email}\nSenha: ${pronto.senha}`,
-      )
-      setCopiado(true)
-      // limpa uma falha ANTERIOR de copia: sem isto, um primeiro clique que
-      // deu errado deixava o recado "copie a mao" na tela mesmo depois de o
-      // segundo clique funcionar
-      setErro('')
-    } catch {
-      setErro('Não foi possível copiar — selecione o texto e copie à mão.')
-    }
+    const deu = await copiarTexto(
+      `Acesso ao Service Desk\nEmail: ${pronto.email}\nSenha: ${pronto.senha}`,
+    )
+    setCopiado(deu)
+    // o `setErro('')` no sucesso limpa uma falha ANTERIOR de copia: sem ele,
+    // um primeiro clique que deu errado deixava o recado "copie a mao" na tela
+    // mesmo depois de o segundo clique funcionar
+    setErro(deu ? '' : 'Não foi possível copiar — selecione o texto e copie à mão.')
   }
 
   if (pronto) {
@@ -114,20 +88,12 @@ export default function NovoMembro({ aoCriar, aoFechar }) {
           que você fechar.
         </p>
 
-        <dl className="nm-credenciais">
-          <div>
-            <dt>Email</dt>
-            <dd>
-              <code>{pronto.email}</code>
-            </dd>
-          </div>
-          <div>
-            <dt>Senha</dt>
-            <dd>
-              <code>{pronto.senha}</code>
-            </dd>
-          </div>
-        </dl>
+        <Credenciais
+          itens={[
+            { rotulo: 'Email', valor: pronto.email },
+            { rotulo: 'Senha', valor: pronto.senha },
+          ]}
+        />
 
         {pronto.aviso && <p className="aviso">{pronto.aviso}</p>}
         {erro && <p className="erro">{erro}</p>}

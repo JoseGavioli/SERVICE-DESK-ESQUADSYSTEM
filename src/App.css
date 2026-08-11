@@ -1573,6 +1573,68 @@ textarea::placeholder {
   line-height: 1.45;
 }
 
+/* ── Resetar senha (bloco dentro do "Editar membro") ───────── */
+/* Separado por uma linha em cima: trocar senha passa por outro caminho (Edge
+   Function) e tem botao proprio — nao entra no "Salvar" do formulario. A
+   divisoria e o que diz isso sem precisar de texto. */
+.rs-bloco {
+  margin-top: 0.35rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--borda);
+}
+.rs-bloco h5 {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+  color: var(--texto);
+}
+.rs-nota {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+  line-height: 1.45;
+}
+/* Os dois seletores abaixo sao `.form-novo button.X` (0,2,1) de proposito:
+   `.form-novo button` (0,1,1) pinta TODO botao do formulario de primario, e
+   uma classe sozinha (0,1,0) perderia. Mesma saida do `.nm-acoes button.link`
+   — subir a especificidade, nunca `!important`. */
+
+/* Botao fechado: discreto de proposito. Ele mora dentro de um formulario de
+   edicao rotineira, e a acao dele nao e rotineira. */
+.form-novo button.rs-abrir {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--borda-forte);
+  background: transparent;
+  color: var(--texto);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+/* `--primaria-suave` e nao `--surface-hover`: em modo edicao a linha nao tem
+   fundo proprio, entao o botao fica direto sobre o `--bg` — e no tema claro o
+   --surface-hover (#eef3f8) esta a 3/255 do --bg (#eef1f5), ou seja, o hover
+   nao apareceria. Mesma escolha do `.cad-editar:hover`, o irmao desta tela. */
+.form-novo button.rs-abrir:hover:not(:disabled) {
+  background: var(--primaria-suave);
+}
+/* Ja o de confirmar e VERMELHO: e o unico botao destas telas que tira o
+   acesso de alguem.
+   SEM `:not(:disabled)` de proposito: ele NASCE desabilitado (a senha comeca
+   vazia) e volta a ficar durante o envio. Com a exclusao, ele aparecia navy —
+   igual ao "Salvar" logo abaixo — justamente enquanto o admin le o rotulo e
+   decide, e so ficava vermelho depois do 6o caractere. O `:disabled` de
+   `.form-novo button` ja o esmaece; a IDENTIDADE nao deve mudar junto. E o
+   que os outros botoes de perigo do app fazem (`.botoes-transicao button.perigo`
+   e companhia). */
+.form-novo button.rs-confirmar {
+  background: var(--perigo);
+  color: var(--perigo-texto);
+}
+.form-novo button.rs-confirmar:hover:not(:disabled) {
+  background: var(--perigo-hover);
+}
+.rs-bloco .nm-senha {
+  margin-top: 0.5rem;
+}
+
 /* O secundario com cara de secundario.
    `.form-novo button` (0,1,1) vence `.link` (0,1,0), entao em TODOS os
    formularios do app o "Cancelar" sai identico ao botao cheio de salvar. Aqui

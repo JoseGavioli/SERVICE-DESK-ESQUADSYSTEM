@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import ResetarSenha from './ResetarSenha'
 
 const PAPEIS = [
   { valor: 'admin', rotulo: 'Admin' },
@@ -12,7 +13,17 @@ const PAPEIS = [
 // Cada form cuida do proprio rascunho e salva com um update no banco.
 // Trava de seguranca: voce NAO muda o proprio papel nem se desativa (evita
 // se trancar para fora por engano) — reforcada pela RLS no banco.
-export default function LinhaPerfil({ perfilDaLinha, euId, aoSalvar, aoCancelar }) {
+export default function LinhaPerfil({
+  perfilDaLinha,
+  euId,
+  aoSalvar,
+  aoCancelar,
+  // Estado do reset de senha: mora na EQUIPE, não aqui. Ver ResetarSenha.
+  senhaNova,
+  aoSenhaNova,
+  aoEnviandoSenha,
+  travado,
+}) {
   const [nome, setNome] = useState(perfilDaLinha.nome_completo || '')
   const [celular, setCelular] = useState(perfilDaLinha.celular || '')
   const [papel, setPapel] = useState(perfilDaLinha.papel)
@@ -90,13 +101,40 @@ export default function LinhaPerfil({ perfilDaLinha, euId, aoSalvar, aoCancelar 
         Ativo{souEu && ' — você não pode se desativar'}
       </label>
 
+      {/* Bloco proprio, com botao e resultado proprios. Trocar a senha passa
+          por uma Edge Function (service_role), enquanto o resto do formulario
+          e um update comum pela RLS — juntar os dois no mesmo "Salvar" deixaria
+          metade aplicada quando um dos lados falhasse. */}
+      <ResetarSenha
+        perfilDaLinha={perfilDaLinha}
+        souEu={souEu}
+        senhaNova={senhaNova}
+        aoSenhaNova={aoSenhaNova}
+        aoEnviando={aoEnviandoSenha}
+      />
+
       {erro && <p className="erro">{erro}</p>}
 
+      {/* `travado` cobre DOIS momentos, e os dois pelo mesmo motivo: fechar
+          este formulario destroi a senha nova. Enquanto o pedido esta EM VOO
+          (nao da para abortar — a troca acontece de qualquer jeito) e enquanto
+          a senha esta A VISTA. Sair daqui no meio deixaria a conta com uma
+          senha que ninguem conhece. */}
       <div className="form-cad-acoes">
-        <button type="submit" disabled={salvando || !nome.trim()}>
+        <button
+          type="submit"
+          disabled={salvando || !nome.trim() || travado}
+          title={travado ? 'Termine o reset de senha antes de sair' : ''}
+        >
           {salvando ? 'Salvando…' : 'Salvar'}
         </button>
-        <button type="button" className="link" onClick={aoCancelar}>
+        <button
+          type="button"
+          className="link"
+          onClick={aoCancelar}
+          disabled={travado}
+          title={travado ? 'Termine o reset de senha antes de sair' : ''}
+        >
           Cancelar
         </button>
       </div>
