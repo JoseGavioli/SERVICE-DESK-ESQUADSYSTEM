@@ -4,7 +4,7 @@
 > Ele define **o que o app é**, **as regras de negócio** e **como você (Claude Code) deve trabalhar comigo**.
 
 > **Status atual (05/08/2026):** Fases 0–6 **concluídas**, app **no ar e em uso real** (deploy na **Vercel**, CD ativo — push na `main` publica). Depois delas: repaginação visual (marca **EsquadSystem**, tema claro/escuro, PWA), **notificações in-app em tempo real** (§15), **Web Push concluído** (validado em desktop, Android e iOS), 4º papel **gerente** (§5), **relatório mensal** (§18), uma **rede de segurança** contra tela branca (ErrorBoundary + log de erros + tela de Erros para o admin) e a **ficha de pedido de vendas no Fechamento** (§19).
-> Backend em Supabase; migrações **`0001`–`0046`** aplicadas. Pendências ativas em §17.
+> Backend em Supabase; migrações **`0001`–`0051`** aplicadas. Pendências ativas em §17.
 > Para retomar o trabalho, leia também o **`HANDOFF.md`** na raiz (estado, decisões com o porquê e armadilhas do ambiente).
 
 ---
@@ -85,6 +85,8 @@ Hoje **eu ocupo Admin + Atendente** sozinho. Mesmo assim, os papéis são modela
 - O autor de uma demanda é **sempre** o usuário logado — não é possível forjar (garantido por RLS, não por checagem no frontend).
 - **`perfil.ativo` vale na RLS** (migração `0025`): conta desativada não escreve nada e é barrada no login.
 - O **relatório mensal** (§18) é de Admin/Atendente/Gerente — o vendedor não emite.
+- **Quem enxerga quem, na tabela `perfil`:** o vendedor lê o próprio perfil **e** os de Admin/Atendente/**Gerente** — é assim que o nome e a foto de quem comentou, moveu status ou alterou prazo aparecem para ele. **Vendedor continua sem ver vendedor.** O `gerente` entrou nessa lista só na `0050`: até então ele assinava como *"Alguém"*, porque a policy era de quando existiam três papéis. **Ao criar um papel novo, as policies de leitura de `perfil` são o primeiro lugar a conferir** — o projeto já tropeçou nisso três vezes (`0007`, `0032`, `0050`).
+- **Ler a equipe exige estar logado** (`0051`). A policy nasceu sem cláusula `to`, o que em Postgres é `TO PUBLIC` — e no Supabase o PUBLIC inclui o visitante **sem sessão**. Como a condição dela olhava só a linha (`papel in (...)`), qualquer um com o endereço do app listava nome, celular e papel da equipe. As outras policies escapam por comparar com `auth.uid()` ou chamar `meu_papel()`, que para o anônimo dão nulo.
 
 ---
 
@@ -358,7 +360,8 @@ Cada fase é pequena o bastante para eu ler, entender e aprovar antes da próxim
 
 > **✅ Fases 0–6 concluídas** e no ar (Vercel). **Pós-Fase 6** (evoluções pedidas pelo dono, fora do plano original): repaginação visual completa (todas as telas), **notificações in-app em tempo real** (§15), **Web Push** (§15, concluído), papel **gerente** (§5), **Meu perfil** com foto + avatares no app, tela **Administração** (agrupa Equipe/Erros), **relatório mensal** (§18) e a **rede de segurança** (ErrorBoundary + `erro_log` + tela de Erros).
 
-**Fora de escopo (fase 7+):** e-mail, WhatsApp, cadastro de usuário in-app (Edge Function `criar-usuario` criada, **ainda não deployada**), relatórios **de tempo** / dashboard de gestão de produtividade (o §18 é de **volume**), integração com CEM, tabela de feriados, histórico de versões de texto, limpeza automática de anexos.
+**Fora de escopo (fase 7+):** e-mail, WhatsApp, relatórios **de tempo** / dashboard de gestão de produtividade (o §18 é de **volume**), integração com CEM, tabela de feriados, histórico de versões de texto, limpeza automática de anexos.
+> O **cadastro de usuário in-app** saiu desta lista: está **feito** (§17, issue #16, ago/2026).
 
 ---
 
@@ -366,10 +369,10 @@ Cada fase é pequena o bastante para eu ler, entender e aprovar antes da próxim
 
 **Ainda em aberto:**
 1. **Dashboard** — o dono vai passar como quer que fique. **Não começar sem os detalhes dele.**
-2. **Cadastro de usuários in-app** (issue #16) — Edge Function `criar-usuario` criada, **não deployada** (falta o deploy + o formulário, que agora entra na tela **Administração**).
-3. **Tela admin de tipos de demanda** (issue #18) — hoje os 6 tipos são semeados no banco. Também vai para a **Administração**.
-4. **Feriados no cálculo de prazo** (§8) — hoje só pula sábado/domingo.
-5. **Limpeza de anexos de entrada antigos** (§14) — os de saída são permanentes.
+2. **Tela admin de tipos de demanda** (issue #18) — hoje os 6 tipos são semeados no banco. Também vai para a **Administração**.
+3. **Feriados no cálculo de prazo** (§8) — hoje só pula sábado/domingo.
+4. **Limpeza de anexos de entrada antigos** (§14) — os de saída são permanentes.
+5. ~~Cadastro de usuários in-app~~ → **feito** (issue #16, ago/2026): a tela **Equipe** ganhou "Novo membro" (nome, email, celular, papel, senha definida pelo admin, com botão de sugerir). Quem cria o login é a Edge Function **`criar-usuario`** — a chave que faz isso (`service_role`) não pode viver no frontend. Ela existia desde a Fase 1 e nunca tinha sido deployada; envelheceu fora do repositório e precisou de três correções antes de subir: faltava o papel **`gerente`** (é anterior à `0030`), não conferia se o admin está **`ativo`** (roda com `service_role`, **por fora da RLS**) e não gravava `celular`. O `supabase/config.toml` fixa **`verify_jwt = true`** nela — o contrário da `enviar-push`, e escrito lá justamente para ninguém desligar por analogia.
 6. ~~Export/backup dos dados~~ → **feito**: Administração → **Backup** baixa um `.zip` com as 9 tabelas de conteúdo em **CSV** (separador `;`, o do Excel em português) e **JSON**, mais um `LEIA-ME`. Os **arquivos** dos anexos têm botões próprios, um por tipo (saída ~60 MB / entrada ~45 MB), organizados numa pasta por demanda — separados porque o zip é montado na memória do navegador, e por isso o botão fica **desabilitado no celular**. Sem dependência (reusa o `lib/zip.js` da #72) e sem migração. Não substitui o backup automático do Supabase; resolve outra coisa — ter os dados fora dele, legíveis.
 
 **Já resolvidas:**

@@ -1,15 +1,16 @@
 # 📋 Handoff — Service Desk - EsquadSystem
 
-**Data:** 10/08/2026 · **Branch:** `main` · **último HEAD publicado:** `ea25e2c`
+**Data:** 11/08/2026 · **Branch:** `main` · **último HEAD publicado:** `a6a1e5c`
 
 > Documento de continuidade. Para retomar: leia a **§7** (pendências) e a **§9** (armadilhas).
 > A fundação é o **`CLAUDE.md`** — leia-o por completo antes de mexer em qualquer coisa.
 
 ---
 
-## 1. ✅ Migrações: todas aplicadas (`0001` → `0049`)
+## 1. ✅ Migrações: todas aplicadas (`0001` → `0051`)
 
 Todas rodadas e confirmadas pelo dono no SQL Editor. As mais recentes:
+- **`0050`/`0051`** — as duas na `perfil`, e a segunda **nasceu de conferir a primeira**. A `0050` põe o `gerente` na `perfil_staff_visivel`, que era de quando existiam três papéis: sem ele, o vendedor via o comentário de mudança de prazo assinado por **"Alguém"** (o embed `autor:perfil(...)` é to-one sem `!inner` — linha barrada volta **nula**, não dá erro). Ao verificar se pegou, a consulta mostrou que ela respondia **sem sessão nenhuma**: a policy fora criada sem cláusula `to`, que em Postgres é `TO PUBLIC` e no Supabase inclui o `anon`. Como a condição olhava só a linha (`papel in (...)`), qualquer um com o endereço do app listava nome, celular e papel da equipe — no ar desde julho. A `0051` fecha com `to authenticated` (muda **quem pergunta**, não **quais linhas**).
 - **`0042`/`0043`/`0044`** — admin define o **dono** da demanda + os dois fixes de posse que isso exigiu (anexar entrada; dono apaga entrada — ver §6).
 - **`0045`** — **Ficha de pedido de vendas** (F1 da #80): `tipo_demanda.com_ficha` (flag data-driven), tabela `ficha_fechamento` (1:1 com demanda, RLS: ler=quem vê a demanda; criar=dono em `nao_iniciado` OU admin não-terminal, só tipo com ficha; editar=staff não-terminal OU dono em `nao_iniciado`; delete=negado; gatilho impede trocar de demanda) e **`mover_status` com DOIS trilhos**: tipo com ficha pula a revisão de custo (`em_andamento → concluido` direto; entrar em revisão é bloqueado, sair continua podendo).
 - **`0046`** — devolve o aviso **"prazo se aproximando"** que a 0039 tinha derrubado sem querer (achado de revisão adversarial); agora só em `nao_iniciado`/`em_andamento`, alinhado ao "Atrasado" (§8).
@@ -33,17 +34,32 @@ App web interno da **EsquadSystem** (esquadrias de alumínio) para gerir **deman
 
 ## 4. Estado atual
 
-- **Fases 0–6 completas** e no ar. Migrações **`0001` → `0049`**, todas aplicadas (§1).
+- **Fases 0–6 completas** e no ar. Migrações **`0001` → `0051`**, todas aplicadas (§1).
 - **Web Push (#14): CONCLUÍDO** — validado nas 3 plataformas (desktop, Android, iOS com PWA).
 - **Dashboard: reforma COMPLETA** (A+B+C, #77) e **TODAS as listagens ilimitadas paginadas** (#78/#79 — helper `lib/paginacao.js`, `todasAsLinhas`): lista, RPCs, Relatório, SeletorCliente, Clientes. A classe de bug "corte silencioso de ~1000 do PostgREST" está **encerrada** no app.
 - **Anexos de entrada:** comprimidos para **≤ 1 MB** (`ALVO_ENTRADA` em `lib/anexos.js`) nos DOIS caminhos (criação e detalhe) — #75.
 - **Ficha de pedido de vendas (#80): COMPLETA (F1–F4)** — o vendedor preenche a ficha no app ao criar demanda de Fechamento; o fluxo de status pula a revisão (dois trilhos na `mover_status`); o detalhe tem a box da ficha (ver/**editar** com permissões espelhando a RLS; RT travada — é da demanda); e o **PDF** sai como réplica fiel do papel via `window.print()`. Spec registrada no **CLAUDE.md §19** (+ exceções em §7/§10). ⚠ iPhone com PWA instalado não imprime (`window.print()` é ignorado em standalone — o app mostra a dica de abrir pelo Safari; mesma limitação do Relatório). Demandas de teste #36/#37 criadas pela conta oculta na validação.
 - **Modo desktop (#83): COMPLETO (B1–B4)** — o app tem duas caras na mesma base: **≥900px** vira site (menu lateral, campos expostos, filtros à vista) e **≥1200px** ganha **lista + detalhe lado a lado**. Spec no **CLAUDE.md §20**. O **celular não mudou em nada** — foi o critério de aceite de cada bloco.
 - **Backup dos dados (§17): FEITO** — Administração → Backup baixa as 9 tabelas em CSV+JSON, e os ARQUIVOS dos anexos em zips por tipo. Era a pendência que protegia contra perda; a lista do §17 do CLAUDE.md ficou sem itens de risco.
+- **Cadastro de membro in-app (#16): FEITO** — a Equipe tem "Novo membro"; quem cria o login é a Edge Function **`criar-usuario`**, agora **deployada** (v2, `verify_jwt=true`). Ver a seção própria abaixo.
 - **Conta de teste** (`teste@gmail.com` = 'USUARIO DE TESTE'): **oculta** (0041) — não aparece nas listas/dashboard/relatório dos outros; e fora do relatório (0040).
-- **Fora do versionamento de propósito:** `deno.lock` e `supabase/functions/criar-usuario/` (Edge Function criada, **não deployada** — pendência #16).
+- **Edge Functions no ar:** `enviar-push` (v11, `verify_jwt=**false**` — o webhook do banco chama sem token) e `criar-usuario` (v2, `verify_jwt=**true**` — identifica o chamador pelo token dele). As duas versionadas, e o `supabase/config.toml` é quem preserva essa diferença a cada deploy.
+- **Fora do versionamento de propósito:** `deno.lock` e `supabase/.temp/` — estado da máquina (qual projeto está "linkado" no CLI), não do projeto.
 
 ## 5. O que foi feito
+
+### Sessão de 11/08/2026 (issues #16 e #89 fechadas · migrações `0050`/`0051`)
+
+**#16 — cadastro de membro dentro do app.** Era a pendência mais antiga com valor prático: adicionar alguém exigia abrir o painel do Supabase, criar o login na mão e voltar para acertar nome e papel.
+
+- **A Edge Function envelheceu fora do repositório.** Ela estava escrita desde a Fase 1, nunca commitada nem deployada, e tinha **três defeitos** acumulados pelo tempo: faltava o papel **`gerente`** (foi escrita antes da `0030` criar o papel — cadastrar um gerente devolvia "Dados inválidos"); **não conferia se o admin está `ativo`** (ela roda com `service_role`, ou seja **por fora da RLS**, então um admin desativado seguiria criando logins — o oposto de desativar alguém); e não gravava `celular`, campo que a Equipe mostra.
+- **Deploy:** `npx supabase functions deploy criar-usuario --project-ref …` (sem `link`, para não mexer em config global). O `config.toml` fixa `verify_jwt = true` **com o porquê escrito**, já que a vizinha precisa dele desligado. Verificado por curl: sem token → 401 no gateway; só com a chave pública → a própria função responde "Não autenticado."; **OPTIONS → 200**, que era o risco real de ligar o `verify_jwt` (preflight vai sem `Authorization`; se fosse barrado, o navegador tomaria erro de CORS sem nunca chegar na função).
+- **Front:** `NovoMembro.jsx` na Equipe, no par botão-tracejado ↔ formulário do "Novo cliente". Senha definida pelo admin, **à vista** (ele precisa lê-la para passar adiante; esconder só criaria erro de digitação e um campo de confirmação) com botão "Sugerir" (8 caracteres, sem `l/I/1/O/0`). Criado o membro, caixa com email + senha e botão de copiar — **único momento em que a senha existe legível**.
+- **Mudança que parece detalhe e não é:** o `carregar()` da Equipe deixou de religar o `carregando`. Ele trocava a tela inteira pelo "Carregando equipe…" a cada recarga — e recarregar é exatamente o que acontece depois de criar o membro, o que desmontaria o componente **junto com a senha**.
+
+**O que a revisão adversarial pegou (4 confirmados, corrigidos antes do commit):** o **"Cancelar" ficava clicável durante o envio** — o pedido não é abortável, então fechar no meio derrubava o componente mas a função seguia e criava o login: a pessoa apareceria na lista e **ninguém saberia a senha dela**; a mensagem genérica de falha mandava "tente de novo", mas se a rede cai *depois* da criação isso leva a "já existe esse email" sem explicação; o `erro` da Equipe nunca era limpo (alcançável só a partir daqui — antes, lista vazia não tinha botão que recarregasse); e a caixa das credenciais **não existia visualmente no tema claro** (fundo `#f3f6f9` sobre página `#eef1f5` = 1,05:1 de contraste).
+
+**#89 — o gerente deixa de ser "Alguém"** (`0050`), e a `0051` que **nasceu de conferir a `0050`** — ver §1. A #89 foi aberta como issue normal; a exposição anônima **não**, porque o repositório é **público** e uma issue descrevendo uma brecha ativa com o nome do projeto é um convite. Foi conversada no chat e registrada só depois de fechada.
 
 ### Sessão de 06–10/08/2026 (issues #85/#86/#87/#88 fechadas)
 
@@ -162,7 +178,8 @@ Rede de segurança contra tela branca (`ErrorBoundary` em 2 níveis + `erro_log`
 - 🧾 **Remover a coluna `obra.endereco`** — legado sem uso desde a `0047` (o app inteiro lê `cidade_estado`). Migração de uma linha, sem pressa.
 - 🏗️ **35 obras sem cidade** — vão se completando conforme forem usadas (o formulário pede na hora). Nenhuma ação necessária.
 - 🐢 **Detalhe pesado com muitos PDFs:** cada `MiniaturaPdf` renderiza via pdf.js; demandas com 20+ PDFs de entrada travam a tela ao abrir (renderizar miniaturas sob demanda resolveria). Relevante justo no caso "muitos PDFs".
-- 🗂️ **Backlog aberto:** #43 (documentação), #32 (co-vendedor), #18 (tela de tipos), #17 (box de cor), #16 (cadastro in-app — Edge Function criada, **não deployada**).
+- 🔑 **Reset de senha continua fora do app** — o §5 do CLAUDE.md diz que o admin reseta senhas, mas isso segue sendo feito no painel do Supabase. Ficou de fora da #16 de propósito (é outra Edge Function). Vira relevante se alguém perder a senha entregue no cadastro.
+- 🗂️ **Backlog aberto:** #43 (documentação), #32 (co-vendedor), #18 (tela de tipos), #17 (box de cor).
 - 🧹 Limpeza de anexos de entrada antigos (§14) · 📅 feriados no cálculo de prazo (§8).
 
 ## 8. 🎯 Próximo passo
@@ -170,8 +187,8 @@ Rede de segurança contra tela branca (`ErrorBoundary` em 2 níveis + `erro_log`
 Nada em andamento — o working tree está limpo e tudo o que foi feito está no ar.
 
 Do backlog, em ordem de valor (opinião, não decisão):
-1. **#16 — cadastro de usuários in-app.** A Edge Function `criar-usuario` está escrita há tempos e **nunca foi deployada**; falta o deploy + o formulário na Administração. É a pendência mais antiga que ainda tem valor prático.
-2. **Remover `obra.endereco`** (acima) — barato e tira uma coluna que mente.
+1. **Remover `obra.endereco`** (acima) — barato e tira uma coluna que mente.
+2. **Reset de senha in-app** (acima) — vira o próximo buraco natural agora que o cadastro existe: o admin entrega uma senha, e quando alguém a perder ele volta ao painel do Supabase.
 3. **#29** (reatribuir demandas já existentes), **#43** (documentação), **#32** (co-vendedor), **#18** (tela de tipos), **#17** (box de cor).
 4. 🐢 **Detalhe pesado com muitos PDFs** — 20+ miniaturas via pdf.js travam a tela ao abrir; renderizar sob demanda resolveria.
 
@@ -183,7 +200,7 @@ Do backlog, em ordem de valor (opinião, não decisão):
 | **A preview / dev server CAI com frequência** | Reabra com `preview_start({name:'dev'})`. A aba nova nasce **deslogada** (tela de boas-vindas → Continuar → login). |
 | **Detalhe com muitos PDFs congela o renderer** | 20-26 `MiniaturaPdf` (pdf.js) travam a preview → `javascript_tool`/`read_page` dão timeout. Evite abrir essas demandas para inspecionar; verifique a lógica por query/DOM em telas leves. |
 | **Separar um commit quando o `App.css` tem 2 features** | `git diff -- src/App.css \| awk '/^@@/{c++} c<2{print} c>=2{exit}' > hunk.patch && git apply --cached hunk.patch` (stage só o 1º hunk), commita, depois `git add` o resto. |
-| **`git add <arqs> && git commit` commita TUDO que estiver staged** | Use `git commit -m ... -- <paths>` quando houver outra coisa staged (`deno.lock`/`criar-usuario` seguem fora). |
+| **`git add <arqs> && git commit` commita TUDO que estiver staged** | Use `git commit -m ... -- <paths>` quando houver outra coisa staged (hoje o `.gitignore` já barra `deno.lock` e `supabase/.temp/`). |
 | **`npm run build` com o preview LIGADO** → `EINVAL` no service worker | Pare o preview antes de buildar. |
 | **Buffer do console não limpa** em navigate/reload | Erro fantasma pode persistir; abra **aba nova** para buffer limpo antes de concluir que é real. |
 | **Screenshot trava** no preview | Verificar por **DOM/`getComputedStyle`** via `javascript_tool` (mais confiável e preciso). |
@@ -198,6 +215,9 @@ Do backlog, em ordem de valor (opinião, não decisão):
 | **Nome de arquivo no zip: NTFS não distingue maiúsculas** | Desempatar por string exata deixa `IMG.JPG` e `img.jpg` virarem duas entradas — e uma sobrescreve a outra ao extrair, sem erro. Comparar sempre por `toLowerCase()`. |
 | **CSV para o Excel em português** | Precisa de **BOM UTF-8** (senão "JosÃ©"), separador **`;`** (o Excel usa o separador de lista do Windows) e **apóstrofo** antes de `= + - @` (senão a célula vira fórmula — e "- 2 janelas" é descrição comum aqui). |
 | **PWA cacheia a versão antiga** | Modo `prompt` ("Nova versão → Atualizar"). Se o deploy "não pegou", quase sempre é cache. |
+| **Policy sem cláusula `to` vale para o ANÔNIMO** | Sem `to`, é `TO PUBLIC` — e no Supabase o PUBLIC inclui o `anon` (visitante sem sessão, só com a chave publishable, que por desenho vai no bundle). Quase nunca vaza, porque quase toda policy compara com `auth.uid()` ou chama `meu_papel()` e para o anônimo isso dá nulo. **Vaza quando a condição olha só a LINHA** (`papel in (...)`) — foi a `perfil_staff_visivel`, dois meses no ar. Auditoria barata: varrer TODAS as tabelas por curl anônimo (lista via `grep -rhoE "create table" supabase/migrations/`), antes e depois. Foi o que provou que o vazamento estava confinado a uma tabela. |
+| **`functions.invoke` esconde o corpo do erro** | Resposta não-2xx vira sempre a MESMA frase em inglês no `error.message`. O texto que a função escreveu está no **`error.context`**, que é um `Response` ainda por ler (`await error.context.json()`). Sem isso a função fica bem-educada por dentro e fala inglês com o usuário. |
+| **Deploy de Edge Function não precisa de `link`** | `npx supabase functions deploy <nome> --project-ref <ref>` (o `login` é interativo — é do dono). O `supabase/config.toml` **vai junto** e é ele que preserva o `verify_jwt` de cada função; sem ele, cada deploy religa a verificação e derruba o webhook do push. Conferir depois com `functions list`. |
 | **PostgREST: ambiguidade de embed** com >1 FK | `tabela!fk_coluna` (ex.: `vendedor:perfil!vendedor_id(...)`). |
 | **Enum do Postgres** não remove valor fácil | Por isso "concluído" virou legado. `ALTER TYPE ... ADD VALUE` não roda na mesma transação em que o tipo é criado. |
 
@@ -206,8 +226,10 @@ Do backlog, em ordem de valor (opinião, não decisão):
 - **Trabalho concluído → sempre registrar uma issue FECHADA** no GitHub, para o histórico (`gh issue create` + `gh issue close`, com o commit no corpo).
 - **Ideia nova → confirmar ANTES** de criar a issue (propor título; criar só com o "ok").
 - **Função nova que funcione + "ok" do dono → commit + push** (conferindo `git status` antes e `HEAD == origin/main` depois). Um commit por assunto (separar `App.css` por hunk quando preciso — §9).
-- **Migração é do dono:** ele roda no SQL Editor. Sempre dizer **o que quebra se não rodar**; preferir que a ausência degrade só a tela nova. **Não commitar o front que depende da migração antes de o dono confirmar que rodou** (senão o deploy quebra).
+- **Migração é do dono:** ele roda no SQL Editor. Sempre dizer **o que quebra se não rodar**; preferir que a ausência degrade só a tela nova. **Não commitar o front que depende da migração antes de o dono confirmar que rodou** (senão o deploy quebra). Vale igual para **Edge Function**: função primeiro, front depois — nada que dependa do servidor sobe antes de ele existir.
+- **Conferir o efeito depois que ele roda**, não só perguntar se rodou. Foi verificar a `0050` que expôs a brecha que virou a `0051` — a confirmação do dono prova que o comando não deu erro, não que o efeito é o esperado.
+- **Achado de segurança em repositório PÚBLICO não vira issue** enquanto está aberto. Conversar no chat, corrigir, e só então registrar. Uma issue descrevendo brecha ativa com o nome do projeto é um convite.
 
 ---
 
-_Gerado por Claude Code em 05/08/2026 (após `4a785fd`; migrações até `0046`)._
+_Atualizado por Claude Code em 11/08/2026 (após `a6a1e5c`; migrações até `0051`)._
