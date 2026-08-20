@@ -1,0 +1,33 @@
+-- ───────────────────────────────────────────────────────────────
+-- Migracao 0053 — comentario no Realtime (feed da lista em tempo real)
+--
+-- A lista da Inicio passa a se atualizar sozinha. A tabela `demanda` ja esta
+-- publicada desde a 0016 (o comentario dela diz: "Inicio em tempo real"), o
+-- que cobre demanda NOVA e mudanca de STATUS. Falta o COMENTARIO.
+--
+-- Por que comentario entra: a `ultima_atividade()` (0037) calcula o "movida ha
+-- X" com o GREATEST entre historico_status e COMENTARIO. Ou seja, um
+-- comentario novo muda o que a lista mostra — sem este publish, o selo ficaria
+-- velho na tela de quem estivesse com a lista aberta.
+--
+-- Por que nao bastou aproveitar a notificacao (que ja chega em tempo real):
+-- os gatilhos da 0015 mandam vendedor->staff e staff->dono. O GERENTE nao
+-- recebe notificacao nenhuma, e ele VE TODAS as demandas (§5) — a tela dele
+-- nunca atualizaria por comentario. Escutar a tabela cobre todo mundo pela
+-- mesma regra.
+--
+-- Seguranca: o Realtime aplica a RLS por assinante nos eventos de
+-- postgres_changes. Quem nao pode ler o comentario nao recebe o evento dele —
+-- e a policy de leitura de `comentario` nao muda aqui. Mesmo desenho que a
+-- 0016 ja usa para `demanda`, e agora tambem com o `sou_ativo()` da 0052 por
+-- cima (desativado nao le, logo nao escuta).
+--
+-- NAO e destrutiva, nao cria coluna nem policy, nao toca em dado nenhum.
+-- Cole no SQL Editor e rode.
+--
+-- Se NAO rodar: nada quebra. A lista continua atualizando sozinha por demanda
+-- nova e por mudanca de status; so o comentario novo deixa de aparecer sem
+-- recarregar. A ausencia degrada exatamente um caso, e em silencio benigno.
+-- ───────────────────────────────────────────────────────────────
+
+alter publication supabase_realtime add table comentario;

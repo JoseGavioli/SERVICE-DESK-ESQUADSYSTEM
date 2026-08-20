@@ -23,6 +23,12 @@ const RANK_URGENCIA = Object.fromEntries(
   URGENCIA_NIVEIS.map((u, i) => [u.nivel, i]),
 )
 
+// Espera antes de recarregar por evento de tempo real. UMA acao escreve em
+// varias tabelas — mover status grava em `demanda`, `historico_status` e
+// `comentario`, e cada uma vira um evento. Sem a espera, um unico clique de
+// outra pessoa dispararia tres recargas de tres consultas paginadas.
+const ESPERA_FEED = 400
+
 const FILTROS_VAZIOS = {
   busca: '',
   status: '',
@@ -134,9 +140,17 @@ export default function Demandas({
   const [datasRevisao, setDatasRevisao] = useState({})
   const [atividade, setAtividade] = useState({}) // demanda_id -> ultima mexida
 
+  // Senha de ordem das cargas. Antes do feed, `carregar` so rodava por acao do
+  // usuario e era raro haver duas em voo. Agora um evento de tempo real pode
+  // chegar no meio de outra carga — e como as tres consultas sao paginadas, a
+  // que COMECOU antes pode TERMINAR depois, sobrescrevendo dado novo com velho
+  // em silencio. So a carga mais recente escreve.
+  const cargaAtual = useRef(0)
+
   // silencioso: recarrega sem mostrar o skeleton (ex.: ao voltar do detalhe,
   // para refletir mudancas de status sem "piscar" a lista inteira).
   async function carregar({ silencioso = false } = {}) {
+    const minhaVez = ++cargaAtual.current
     if (!silencioso) setCarregando(true)
     // §Bloco C da lista (#78): as tres consultas viram PAGINAS (todasAsLinhas)
     // — a busca/arvore/filtros sao client-side e precisam de TODAS as linhas;
@@ -163,8 +177,15 @@ export default function Demandas({
           supabase.rpc('ultima_atividade').order('demanda_id').range(de, ate),
         ),
       ])
-    if (error) setErro('Não foi possível carregar as demandas.')
-    else setDemandas(data)
+    // Chegou tarde: uma carga mais nova ja respondeu. Sair sem escrever nada.
+    if (minhaVez !== cargaAtual.current) return
+
+    // O sucesso LIMPA o erro. Sem isso, uma recarga DE FUNDO que pegasse um
+    // blip de rede deixava a faixa vermelha na tela para sempre — por cima de
+    // uma lista correta, e sem o usuario ter tocado em nada. (Mesmo conserto
+    // que a Equipe.jsx ja levou.)
+    setErro(error ? 'Não foi possível carregar as demandas.' : '')
+    if (!error) setDemandas(data)
     if (datas) {
       const mapa = {}
       for (const r of datas) mapa[r.demanda_id] = r.data
@@ -209,6 +230,69 @@ export default function Demandas({
 
   useEffect(() => {
     carregar()
+  }, [])
+
+  // ── Feed em tempo real ──────────────────────────────────────────
+  // A lista se atualiza sozinha quando alguem cria uma demanda, move um status
+  // ou comenta. Nao e padrao novo: o Dashboard e os contadores do menu lateral
+  // ja escutavam a tabela `demanda` desse mesmo jeito — a lista era a peca que
+  // faltava (no PC dava para ver o contador "Em aberto" mudar sozinho ao lado
+  // de uma lista parada).
+  //
+  // A RLS vale aqui: o Realtime avalia as policies POR ASSINANTE, entao o
+  // vendedor so recebe evento das demandas dele, e um desativado (§0052) nao
+  // recebe nada.
+  //
+  // `carregar` e recriada a cada render deste componente, entao ela NAO pode
+  // entrar nas dependencias — o efeito cancelaria e refaria a inscricao sem
+  // parar. A ref guarda sempre a versao mais recente sem provocar isso.
+  const carregarRef = useRef(carregar)
+  useEffect(() => {
+    carregarRef.current = carregar
+  })
+
+  useEffect(() => {
+    let timer = null
+    function recarregarLogo() {
+      clearTimeout(timer)
+      timer = setTimeout(
+        () => carregarRef.current({ silencioso: true }),
+        ESPERA_FEED,
+      )
+    }
+
+    const canal = supabase
+      .channel('lista-demandas')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'demanda' },
+        recarregarLogo,
+      )
+      // `comentario` so entra no Realtime com a migracao 0053. Sem ela, esta
+      // escuta simplesmente nunca dispara — nao da erro, so nao acontece.
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'comentario' },
+        recarregarLogo,
+      )
+      .subscribe((status) => {
+        // O Realtime NAO reentrega o que passou enquanto o socket esteve
+        // caido. Celular bloqueado 20 minutos: o canal reentra sozinho e volta
+        // a receber eventos NOVOS, mas os perdidos somem — a lista fica com um
+        // buraco permanente, agora com a aparencia de estar ao vivo, que e o
+        // pior dos dois mundos. O SUBSCRIBED dispara a cada entrada
+        // bem-sucedida (inclusive as reentradas), entao e o gancho certo para
+        // refazer a carga. A espera de 400ms absorve a duplicata com o
+        // `carregar` da montagem.
+        if (status === 'SUBSCRIBED') recarregarLogo()
+      })
+
+    return () => {
+      // O clearTimeout importa: sem ele, um evento chegado pouco antes de sair
+      // da tela dispararia `carregar` num componente ja desmontado.
+      clearTimeout(timer)
+      supabase.removeChannel(canal)
+    }
   }, [])
 
   // Cruzou o breakpoint (§#83 B2): ENTRANDO no desktop, zera o buscaAberta

@@ -4,7 +4,7 @@
 > Ele define **o que o app é**, **as regras de negócio** e **como você (Claude Code) deve trabalhar comigo**.
 
 > **Status atual (05/08/2026):** Fases 0–6 **concluídas**, app **no ar e em uso real** (deploy na **Vercel**, CD ativo — push na `main` publica). Depois delas: repaginação visual (marca **EsquadSystem**, tema claro/escuro, PWA), **notificações in-app em tempo real** (§15), **Web Push concluído** (validado em desktop, Android e iOS), 4º papel **gerente** (§5), **relatório mensal** (§18), uma **rede de segurança** contra tela branca (ErrorBoundary + log de erros + tela de Erros para o admin) e a **ficha de pedido de vendas no Fechamento** (§19).
-> Backend em Supabase; migrações **`0001`–`0052`** aplicadas. Pendências ativas em §17.
+> Backend em Supabase; migrações **`0001`–`0053`** aplicadas. Pendências ativas em §17.
 > Para retomar o trabalho, leia também o **`HANDOFF.md`** na raiz (estado, decisões com o porquê e armadilhas do ambiente).
 
 ---
@@ -340,6 +340,8 @@ Motivo: comentário obrigatório só onde ele **significa** algo. Forçar justif
   - **nunca** o próprio autor; um vendedor **nunca** recebe de outro vendedor.
   - Na interface: **sino no topo** com contador de não lidas; **tela de notificações** (cada item abre a demanda e marca como lida; "marcar todas como lidas" e **"limpar" com confirmação**); **pop-up (toast)** ao chegar algo novo; **descrição específica** do evento ("Fulano iniciou a demanda de Cliente").
   - A **Início** (contador de demandas em aberto) e os marcadores da lista (tag **"novidade"** + **💬 novo**) derivam **desse mesmo sistema**.
+  - **A LISTA se atualiza sozinha** (`0053`): ela escuta `demanda` e `comentario` pelo Realtime e recarrega em silêncio quando alguém cria demanda, move status ou comenta. Não vem da `notificacao` de propósito — o **gerente não recebe notificação nenhuma** (§`0015`) e vê todas as demandas, então a tela dele nunca atualizaria. O Dashboard e os contadores do menu já faziam isso; a lista era a peça que faltava.
+    > **A lista muda embaixo do dedo** — decisão do dono, ciente do risco. Onde morde mais forte: ordenando por **atividade recente**, um comentário alheio joga aquela demanda para o topo do bloco dela e empurra as linhas de baixo. Se incomodar, a alternativa é uma pílula *"N novidades — atualizar"*.
 - **Notificações por TEMPO (implementado — migrações `0020`/`0021`/`0039`):** um job diário (`notificar_pendencias()` via pg_cron, 8h BRT) avisa **prazo vencido** (→ admins) e **custo atrasado** (→ dono + admins), uma vez por demanda/evento. **As regras dele têm que casar com o `lib/urgencia.js`** — ver a ressalva no §8.
 - **Push no sistema operacional — CONCLUÍDO (issue #14):** Web Push (VAPID + `push-sw.js` + Edge Function `enviar-push` disparada por Database Webhook no INSERT de `notificacao`). **Validado em desktop, Android e iOS** (no iPhone só funciona com o **PWA instalado**, iOS 16.4+). Toggle "Receber avisos neste aparelho" na tela de Notificações.
 - **Fases futuras (registrado, fora do escopo atual):**

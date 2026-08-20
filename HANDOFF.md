@@ -1,15 +1,16 @@
 # 📋 Handoff — Service Desk - EsquadSystem
 
-**Data:** 11/08/2026 · **Branch:** `main` · **último HEAD publicado:** `0e3c34f`
+**Data:** 11/08/2026 · **Branch:** `main` · **último HEAD publicado:** `4210fac`
 
 > Documento de continuidade. Para retomar: leia a **§7** (pendências) e a **§9** (armadilhas).
 > A fundação é o **`CLAUDE.md`** — leia-o por completo antes de mexer em qualquer coisa.
 
 ---
 
-## 1. ✅ Migrações: todas aplicadas (`0001` → `0052`)
+## 1. ✅ Migrações: todas aplicadas (`0001` → `0053`)
 
 Todas rodadas e confirmadas pelo dono no SQL Editor. As mais recentes:
+- **`0053`** — publica `comentario` no Realtime, para a **lista da Início se atualizar sozinha**. A `demanda` já estava publicada desde a `0016` (o comentário dela dizia "Início em tempo real" — a intenção estava lá, faltava o consumidor). O comentário entrou porque a `ultima_atividade()` (`0037`) calcula o "movida há X" com o GREATEST entre `historico_status` e **comentário**. Não bastou aproveitar a notificação, que já chega em tempo real: os gatilhos da `0015` mandam vendedor→staff e staff→dono, e o **gerente não recebe nenhuma** — a tela dele nunca atualizaria.
 - **`0052`** — conta desativada para de **LER** (issue #91). A `0025` só cobria a escrita, e o barrar na entrada era do frontend — pela API, com o token na mão, um desativado seguia lendo tudo. Fecha com policies **`restrictive`** nas 8 tabelas de conteúdo: restritiva o Postgres soma com **E** ao que já existe, então **nenhuma condição antiga precisou ser reescrita**. Foi de propósito — `alter policy ... using` SUBSTITUI a expressão, e várias dessas policies já tinham sido refeitas depois (a `0031` por causa do gerente, a `0041` pelo `perfil_oculto()`); copiar oito à mão é como um pedaço de condição some sem ninguém ver, e numa policy de LEITURA isso quer dizer alguém enxergando o que não devia. A `perfil` ficou **fora** para o aviso *"Sua conta está desativada"* não virar *"Seu usuário ainda não tem um perfil cadastrado"*.
 - **`0050`/`0051`** — as duas na `perfil`, e a segunda **nasceu de conferir a primeira**. A `0050` põe o `gerente` na `perfil_staff_visivel`, que era de quando existiam três papéis: sem ele, o vendedor via o comentário de mudança de prazo assinado por **"Alguém"** (o embed `autor:perfil(...)` é to-one sem `!inner` — linha barrada volta **nula**, não dá erro). Ao verificar se pegou, a consulta mostrou que ela respondia **sem sessão nenhuma**: a policy fora criada sem cláusula `to`, que em Postgres é `TO PUBLIC` e no Supabase inclui o `anon`. Como a condição olhava só a linha (`papel in (...)`), qualquer um com o endereço do app listava nome, celular e papel da equipe — no ar desde julho. A `0051` fecha com `to authenticated` (muda **quem pergunta**, não **quais linhas**).
 - **`0042`/`0043`/`0044`** — admin define o **dono** da demanda + os dois fixes de posse que isso exigiu (anexar entrada; dono apaga entrada — ver §6).
@@ -35,7 +36,7 @@ App web interno da **EsquadSystem** (esquadrias de alumínio) para gerir **deman
 
 ## 4. Estado atual
 
-- **Fases 0–6 completas** e no ar. Migrações **`0001` → `0052`**, todas aplicadas (§1).
+- **Fases 0–6 completas** e no ar. Migrações **`0001` → `0053`**, todas aplicadas (§1).
 - **Web Push (#14): CONCLUÍDO** — validado nas 3 plataformas (desktop, Android, iOS com PWA).
 - **Dashboard: reforma COMPLETA** (A+B+C, #77) e **TODAS as listagens ilimitadas paginadas** (#78/#79 — helper `lib/paginacao.js`, `todasAsLinhas`): lista, RPCs, Relatório, SeletorCliente, Clientes. A classe de bug "corte silencioso de ~1000 do PostgREST" está **encerrada** no app.
 - **Anexos de entrada:** comprimidos para **≤ 1 MB** (`ALVO_ENTRADA` em `lib/anexos.js`) nos DOIS caminhos (criação e detalhe) — #75.
@@ -193,6 +194,8 @@ Rede de segurança contra tela branca (`ErrorBoundary` em 2 níveis + `erro_log`
 - 🏗️ **35 obras sem cidade** — vão se completando conforme forem usadas (o formulário pede na hora). Nenhuma ação necessária.
 - 🐢 **Detalhe pesado com muitos PDFs:** cada `MiniaturaPdf` renderiza via pdf.js; demandas com 20+ PDFs de entrada travam a tela ao abrir (renderizar miniaturas sob demanda resolveria). Relevante justo no caso "muitos PDFs".
 - 🚪 **A sessão em si nunca cai** — nem por reset de senha (MEDIDO pelo dono: o celular logado continuou funcionando), nem por desativar. O token segue válido até expirar; encerrar sessão de verdade continua sendo no painel do Supabase. O que mudou com a `0052` é que o desativado deixou de **ver** — antes ele lia tudo pela API. Se algum dia for preciso "expulsar agora" (celular roubado), aí sim é Edge Function nova com `auth.admin.signOut` — não fazer sem o dono pedir.
+- 🌀 **O feed muda a lista embaixo do dedo** — decisão do dono, com o risco na mesa. A revisão confirmou onde morde mais forte: ordenando por **atividade recente**, um comentário alheio move a chave de ordenação daquela demanda para "agora" e empurra as linhas de baixo; no celular a lista é a tela inteira e o toque ABRE o detalhe, então o dedo pode descer sobre X e abrir Y. Sem mitigação hoje (não há pausa por ponteiro nem âncora de rolagem). Se incomodar: pílula *"N novidades — atualizar"*.
+- 💸 **Rajada de eventos espaçados = N recargas.** A espera de 400ms agrupa o que sai na MESMA transação (mover status → `demanda` + `historico_status` + `comentario` = 1 recarga). Não agrupa o que vem espaçado: anexar 5 arquivos numa demanda **já enviada** dispara o gatilho da `0038` uma vez por arquivo → 5 comentários → 5 recargas de 3 consultas paginadas. Caminho raro e sem dano — só custo. Um teto de intervalo (~2s) resolveria; não foi feito para não somar duas lógicas de tempo ao mesmo código.
 - 🔎 **`0052`: falta observar o único caminho que ela realmente protege.** O dono testou os dois lados visíveis no app — com conta ativa a lista aparece normal (não houve regressão), e a conta desativada mostra **"Sua conta está desativada"**, não *"Seu usuário ainda não tem um perfil cadastrado"*, o que confirma que deixar a `perfil` fora da regra foi acerto. Mas repare: o frontend barra em [Painel.jsx:203](src/components/Painel.jsx:203) **antes** de a lista carregar, então pelo app um desativado nunca veria as demandas, com ou sem a `0052`. O que a migração fecha é o caminho da **API direta** — e esse ainda não foi observado. Para provar, bastaria logar via REST com a conta de teste desativada e bater na `demanda`: deve vir `[]`.
 - 🗂️ **Backlog aberto:** #43 (documentação), #32 (co-vendedor), #18 (tela de tipos), #17 (box de cor).
 - 🧹 Limpeza de anexos de entrada antigos (§14) · 📅 feriados no cálculo de prazo (§8).
@@ -248,4 +251,4 @@ Do backlog, em ordem de valor (opinião, não decisão):
 
 ---
 
-_Atualizado por Claude Code em 11/08/2026 (após `0e3c34f`; migrações até `0052`)._
+_Atualizado por Claude Code em 11/08/2026 (após `4210fac`; migrações até `0053`)._
